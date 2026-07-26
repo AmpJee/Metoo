@@ -1,0 +1,12 @@
+{
+  "scripts": {
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "format": "turbo format",
+    "format:check": "turbo format:check"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "turbo": "^2.10.7"
+  }
+}
