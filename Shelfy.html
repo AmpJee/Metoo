@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shelfy</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="Shelfystyle.css">  
+ </head>
+ <body data-template-id="__page-root">
+  <div class="scene">
+   <div class="stars" id="stars"></div>
+   <div class="glow-orb"></div>
+  <!-- AUTH FLOW -->
+  <div class="auth-wrap" id="authWrap">
+   <div class="auth-card screen active" id="screen-welcome">
+    <div class="welcome-title-group">
+     <div class="logo-big">🛍️</div>
+     <div class="welcome-title-text">Shelfy</div>
+    </div>
+    <button class="btn" style="width:100%;margin-bottom:18px;" onclick="showAuth('signin')">Already have an account</button>
+    <button class="btn" style="width:100%;" onclick="showAuth('register')">Have no account yet</button>
+   </div>
+   <div class="auth-card screen" id="screen-register">
+    <h1 class="display">Create your seller account</h1>
+    <div class="sub">Step 1 — User register</div>
+    <label for="reg-shop">Shop name</label><input id="reg-shop" placeholder="e.g. Suki's Silk House">
+    <label for="reg-email">Email</label><input id="reg-email" placeholder="you@shop.com" type="email">
+    <label for="reg-phone">Phone</label><input id="reg-phone" placeholder="0xx-xxx-xxxx">
+    <button class="btn" style="width:100%;margin-top:4px;" onclick="showAuth('signup')">Continue to Sign Up</button>
+    <div class="divider">or</div>
+    <span class="link" onclick="showAuth('welcome')">Back</span>
+   </div>
+   <div class="auth-card screen" id="screen-signup">
+    <h1 class="display">Sign Up / Sign In</h1>
+    <div class="sub">Set a password to secure your account</div>
+    <label for="su-pass">Password</label><input id="su-pass" type="password" placeholder="••••••••">
+    <label for="su-confirm">Confirm password</label><input id="su-confirm" type="password" placeholder="••••••••">
+    <button class="btn" style="width:100%;" onclick="showAuth('login')">Continue to Login</button>
+   </div>
+   <div class="auth-card screen" id="screen-signin">
+    <div class="logo-big">🔐</div>
+    <h1 class="display">Welcome back</h1>
+    <div class="sub">Login to your seller account</div>
+    <label for="si-email">Email</label><input id="si-email" placeholder="you@shop.com" type="email">
+    <label for="si-pass">Password</label><input id="si-pass" type="password" placeholder="••••••••">
+    <button class="btn" style="width:100%;" onclick="showAuth('login')">Login</button>
+    <div class="divider">or</div>
+    <span class="link" onclick="showAuth('welcome')">Back</span>
+   </div>
+   <div class="auth-card screen" id="screen-login">
+    <div class="logo-big">✅</div>
+    <h1 class="display">Logging in…</h1>
+    <div class="sub">Verifying your credentials</div>
+    <button class="btn" style="width:100%;" onclick="showAuth('pending')">Continue</button>
+   </div>
+   <div class="auth-card screen" id="screen-pending">
+    <div class="spinner"></div>
+    <h1 class="display">Pending Approval</h1>
+    <div class="sub">We're verifying your shop details. This usually takes a moment.</div>
+    <button class="btn" style="width:100%;" onclick="enterApp()">Simulate: account verified</button>
+   </div>
+  </div>
+  <!-- MAIN APP -->
+  <div class="app hidden" id="mainApp">
+   <nav class="sidebar" aria-label="Main navigation">
+    <div class="brand">
+     <div class="logo">🛍️</div><span class="display">Shelfy</span>
+    </div>
+    <div class="nav-item active" data-screen="home" onclick="nav(this,'home')"><span class="ic">🏡</span>Home</div>
+    <div class="nav-item" data-screen="inventory" onclick="nav(this,'inventory')"><span class="ic">🎁</span>Inventory</div>
+    <div class="nav-item" data-screen="orders" onclick="nav(this,'orders')"><span class="ic">📋</span>Order status</div>
+    <div class="nav-item" data-screen="chat" onclick="nav(this,'chat')"><span class="ic">🗨️</span>Chat with Retailer</div>
+    <div class="sidebar-foot">
+     <div class="theme-toggle" onclick="toggleTheme()">
+      <span id="themeLabel">Day</span>
+      <div class="knob" id="themeKnob">☀️</div>
+     </div>
+     <div class="nav-item" onclick="logout()"><span class="ic">🚪</span>Log out</div>
+    </div>
+   </nav>
+   <main class="main">
+    <div class="topbar">
+     <div>
+      <h1 class="display" id="pageTitle">Home</h1>
+      <div class="sub" id="pageSub">Everything about your shop, at a glance.</div>
+     </div>
+     <div class="pill">✨ Verified Seller</div>
+    </div>
+    <!-- HOME -->
+    <section class="screen active" id="app-home">
+     <div class="grid grid-3">
+      <div class="card" onclick="pop(this);nav(document.querySelector('[data-screen=inventory]'),'inventory')">
+       <h3>🎁 Inventory</h3>
+       <p>12 products live · 3 low on stock</p><span class="tag">Manage</span>
+      </div>
+      <div class="card" onclick="pop(this);nav(document.querySelector('[data-screen=orders]'),'orders')">
+       <h3>📋 Order status</h3>
+       <p>4 to confirm · 2 to ship</p><span class="tag">Review</span>
+      </div>
+      <div class="card" onclick="pop(this);nav(document.querySelector('[data-screen=chat]'),'chat')">
+       <h3>🗨️ Chat with Retailer</h3>
+       <p>2 unread messages</p><span class="tag">Open</span>
+      </div>
+     </div>
+    </section>
+    <!-- INVENTORY -->
+    <section class="screen" id="app-inventory">
+     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <div class="sub">Product list</div>
+      <button class="btn small" onclick="pop(this);openAddProduct()">➕ Add Product</button>
+     </div>
+     <div class="grid grid-4" id="productGrid">
+      <div class="card" onclick="pop(this)">
+       <h3>🧣 Thai Silk Scarf</h3>
+       <p>320 THB · 18 in stock</p><span class="tag">Active</span>
+      </div>
+      <div class="card" onclick="pop(this)">
+       <h3>🥭 Mango Sticky Rice Kit</h3>
+       <p>150 THB · 4 in stock</p><span class="tag">Low stock</span>
+      </div>
+      <div class="card" onclick="pop(this)">
+       <h3>🏮 Paper Lantern Set</h3>
+       <p>210 THB · 32 in stock</p><span class="tag">Active</span>
+      </div>
+      <div class="card" onclick="pop(this)">
+       <h3>👡 Handmade Sandals</h3>
+       <p>480 THB · 9 in stock</p><span class="tag">Active</span>
+      </div>
+     </div>
+     <div id="addProductForm" style="display:none;margin-top:22px;background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:22px;max-width:420px;">
+      <h3 style="margin-top:0;">Add Product</h3>
+      <label for="prod-name">Product name</label><input id="prod-name" placeholder="e.g. Coconut Candle">
+      <label for="prod-price">Price (THB)</label><input id="prod-price" placeholder="0.00" type="number">
+      <label for="prod-stock">Stock quantity</label><input id="prod-stock" placeholder="0" type="number">
+      <button class="btn" style="width:100%;" onclick="submitProduct()">Submit</button>
+     </div>
+    </section>
+    <!-- ORDER STATUS -->
+    <section class="screen" id="app-orders">
+     <div class="tabs" id="orderTabs">
+      <div class="tab active" onclick="setOrderTab(this,'confirm')">To Confirm</div>
+      <div class="tab" onclick="setOrderTab(this,'ship')">To Ship</div>
+      <div class="tab" onclick="setOrderTab(this,'deliver')">In Deliver</div>
+      <div class="tab" onclick="setOrderTab(this,'returned')">Returned</div>
+     </div>
+     <div id="orderPane"></div>
+    </section>
+    <!-- CHAT -->
+    <section class="screen" id="app-chat">
+     <div class="chat-layout">
+      <div class="chat-list" id="chatList">
+       <div class="chat-contact active" onclick="pop(this);openChat(this,'Retailer · Ploy')">
+        <div class="avatar">🧑‍🎨</div>
+        <div class="info"><strong>Retailer · Ploy</strong><span>Can you ship today?</span></div>
+       </div>
+       <div class="chat-contact" onclick="pop(this);openChat(this,'Message request · Nan')">
+        <div class="avatar">🔔</div>
+        <div class="info"><strong>Message request</strong><span>Nan wants to chat</span></div>
+       </div>
+       <div class="chat-contact" onclick="pop(this);openChat(this,'Notifications')">
+        <div class="avatar">📣</div>
+        <div class="info"><strong>Notifications</strong><span>New order received</span></div>
+       </div>
+       <div class="chat-contact" onclick="pop(this);openChat(this,'Report · Order #204')">
+        <div class="avatar">🚨</div>
+        <div class="info"><strong>Report</strong><span>Order #204 issue</span></div>
+       </div>
+      </div>
+      <div class="chat-panel">
+       <div class="chat-head" id="chatHeadTitle">Retailer · Ploy</div>
+       <div class="chat-body" id="chatBody">
+        <div class="msg in">Hi! Is the mango sticky rice kit still in stock?</div>
+        <div class="msg out">Yes, 4 left — want me to hold one for you?</div>
+        <div class="msg in">Yes please, can you ship today?</div>
+       </div>
+       <div class="chat-input">
+        <input id="chatInput" placeholder="Type a message…">
+        <button class="btn small" onclick="sendMsg()">Send</button>
+       </div>
+      </div>
+     </div>
+    </section>
+   </main>
+  </div>
+  <div class="toast" id="toast"></div>
+  <script src="Shelfysp.js"></script>
+  <script>
+    // Initialize order tab
+    setOrderTab(document.querySelector('#orderTabs .tab.active'), 'confirm');
+  </script>
+ </body>
+</html>
