@@ -1,12 +1,28 @@
 {
+  "name": "metoo",
+  "private": true,
+  "packageManager": "bun@1.3.14",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "workspaces": ["apps/*", "packages/*"],
   "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
     "format": "turbo format",
-    "format:check": "turbo format:check"
+    "format:check": "turbo format:check",
+    "db:generate": "turbo db:generate"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/bun": "latest",
-    "turbo": "^2.10.7"
+    "eslint": "^10.8.0",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.9.6",
+    "turbo": "^2.10.7",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.65.0"
   }
 }
