@@ -36,7 +36,7 @@
 └── bun.lockb
 ```
 
-### Prompt for llm
+### Prompt for LLM
 
 ```
 PROMPT
