@@ -1,0 +1,44 @@
+// Prisma v7. Two things changed from v6 that matter here:
+//   1. `prisma-client-js` is deprecated — this uses the `prisma-client`
+//      generator, which emits plain TypeScript into src/generated (gitignored).
+//   2. The datasource has no `url`. Connection details now live in
+//      prisma.config.ts, which the CLI reads.
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  runtime      = "bun"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// SAMPLE MODEL — delete me.
+//
+// This exists only to prove the chain works: migrate -> generate -> seed ->
+// query over HTTP against Supabase. It is not the real data model.
+//
+// The actual schema (brands, retailers, products, orders split per brand,
+// payments, returns, chat, commission tiers) is the team's job — see the
+// product brief in the root README.md.
+// ---------------------------------------------------------------------------
+
+enum Role {
+  ADMIN
+  BRAND
+  RETAILER
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  role      Role     @default(RETAILER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}

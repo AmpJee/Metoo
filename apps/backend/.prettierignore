@@ -1,0 +1,6 @@
+# Prettier only reads the .prettierignore in its working directory, not the
+# repo root — so this file is required in addition to the root one.
+
+# Prisma's generated client and migration SQL are artifacts, not source.
+src/generated
+prisma/migrations

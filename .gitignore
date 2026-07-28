@@ -1,1 +1,17 @@
 node_modules
+
+# Build output
+dist
+.turbo
+
+# Environment — never commit real credentials
+.env
+.env.*
+!.env.example
+
+# Prisma v7's `prisma-client` generator emits plain TypeScript into the source
+# tree. It is a build artifact — recreate it with `make db-generate`.
+**/src/generated
+
+# OS
+.DS_Store
