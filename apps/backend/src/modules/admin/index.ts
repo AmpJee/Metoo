@@ -7,6 +7,7 @@
  */
 import { Elysia, t } from 'elysia'
 import { ACCOUNT_STATUSES, ROLES } from '@metoo/shared'
+import { optionalEnum } from '../../lib/schema.ts'
 import { requireAccess } from '../../middleware/auth.ts'
 import * as service from './service.ts'
 
@@ -47,8 +48,11 @@ export const adminModule = new Elysia({ name: 'admin', prefix: '/admin' })
       service.listApprovals({ status: query.status, role: query.role }),
     {
       query: t.Object({
-        status: t.Optional(t.UnionEnum(ACCOUNT_STATUSES)),
-        role: t.Optional(t.UnionEnum(['BRAND', 'RETAILER'])),
+        // optionalEnum, not t.Optional(t.UnionEnum(...)) — the latter would
+        // default an unfiltered request to status PENDING and role BRAND,
+        // hiding every other applicant. See lib/schema.ts.
+        status: optionalEnum(ACCOUNT_STATUSES),
+        role: optionalEnum(['BRAND', 'RETAILER'] as const),
       }),
       detail: {
         summary: 'List signup applications',
