@@ -55,6 +55,12 @@ jobs:
       - name: Typecheck
         run: bun run typecheck
 
+      # No database service here on purpose. Everything under src/domain/ is
+      # pure — no Prisma import, no I/O — which is what keeps this job fast and
+      # is why domain logic must not be written inline in a handler.
+      - name: Unit tests
+        run: bun run test
+
   docker:
     name: Docker build
     runs-on: ubuntu-latest
