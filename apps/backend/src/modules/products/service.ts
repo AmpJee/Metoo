@@ -10,30 +10,7 @@ import type { Category, Prisma } from '../../generated/prisma/client.ts'
 import { prisma } from '../../config/prisma.ts'
 import { AppError } from '../../middleware/error.ts'
 
-/**
- * Resolve the BrandProfile id for a user.
- *
- * Route guards prove the caller is an approved BRAND, but the token carries a
- * user id and products hang off BrandProfile — so every handler needs this hop.
- */
-export async function brandIdForUser(userId: string): Promise<string> {
-  const brand = await prisma.brandProfile.findUnique({
-    where: { userId },
-    select: { id: true },
-  })
-
-  if (!brand) {
-    // Registration creates User and BrandProfile in one transaction, so this
-    // means the data was edited out of band.
-    throw new AppError(
-      404,
-      'BRAND_PROFILE_MISSING',
-      'This account has no brand profile.'
-    )
-  }
-
-  return brand.id
-}
+export { brandIdForUser } from '../../lib/profile.ts'
 
 export interface ProductInput {
   name: string
