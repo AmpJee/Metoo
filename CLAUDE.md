@@ -146,9 +146,34 @@ Backend modules follow one pattern per domain folder — copy an existing module
 and register it in `src/index.ts` with `.use(...)`. Details in
 [apps/backend/README.md](apps/backend/README.md).
 
+## Auth
+
+Tokens go in the `Authorization: Bearer` header, not cookies. Access tokens last
+15 minutes and carry `role` + `status` as claims; refresh tokens last 30 days,
+are stored hashed, and are rotated on every use.
+
+Protect a route with the single guard in `middleware/auth.ts`:
+
+```ts
+.use(requireAccess({ roles: ['BRAND'], approved: true }))
+```
+
+`roles` and `approved` are deliberately independent — a `PENDING` brand is
+authenticated and *is* a brand, it just cannot reach features yet. Admin routes
+set `roles` only, since admins are seeded rather than approved.
+
+Two consequences of `status` being a token claim: an approval does not take
+effect until the user's access token refreshes (≤15 min), and `/auth/login`
+deliberately succeeds for unapproved accounts so the frontend can show them why
+they are blocked.
+
 ## Status
 
-The data layer is done: 19 models, migrated against Supabase, seeded. Still to
-build — JWT auth + role-based middleware, the domain modules
-(auth/products/catalog/cart/checkout/orders/wallet/returns/chat/admin), Supabase
-Storage upload routes, Stripe payment collection, and the unit test suite.
+Done — the data layer (19 models, migrated and seeded), JWT auth with
+role/approval guards, and the admin signup approval queue.
+
+Still to build, in order: catalog (product CRUD + Supabase Storage uploads,
+browse, favourites), cart and checkout (per-brand splitting + commission),
+Stripe collection (card + PromptPay + webhooks), the order state machine and
+wallet ledger with withdrawals, then returns and chat. Unit tests land with the
+`src/domain/` pure functions.
