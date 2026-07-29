@@ -5,7 +5,6 @@ import { env } from './config/env.ts'
 import { logger } from './lib/logger.ts'
 import { errorHandler } from './middleware/error.ts'
 import { healthModule } from './modules/health/index.ts'
-import { usersModule } from './modules/users/index.ts'
 
 export const app = new Elysia()
   .use(cors({ origin: env.CORS_ORIGIN }))
@@ -23,8 +22,7 @@ export const app = new Elysia()
   )
   .use(errorHandler)
   .use(healthModule)
-  // Register new domain modules here.
-  .use(usersModule)
+// Register new domain modules here.
 
 // `0.0.0.0` rather than the default localhost: inside a container, binding to
 // the loopback interface makes the server unreachable from outside it.

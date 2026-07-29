@@ -1,18 +1,29 @@
-import type { ACCOUNT_STATUSES, ROLES } from '../constants/roles.ts'
+import type {
+  ACCOUNT_STATUSES,
+  CATEGORIES,
+  ORDER_STATUSES,
+  ROLES,
+} from '../constants/roles.ts'
 
 export type Role = (typeof ROLES)[number]
 
 export type AccountStatus = (typeof ACCOUNT_STATUSES)[number]
 
+export type Category = (typeof CATEGORIES)[number]
+
+export type OrderStatus = (typeof ORDER_STATUSES)[number]
+
 /**
- * SAMPLE — the API-facing shape of a user, mirroring the sample Prisma model.
- * Note it carries no password: this is what crosses the wire to the frontend.
+ * The API-facing shape of a user.
+ *
+ * Note what is absent: `passwordHash`. This type is what crosses the wire to
+ * the frontend, and the hash must never be part of that.
  */
 export interface User {
   id: string
   email: string
-  name: string
   role: Role
+  status: AccountStatus
   createdAt: string
   updatedAt: string
 }
