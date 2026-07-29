@@ -14,17 +14,44 @@ src/
 ├── config/
 │   ├── env.ts          fail-fast environment validation
 │   └── prisma.ts       the single PrismaClient (+ pg driver adapter)
-├── lib/logger.ts       JSON lines in production, readable in dev
-├── middleware/error.ts one error envelope for every route
+├── lib/
+│   ├── logger.ts       JSON lines in production, readable in dev
+│   ├── jwt.ts          access + refresh token signing
+│   ├── password.ts     argon2id via Bun.password
+│   └── supabase.ts     Storage client + signed URLs
+├── middleware/
+│   ├── error.ts        one error envelope for every route
+│   └── auth.ts         requireAccess — authentication, role, approval
 ├── modules/            one folder per domain
 │   ├── health/         liveness + database probe
-│   └── users/          SAMPLE — the pattern to copy, then delete
+│   ├── auth/           register, login, refresh, logout, me
+│   └── admin/          signup approval queue
 └── generated/          Prisma client — generated, gitignored
 ```
 
+Each module is a folder with `index.ts` (routes and schemas) and, once there is
+real work to do, `service.ts` (the Prisma calls). Keeping them apart is what
+lets the route file stay readable as a description of the API.
+
+## Protecting a route
+
+`requireAccess` resolves the caller and enforces role and approval in one pass.
+It puts `auth` (`userId`, `role`, `status`) on the context.
+
+```ts
+new Elysia({ name: 'products', prefix: '/products' })
+  .use(requireAccess({ roles: ['BRAND'], approved: true }))
+  .get('/', ({ auth }) => listProductsForBrand(auth.userId))
+```
+
+`roles` and `approved` are separate on purpose. A `PENDING` brand is
+authenticated and _is_ a brand — it just must not reach product management yet,
+while still being able to load the screen that explains why. Admin routes set
+`roles` only: admins are seeded, not approved.
+
 ## Adding a module
 
-Copy `modules/users/`. The shape:
+Copy `modules/auth/`. The shape:
 
 ```ts
 export const productsModule = new Elysia({
@@ -48,8 +75,29 @@ Four rules that keep the API predictable:
   is rejected with a 422 before any handler code runs.
 - **Throw `AppError` for expected failures** — `new AppError(404, 'NOT_FOUND', msg)`.
   Anything else becomes a 500 and gets logged.
-- **Declare `response` schemas.** They are what make `/openapi` useful.
+- **Declare `response` schemas.** They are what make `/openapi` useful — it is
+  the contract the frontend team builds against.
 - **One PrismaClient.** Import it from `config/prisma.ts`; never construct another.
+
+## Auth
+
+Tokens are carried in the `Authorization: Bearer` header, not cookies.
+
+- **Access token** — 15 minutes, holds `role` and `status` so authorising a
+  request costs no database round-trip. The frontend keeps it in
+  `localStorage`, which is why the window is short.
+- **Refresh token** — 30 days, stored **hashed** and **rotated on every use**.
+  Replaying a used one fails, so a stolen token is good for at most one
+  exchange.
+
+Two consequences worth knowing:
+
+- Because `status` is a token claim, an admin approving an account does not
+  take effect until that user's access token is refreshed — up to 15 minutes,
+  or immediately if they log in again.
+- `/auth/login` succeeds for unapproved accounts by design; the frontend needs
+  to sign them in to show them _why_ they are blocked. Route guards do the
+  gating.
 
 ## Prisma v7 notes
 

@@ -2,10 +2,10 @@
 
 B2B wholesale marketplace connecting brands and retailers.
 
-> **Status: scaffold.** Every layer is wired and proven end to end, but the
-> product is not built. The Prisma schema holds a single sample `User` model
-> and the API a single sample `users` module — both are patterns to copy and
-> then delete. See [What to build next](#what-to-build-next).
+> **Status: in progress.** The data layer is complete — 19 models, migrated
+> against Supabase and seeded. Auth (JWT + role-based access) and the admin
+> signup approval queue are built. The commerce features are not.
+> See [What to build next](#what-to-build-next).
 
 ## Getting Started
 
@@ -57,9 +57,9 @@ through 6543 will fail with confusing lock errors.
 │   ├── backend/              # Elysia API server
 │   │   ├── src/
 │   │   │   ├── config/       # env validation, Prisma client + adapter
-│   │   │   ├── modules/      # one folder per domain: health, users (sample)
-│   │   │   ├── middleware/   # error envelope; auth goes here
-│   │   │   ├── lib/          # logger; Supabase Storage helpers go here
+│   │   │   ├── modules/      # one folder per domain: health, auth, admin
+│   │   │   ├── middleware/   # error envelope, auth + RBAC guards
+│   │   │   ├── lib/          # logger, jwt, password, Supabase Storage
 │   │   │   ├── generated/    # Prisma client — generated, gitignored
 │   │   │   └── index.ts      # app entry point
 │   │   ├── prisma/           # schema, migrations, seed script
@@ -128,20 +128,32 @@ Migrations run automatically: the backend's `preDeployCommand` runs
 
 ## What to build next
 
-The scaffold deliberately stops at the wiring. Still to do:
+Done: the schema (19 models), auth (JWT + `requireAccess` role/approval
+guards), and the admin signup approval queue.
 
-1. **Design the real schema** in `apps/backend/prisma/schema.prisma`. Delete
-   the sample `User` model, the `20260727135608_init` migration, and
-   `prisma/seed.ts`'s sample rows.
-2. **Add domain modules** — copy `apps/backend/src/modules/users/` as the
-   pattern (TypeBox validation on input, `AppError` for expected failures,
-   `response` schemas so `/openapi` documents itself).
-3. **Auth** — JWT plus role-based middleware in `src/middleware/`.
-4. **Pages** — one `.html` in `src/pages/` and one `.js` in
+Still to do, in dependency order:
+
+1. **Catalog** — brand product CRUD, Supabase Storage upload routes (public
+   bucket for photos, private + signed URLs for ID/อย. documents), retailer
+   browse and filter, favourites.
+2. **Cart and checkout** — cart with MOQ and case-size validation, then the
+   checkout that **splits one cart into one order per brand** and snapshots the
+   commission tier onto each order.
+3. **Payments** — Stripe card + PromptPay collection and webhooks. PromptPay
+   confirms asynchronously, so order state must come from the webhook, never
+   from the HTTP response.
+4. **Fulfilment and wallet** — the 8-state order lifecycle, the append-only
+   wallet ledger, and admin-approved withdrawals paid by manual bank transfer.
+5. **Post-sale** — returns with refunds, and chat.
+6. **Pages** — one `.html` in `src/pages/` and one `.js` in
    `src/public/scripts/` per screen, all API calls going through
    `api-client.js`.
-5. **Supabase Storage, Stripe/Stripe Connect**, and a backend test suite (CI
-   has a Postgres-backed test job to add).
+7. **Unit tests** — pure functions under `src/domain/` (commission, cart
+   splitting, state transitions, ledger math), plus a `test` job in CI.
+
+Conventions and the decisions that supersede the brief below are in
+[CLAUDE.md](CLAUDE.md); module patterns are in
+[apps/backend/README.md](apps/backend/README.md).
 
 ---
 
