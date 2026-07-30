@@ -16,26 +16,13 @@ import {
   periodStart,
   repeatOrderRate,
 } from '../../domain/analytics.ts'
-
-const orderFactSelect = {
-  createdAt: true,
-  subtotalMinor: true,
-  commissionMinor: true,
-  deliveryCostMinor: true,
-  retailerId: true,
-  deliveredAt: true,
-}
+import { loadOrderFacts } from '../../lib/order-facts.ts'
 
 export async function summary(period: Period) {
   const from = periodStart(period)
 
   const [orders, pipeline, gmvByBrand, retailers] = await Promise.all([
-    prisma.order.findMany({
-      where: { status: { in: [...EARNS_REVENUE] }, createdAt: { gte: from } },
-      select: orderFactSelect,
-      // Oldest first: repeat-rate depends on which order came first.
-      orderBy: { createdAt: 'asc' },
-    }),
+    loadOrderFacts({ since: from }),
 
     prisma.user.groupBy({
       by: ['role', 'status'],
