@@ -36,6 +36,7 @@ import { AppError } from '../../middleware/error.ts'
 const VOLUME_COUNTED_STATUSES = [
   'CONFIRMED',
   'PREPARING',
+  'READY_FOR_PICKUP',
   'PICKED_UP',
   'DELIVERED',
   'SETTLED',

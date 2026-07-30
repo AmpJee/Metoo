@@ -64,15 +64,23 @@ enum DocumentStatus {
   REJECTED
 }
 
-/// PENDING -> CONFIRMED -> PREPARING -> PICKED_UP -> DELIVERED -> SETTLED
+/// The seven steps the seller's order tracker shows, in order:
 ///
-/// SETTLED is a financial state, not a shipping one: it means the sale was
-/// credited to the brand's wallet ledger. CANCELLED and CLOSED are terminal —
-/// CLOSED is where an order lands once a return has been resolved.
+///   PENDING          "Incoming"
+///   CONFIRMED        the brand accepted the order
+///   PREPARING        packing
+///   READY_FOR_PICKUP waiting on the courier
+///   PICKED_UP        collected
+///   DELIVERED        with the retailer
+///   SETTLED          "Money Received" — credited to the brand's wallet ledger
+///
+/// SETTLED is a financial state, not a shipping one. CANCELLED and CLOSED are
+/// terminal; CLOSED is where an order lands once a return has been resolved.
 enum OrderStatus {
   PENDING
   CONFIRMED
   PREPARING
+  READY_FOR_PICKUP
   PICKED_UP
   DELIVERED
   SETTLED
@@ -333,11 +341,12 @@ model Order {
   /// Copy of the retailer's address at order time.
   shippingAddress Json
 
-  confirmedAt DateTime?
-  pickedUpAt  DateTime?
-  deliveredAt DateTime?
-  settledAt   DateTime?
-  closedAt    DateTime?
+  confirmedAt      DateTime?
+  readyForPickupAt DateTime?
+  pickedUpAt       DateTime?
+  deliveredAt      DateTime?
+  settledAt        DateTime?
+  closedAt         DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
