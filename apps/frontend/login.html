@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>metoo. — Account login</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="loginstyle.css">
+<link rel="background" href="login-bg.jpg">
+</head>
+<body>
+
+<a class="top-logo" href="Signup.html"><div class="mark"></div>metoo.</a>
+
+<form class="login-card" id="login-form">
+  <p class="login-title">Account login</p>
+
+  <p class="error-msg" id="error-msg">Enter a username and password to continue.</p>
+
+  <div class="field-group">
+    <div class="field">
+      <i class="fa-regular fa-user" aria-hidden="true"></i>
+      <input type="text" id="username" placeholder="User name" autocomplete="username">
+    </div>
+    <div class="field">
+      <i class="fa-solid fa-lock" aria-hidden="true"></i>
+      <input type="password" id="password" placeholder="Password" autocomplete="current-password">
+    </div>
+  </div>
+
+  <div class="row-between">
+    <label> <input type="checkbox" style="margin:0;"> Remember me</label>
+    <a href="#">Forgot password?</a>
+  </div>
+
+  <button type="submit" class="btn-login">Login</button>
+
+  <p class="signup-note">New to metoo? <a href="Signup.html">Create an account</a></p>
+</form>
+
+<script>
+  document.getElementById('login-form').addEventListener('submit', function(e){
+    e.preventDefault();
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value.trim();
+    const errorMsg = document.getElementById('error-msg');
+
+    if(!username || !password){
+      errorMsg.classList.add('show');
+      return;
+    }
+    errorMsg.classList.remove('show');
+    window.location.href = 'Retailer.html';
+  });
+</script>
+
+</body>
+</html>

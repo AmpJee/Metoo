@@ -1,0 +1,119 @@
+<!Doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat · metoo.</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link rel="stylesheet" href="Seller.css">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="chatstyle.css">
+</head>
+<body>
+  <div class="market-shell">
+    <header class="site-header chat-header">
+      <a class="brand-lockup" href="Seller.html" aria-label="Back to marketplace">
+        <div class="brand-mark" aria-hidden="true"><span></span></div>
+        <strong>metoo.</strong>
+      </a>
+      <a class="button-outline back-button" id="chat-back-button" href="Seller.html">
+        <i data-lucide="arrow-left" width="16" height="16"></i>
+        <span class="back-text">Back to seller</span>
+      </a>
+    </header>
+
+    <main class="chat-shell">
+      <aside class="chat-sidebar">
+        <div class="chat-sidebar-head">
+          <p class="section-kicker">Messages</p>
+          <h2>Chats</h2>
+        </div>
+
+        <div class="chat-request-card">
+          <p class="request-label">Request message</p>
+          <p class="request-copy">Hi, I’d like to request pricing and lead time for your latest product range.</p>
+          <button class="button-main request-action" type="button">Send request</button>
+        </div>
+
+        <div class="people-list">
+          <h3>People</h3>
+          <button class="person-card is-active" type="button" data-person="Retailer Support" data-preview="Hi! Thanks for reaching out. Tell me what product you are interested in and I’ll share the details.">
+            <span class="person-avatar">R</span>
+            <span>Retailer Support</span>
+          </button>
+          <button class="person-card" type="button" data-person="Anne from Brand" data-preview="Hello! Which accessory collection are you looking at?">
+            <span class="person-avatar">A</span>
+            <span>Anne from Brand</span>
+          </button>
+          <button class="person-card" type="button" data-person="James" data-preview="Hey! I can share the quote once I know your order quantity.">
+            <span class="person-avatar">J</span>
+            <span>James</span>
+          </button>
+        </div>
+
+        <div class="chat-preview" id="chat-preview">
+          <p class="preview-label">Preview</p>
+          <p class="preview-text">Hover a person to preview their latest chat.</p>
+        </div>
+      </aside>
+
+      <section class="chat-room">
+        <div class="chat-room-header">
+          <div class="chat-room-heading">
+            <button class="chat-mobile-back" type="button">
+              <i data-lucide="arrow-left" width="16" height="16"></i>
+              <span>Chats</span>
+            </button>
+            <div>
+              <p class="section-kicker">Active chat</p>
+              <h2>Retailer Support</h2>
+            </div>
+          </div>
+          <button class="report-button" type="button">
+            <i data-lucide="alert-triangle" width="16" height="16"></i> Report chat
+          </button>
+        </div>
+
+        <div class="chat-messages">
+          <div class="chat-message incoming">
+            <p class="message-meta">Retailer Support • 09:25</p>
+            <p>Hi! Thanks for reaching out. Tell me what product you are interested in and I’ll share the details.</p>
+          </div>
+
+          <div class="chat-message outgoing">
+            <p class="message-meta">You • 09:27</p>
+            <p>I’m interested in the seasonal gift collection and need minimum order quantities.</p>
+          </div>
+
+          <div class="chat-message incoming">
+            <p class="message-meta">Retailer Support • 09:28</p>
+            <p>Great! I’ll send you the pricing, MOQ and available delivery dates now.</p>
+          </div>
+        </div>
+
+        <form class="chat-input" action="#">
+          <input type="text" placeholder="Write a message..." aria-label="Write a message">
+          <button class="button-main" type="submit">
+            <i data-lucide="send" width="16" height="16"></i>
+          </button>
+        </form>
+      </section>
+    </main>
+  </div>
+  <script src="chat.js"></script>
+  <script>
+    if (window.lucide) lucide.createIcons();
+
+    const backBtn = document.getElementById('chat-back-button');
+    const from = new URLSearchParams(location.search).get('from');
+
+    if (backBtn) {
+      const target = from === 'retailer' ? 'Retailer.html' : 'Seller.html';
+      backBtn.href = target;
+      backBtn.querySelector('.back-text').textContent =
+        from === 'retailer' ? 'Back to retailer page' : 'Back to seller page';
+    }
+  </script>
+</body>
+</html>

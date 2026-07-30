@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notifications · metoo.</title>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link rel="stylesheet" href="Seller.css">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="Notificationstyle.css">
+</head>
+<body>
+  <div class="market-shell">
+    <header class="site-header notification-header">
+      <a class="brand-lockup" href="Seller.html" aria-label="Back to marketplace">
+        <div class="brand-mark" aria-hidden="true"><span></span></div>
+        <strong>metoo.</strong>
+      </a>
+      <a class="back-button" id="notification-back" href="Seller.html">
+        <i data-lucide="arrow-left" width="16" height="16"></i>
+        <span class="back-text">Back to seller page</span>
+      </a>
+    </header>
+
+    <main class="notification-page">
+      <div class="notification-card" style="margin-bottom: 18px;">
+        <h1 id="notification-title" style="margin:0 0 8px; font-size: 24px; font-family: 'Fraunces', serif;">Seller notifications</h1>
+        <p id="notification-subtitle" style="margin:0; color: var(--muted); line-height: 1.6;">Updates about your catalog, chats, and new buyers.</p>
+      </div>
+
+      <div id="notification-list"></div>
+    </main>
+  </div>
+    <script src="Notifications.js"></script>
+</body>
+</html>
+
+        

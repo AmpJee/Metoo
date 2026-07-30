@@ -1,0 +1,177 @@
+<!Doctype html>
+<html lang="en">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>metoo. — Find your niche</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link rel="stylesheet" href="Seller.css">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet">
+ </head>
+ <body>
+  <div class="market-shell">
+   <header class="site-header">
+    <div class="brand-lockup" aria-label="metoo marketplace">
+     <div class="brand-mark" aria-hidden="true">
+      <span></span>
+     </div><strong>metoo.</strong>
+    </div>
+    <label class="search-area" for="product-search">
+     <i data-lucide="search" width="16" height="16" aria-hidden="true"></i>
+     <input id="product-search" type="search" placeholder="Search by brand name or product name">
+    </label>
+    <div class="header-tools">
+     <button class="tool-button view-switch" id="view-switch" type="button" aria-label="Toggle mobile / desktop view">
+      <i data-lucide="smartphone" width="18" height="18"></i>
+      <span class="view-label">Mobile</span>
+     </button>
+     <button class="tool-button" id="header-cart-button" type="button" aria-label="View cart">
+      <i data-lucide="shopping-bag" width="18" height="18"></i>
+      <span class="cart-count" id="cart-count">0</span>
+     </button>
+     <a class="tool-button" href="Chat.html?from=seller" aria-label="Open chat">
+      <i data-lucide="message-circle" width="18" height="18"></i>
+     </a>
+     <a class="tool-button" href="Notifications.html?from=seller" id="header-notification-button" aria-label="View notifications">
+      <i data-lucide="bell" width="18" height="18"></i>
+     </a>
+     <button class="profile-dot" id="account-button" type="button" aria-label="Account options"></button>
+    </div>
+   </header>
+   <main id="home-view">
+    <section class="hero-section">
+     <img src="sellerbg.jpg" alt="Wholesale hero background" class="hero-image" loading="lazy">
+     <div class="hero-shade"></div>
+     <div class="hero-content">
+      <p class="eyebrow">Wholesale marketplace</p>
+      <h1>Find your niche</h1>
+      <p class="hero-copy">Sign up to unlock wholesale pricing with over 5 brands, and discover the products your customers didn't know they needed.</p>
+      <div class="hero-actions">
+       <a class="button-main" href="Login.html?role=seller">Sign in to sell</a>
+       <a class="button-outline" href="Login.html?role=buyer">Sign in to buy</a>
+      </div>
+      <p class="hero-note">Are you a brand? Join a growing community of independent makers.</p>
+     </div>
+    </section>
+    <section class="catalogue-section" aria-labelledby="catalogue-heading">
+     <div class="catalogue-top">
+      <div>
+       <p class="section-kicker">Catalogue</p>
+       <h2 class="section-heading" id="catalogue-heading">Shop by brand</h2>
+      </div>
+      <p class="result-count" id="result-count" aria-live="polite"></p>
+     </div>
+     <nav class="category-row" aria-label="Product categories">
+      <button class="category-button is-active" data-category="all" type="button">All brands</button>
+      <button class="category-button" data-category="Food &amp; Beverage" type="button">Food &amp; Beverage</button>
+      <button class="category-button" data-category="Health &amp; Beauty" type="button">Health &amp; Beauty</button>
+      <button class="category-button" data-category="Fashion &amp; Accessories" type="button">Fashion &amp; Accessories</button>
+     </nav>
+     <div class="product-grid" id="product-grid" aria-live="polite"></div>
+     <p class="empty-message" id="empty-message" hidden>No products found in this category.</p>
+    </section>
+    <section class="story-section" id="story">
+     <div>
+      <p class="story-label">Our story</p>
+      <p class="story-copy">The name metoo. comes from the Thai word "มีตู้" (mee-tûu), meaning "to have a shelf." That's our whole concept — finding shelf space for local brands and connecting them with retailers who can carry them. Read the other way, in English it becomes "me too!" — the feeling every small brand deserves: a seat at the table, a place on the shelf, and a community that says you belong here, too.</p>
+     </div>
+     <div class="story-cta">
+      <h2>The best selection of brands for your store, all in one place</h2>
+      <div class="story-actions">
+       <a class="button-main" href="Signup.html?role=seller">Sign up to sell</a>
+        <a class="button-outline" href="Signup.html?role=buyer">Sign up to buy</a>
+      </div>
+     </div>
+    </section>
+   </main>
+   <main class="detail-view" id="detail-view" hidden>
+    <button class="back-button" id="back-button" type="button"><i data-lucide="arrow-left" width="15" height="15"></i> Back</button>
+    <div class="detail-grid">
+     <section aria-label="Product visual">
+      <div class="detail-visual" id="detail-visual"></div>
+     </section>
+     <section class="detail-info" aria-label="Product information">
+      <div class="detail-title-row">
+       <h1 id="detail-name"></h1>
+       <button class="detail-wish" id="detail-wish" type="button" aria-label="Save product"><i data-lucide="heart" width="19" height="19"></i></button>
+      </div>
+      <p class="detail-meta" id="detail-meta"></p>
+      <div class="detail-rating" id="detail-rating"></div>
+      <p class="detail-price" id="detail-price"></p>
+      <p class="detail-brand" id="detail-brand"></p>
+      <p class="detail-description" id="detail-description"></p>
+      <p class="quantity-label">Amount</p>
+      <div class="preset-row">
+       <button class="preset-button" data-quantity="5" type="button">5</button>
+       <button class="preset-button" data-quantity="10" type="button">10</button>
+       <button class="preset-button" data-quantity="20" type="button">20</button>
+       <button class="preset-button" data-quantity="30" type="button">30</button>
+      </div>
+      <div class="quantity-stepper" aria-label="Selected quantity">
+       <button class="step-button" id="quantity-minus" type="button" aria-label="Reduce quantity"><i data-lucide="minus" width="15" height="15"></i></button>
+       <span class="quantity-value" id="quantity-value">0</span>
+       <button class="step-button" id="quantity-plus" type="button" aria-label="Increase quantity"><i data-lucide="plus" width="15" height="15"></i></button>
+      </div>
+      <div class="detail-actions">
+       <button class="button-main" id="add-cart-button" type="button"><i data-lucide="shopping-bag" width="16" height="16"></i> Add to Cart</button>
+       <a class="button-outline detail-chat" href="Chat.html?from=seller"><i data-lucide="message-circle" width="16" height="16"></i> Chat With Seller</a>
+      </div>
+     </section>
+    </div>
+   </main>
+   <footer class="site-footer">
+    <div class="footer-columns">
+     <section class="footer-column">
+      <h3>Company</h3>
+      <a class="footer-link" href="#story">About us</a>
+      <a class="footer-link" href="#catalogue-heading">Newsroom</a>
+      <a class="footer-link" href="#catalogue-heading">Careers</a>
+     </section>
+     <section class="footer-column">
+      <h3>Explore</h3>
+      <a class="footer-link" href="#catalogue-heading">Help center</a>
+      <a class="footer-link" href="#catalogue-heading">metoo Markets</a>
+      <a class="footer-link" href="#story">How metoo works</a>
+     </section>
+    </div>
+    <div class="footer-social" aria-label="Social links">
+     <button class="social-button" type="button" aria-label="Instagram"><i data-lucide="instagram" width="16" height="16"></i></button>
+     <button class="social-button" type="button" aria-label="Facebook"><i data-lucide="facebook" width="16" height="16"></i></button>
+     <button class="social-button" type="button" aria-label="Twitter"><i data-lucide="twitter" width="16" height="16"></i></button>
+    </div>
+   </footer>
+  </div>
+  <template id="product-card-template">
+   <article class="product-card">
+    <div class="product-visual"><span class="product-object" data-role="icon"></span> <span class="product-category" data-role="category"></span> <button class="favorite-button" data-role="favorite" type="button" aria-label="Save product"></button>
+    </div>
+    <div class="product-body">
+     <p class="product-price" data-role="price"></p>
+     <h3 class="product-name" data-role="name"></h3>
+     <p class="product-brand" data-role="brand"></p>
+     <div class="card-bottom">
+      <div class="rating-wrap" data-role="rating"></div><button class="add-card-button" data-role="quick-add" type="button" aria-label="Add to cart"><i data-lucide="plus" width="15" height="15"></i></button>
+     </div>
+    </div>
+   </article>
+  </template>
+  <div class="toast" id="toast" role="status" aria-live="polite">
+   <i data-lucide="check-circle-2" width="17" height="17"></i><span id="toast-message"></span>
+  </div>
+  <script src="Seller.js"></script>
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      if (window.lucide) lucide.createIcons();
+
+      const viewSwitch = document.getElementById('view-switch');
+      viewSwitch?.addEventListener('click', () => {
+        const isMobile = document.body.classList.toggle('mobile-view');
+        viewSwitch.querySelector('.view-label').textContent = isMobile ? 'Mobile' : 'Desktop';
+        viewSwitch.querySelector('i').setAttribute('data-lucide', isMobile ? 'smartphone' : 'monitor');
+        if (window.lucide) lucide.createIcons();
+      });
+    });
+  </script>
+ </body>
+</html>
