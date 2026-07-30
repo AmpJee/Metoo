@@ -1,4 +1,5 @@
 import { Elysia, t } from 'elysia'
+import { PAYMENT_PREFERENCES } from '@metoo/shared'
 import { retailerIdForUser } from '../../lib/profile.ts'
 import { requireAccess } from '../../middleware/auth.ts'
 import { cartIdForUser } from '../cart/service.ts'
@@ -37,16 +38,25 @@ export const checkoutModule = new Elysia({
 
   .post(
     '/',
-    async ({ auth, set }) => {
+    async ({ auth, body, set }) => {
       const [cartId, retailerId] = await Promise.all([
         cartIdForUser(auth.userId),
         retailerIdForUser(auth.userId),
       ])
 
       set.status = 201
-      return service.checkout({ cartId, retailerId })
+      return service.checkout({
+        cartId,
+        retailerId,
+        paymentMethod: body?.paymentMethod ?? 'PROMPTPAY',
+      })
     },
     {
+      body: t.Optional(
+        t.Object({
+          paymentMethod: t.Optional(t.UnionEnum(PAYMENT_PREFERENCES)),
+        })
+      ),
       detail: {
         summary: 'Place the cart as orders',
         description:
