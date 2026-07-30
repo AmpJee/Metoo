@@ -13,6 +13,7 @@
 import { ORDER_STATUSES } from '@metoo/shared'
 import type { OrderStatus, Prisma } from '../../generated/prisma/client.ts'
 import { prisma } from '../../config/prisma.ts'
+import { settlementEntries } from '../../domain/ledger.ts'
 import {
   TIMESTAMP_FIELD,
   availableTransitions,
@@ -130,7 +131,13 @@ export async function transition(params: {
 
   const order = await prisma.order.findFirst({
     where: { id: orderId, ...(brandId ? { brandId } : {}) },
-    select: { id: true, status: true, brandId: true },
+    select: {
+      id: true,
+      status: true,
+      brandId: true,
+      subtotalMinor: true,
+      commissionMinor: true,
+    },
   })
 
   if (!order) {
@@ -153,6 +160,23 @@ export async function transition(params: {
       },
       select: orderSelect,
     })
+
+    // SETTLED is the moment the sale reaches the brand's wallet. Writing the
+    // ledger rows in the same transaction as the status change is what stops
+    // an order ever being settled without being credited, or credited twice.
+    //
+    // The state machine already refuses to leave SETTLED, so this cannot run
+    // for the same order more than once.
+    if (to === 'SETTLED') {
+      await tx.walletTransaction.createMany({
+        data: settlementEntries(order).map((entry) => ({
+          brandId: order.brandId,
+          orderId: order.id,
+          type: entry.type,
+          amountMinor: entry.amountMinor,
+        })),
+      })
+    }
 
     await tx.auditLog.create({
       data: {
