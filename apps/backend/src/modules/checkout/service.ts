@@ -45,8 +45,8 @@ interface CheckoutLine {
   brandId: string
   productId: string
   productName: string
-  unitPriceMinor: number
-  quantity: number
+  pricePerPackMinor: number
+  packs: number
   category: Prisma.ProductGetPayload<object>['category']
 }
 
@@ -63,17 +63,17 @@ async function loadAndValidateCart(
   const items = await tx.cartItem.findMany({
     where: { cartId },
     select: {
-      quantity: true,
+      packs: true,
       product: {
         select: {
           id: true,
           name: true,
-          unitPriceMinor: true,
-          moq: true,
-          caseSize: true,
+          pricePerPackMinor: true,
+          minPacks: true,
+          unitsPerPack: true,
           category: true,
           isActive: true,
-          stockQty: true,
+          stockPacks: true,
           brandId: true,
           brand: { select: { user: { select: { status: true } } } },
         },
@@ -85,7 +85,7 @@ async function loadAndValidateCart(
     throw new AppError(422, 'CART_EMPTY', 'Your cart is empty.')
   }
 
-  return items.map(({ quantity, product }) => {
+  return items.map(({ packs, product }) => {
     if (!product.isActive || product.brand.user.status !== 'APPROVED') {
       throw new AppError(
         422,
@@ -94,16 +94,16 @@ async function loadAndValidateCart(
       )
     }
 
-    const check = checkQuantity(quantity, product)
+    const check = checkQuantity(packs, product)
     if (!check.ok) {
       throw new AppError(422, check.code, `${product.name}: ${check.message}`)
     }
 
-    if (product.stockQty !== null && quantity > product.stockQty) {
+    if (product.stockPacks !== null && packs > product.stockPacks) {
       throw new AppError(
         422,
         'INSUFFICIENT_STOCK',
-        `${product.name}: only ${product.stockQty} left in stock.`
+        `${product.name}: only ${product.stockPacks} packs left in stock.`
       )
     }
 
@@ -111,8 +111,8 @@ async function loadAndValidateCart(
       brandId: product.brandId,
       productId: product.id,
       productName: product.name,
-      unitPriceMinor: product.unitPriceMinor,
-      quantity,
+      pricePerPackMinor: product.pricePerPackMinor,
+      packs,
       category: product.category,
     }
   })
@@ -149,7 +149,7 @@ function dominantCategory(lines: CheckoutLine[]): CheckoutLine['category'] {
   const totals = new Map<CheckoutLine['category'], number>()
 
   for (const line of lines) {
-    const value = line.unitPriceMinor * line.quantity
+    const value = line.pricePerPackMinor * line.packs
     totals.set(line.category, (totals.get(line.category) ?? 0) + value)
   }
 
@@ -222,9 +222,9 @@ export async function checkout(params: { cartId: string; retailerId: string }) {
             create: group.items.map((line) => ({
               productId: line.productId,
               productName: line.productName,
-              unitPriceMinor: line.unitPriceMinor,
-              quantity: line.quantity,
-              lineTotalMinor: line.unitPriceMinor * line.quantity,
+              pricePerPackMinor: line.pricePerPackMinor,
+              packs: line.packs,
+              lineTotalMinor: line.pricePerPackMinor * line.packs,
             })),
           },
         },
@@ -245,8 +245,8 @@ export async function checkout(params: { cartId: string; retailerId: string }) {
               id: true,
               productId: true,
               productName: true,
-              unitPriceMinor: true,
-              quantity: true,
+              pricePerPackMinor: true,
+              packs: true,
               lineTotalMinor: true,
             },
           },

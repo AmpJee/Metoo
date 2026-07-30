@@ -1,57 +1,46 @@
 /**
  * Cart rules — pure, no Prisma, no I/O.
  *
- * Wholesale is not retail: a brand sells in cases, with a minimum order. Those
- * two constraints are the whole of this file, and they live here rather than
- * inside a handler so they can be unit tested without a database — which is
- * what the "unit tests only, no database in CI" decision requires.
+ * Wholesale here is sold **by the pack**. A product is priced per pack, ordered
+ * in packs, and carries a minimum number of packs. `unitsPerPack` is
+ * descriptive — it tells a retailer what is inside one pack ("5 units/pack")
+ * and never constrains the quantity they may order.
+ *
+ * That last point is deliberate: an earlier version required the ordered
+ * quantity to be an exact multiple of the pack size, which would reject 6 packs
+ * of a 5-units/pack product. The design allows exactly that, so the rule is
+ * gone.
  */
 
-export interface QuantityRules {
-  /** Minimum units per order line. */
-  moq: number
-  /** Units per case; quantities must be exact multiples of this. */
-  caseSize: number
+export interface PackRules {
+  /** Fewest packs a retailer may order. */
+  minPacks: number
 }
 
 export type QuantityCheck =
   { ok: true } | { ok: false; code: string; message: string }
 
 /**
- * Validate a requested quantity against a product's wholesale terms.
+ * Validate a requested pack count against a product's wholesale terms.
  *
  * Returns a result rather than throwing: the domain layer has no opinion about
- * HTTP, and the caller turns this into an AppError. Messages name the number
- * the retailer needs, because "invalid quantity" is not actionable.
+ * HTTP, and the caller turns this into an AppError. The message names the
+ * number the retailer needs, because "invalid quantity" is not actionable.
  */
-export function checkQuantity(
-  quantity: number,
-  rules: QuantityRules
-): QuantityCheck {
-  if (!Number.isInteger(quantity) || quantity <= 0) {
+export function checkQuantity(packs: number, rules: PackRules): QuantityCheck {
+  if (!Number.isInteger(packs) || packs <= 0) {
     return {
       ok: false,
       code: 'INVALID_QUANTITY',
-      message: 'Quantity must be a positive whole number.',
+      message: 'Quantity must be a positive whole number of packs.',
     }
   }
 
-  if (quantity < rules.moq) {
+  if (packs < rules.minPacks) {
     return {
       ok: false,
-      code: 'BELOW_MOQ',
-      message: `This product has a minimum order quantity of ${rules.moq}.`,
-    }
-  }
-
-  if (rules.caseSize > 1 && quantity % rules.caseSize !== 0) {
-    // Suggest the next valid quantity up — it saves the retailer the mental
-    // arithmetic and is what the UI wants to offer as a fix.
-    const next = Math.ceil(quantity / rules.caseSize) * rules.caseSize
-    return {
-      ok: false,
-      code: 'NOT_CASE_MULTIPLE',
-      message: `This product is sold in cases of ${rules.caseSize}. Try ${next}.`,
+      code: 'BELOW_MIN_PACKS',
+      message: `This product has a minimum order of ${rules.minPacks} packs.`,
     }
   }
 
@@ -60,13 +49,15 @@ export function checkQuantity(
 
 export interface LineItem {
   brandId: string
-  unitPriceMinor: number
-  quantity: number
+  /** Price of one pack, in satang. */
+  pricePerPackMinor: number
+  /** Number of packs ordered. */
+  packs: number
 }
 
 /** Total for one line, in satang. */
 export function lineTotalMinor(item: LineItem): number {
-  return item.unitPriceMinor * item.quantity
+  return item.pricePerPackMinor * item.packs
 }
 
 /**

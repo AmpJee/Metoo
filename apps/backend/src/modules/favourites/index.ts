@@ -8,9 +8,9 @@ const favourite = t.Object({
   id: t.String(),
   name: t.String(),
   photoUrl: t.Union([t.String(), t.Null()]),
-  unitPriceMinor: t.Integer(),
-  moq: t.Integer(),
-  caseSize: t.Integer(),
+  pricePerPackMinor: t.Integer(),
+  minPacks: t.Integer(),
+  unitsPerPack: t.Integer(),
   category: t.UnionEnum(CATEGORIES),
   /** False once the brand retires the product — kept visible, but flagged. */
   isActive: t.Boolean(),

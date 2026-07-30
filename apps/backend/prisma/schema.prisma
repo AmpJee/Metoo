@@ -234,23 +234,29 @@ model VerificationDocument {
 
 // ---------------------------------------------------------------- catalog --
 
+/// Sold BY THE PACK. Price, stock and order quantities are all counted in
+/// packs; `unitsPerPack` only describes what is inside one ("5 units/pack") and
+/// never constrains how many packs may be ordered.
 model Product {
-  id             String   @id @default(uuid())
-  brandId        String
-  name           String
-  description    String?
-  photoUrl       String?
-  unitPriceMinor Int
-  /// Minimum order quantity, and the multiple that quantities must arrive in.
-  /// Both are enforced when writing a cart item, not at checkout — a retailer
-  /// should find out immediately, not after filling a cart.
-  moq            Int      @default(1)
-  caseSize       Int      @default(1)
-  category       Category
-  stockQty       Int?
-  isActive       Boolean  @default(true)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id                String   @id @default(uuid())
+  brandId           String
+  name              String
+  description       String?
+  photoUrl          String?
+  /// Price of ONE PACK, in satang.
+  pricePerPackMinor Int
+  /// Fewest packs a retailer may order. Enforced when writing a cart item, not
+  /// at checkout — a retailer should find out immediately, not after filling
+  /// a cart.
+  minPacks          Int      @default(1)
+  /// Descriptive only: how many units are inside one pack.
+  unitsPerPack      Int      @default(1)
+  category          Category
+  /// Stock on hand, in packs.
+  stockPacks        Int?
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   brand      BrandProfile @relation(fields: [brandId], references: [id], onDelete: Cascade)
   cartItems  CartItem[]
@@ -290,7 +296,8 @@ model CartItem {
   id        String   @id @default(uuid())
   cartId    String
   productId String
-  quantity  Int
+  /// Number of packs.
+  packs     Int
   createdAt DateTime @default(now())
 
   cart    Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
@@ -347,14 +354,17 @@ model Order {
 }
 
 model OrderItem {
-  id             String @id @default(uuid())
-  orderId        String
-  productId      String
+  id                String @id @default(uuid())
+  orderId           String
+  productId         String
   /// Snapshots — the product may be renamed or repriced after the sale.
-  productName    String
-  unitPriceMinor Int
-  quantity       Int
-  lineTotalMinor Int
+  productName       String
+  pricePerPackMinor Int
+  /// Units per pack at the time of sale, so a past order still reads correctly
+  /// after the brand repackages.
+  unitsPerPack      Int    @default(1)
+  packs             Int
+  lineTotalMinor    Int
 
   order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product Product @relation(fields: [productId], references: [id])

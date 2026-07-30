@@ -16,11 +16,11 @@ export interface ProductInput {
   name: string
   description?: string
   photoUrl?: string
-  unitPriceMinor: number
-  moq: number
-  caseSize: number
+  pricePerPackMinor: number
+  minPacks: number
+  unitsPerPack: number
   category: Category
-  stockQty?: number
+  stockPacks?: number
   isActive?: boolean
 }
 

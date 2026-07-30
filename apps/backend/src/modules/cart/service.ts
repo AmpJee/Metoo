@@ -6,8 +6,9 @@
  * will use to create one order per group — so what the retailer sees on the
  * cart screen is exactly the split they get.
  *
- * Quantity rules (MOQ, case size) are enforced on every write rather than at
- * checkout, so an invalid line can never sit in the cart waiting to fail.
+ * Everything is counted in packs. The minimum-packs rule is enforced on every
+ * write rather than at checkout, so an invalid line can never sit in the cart
+ * waiting to fail.
  */
 import { prisma } from '../../config/prisma.ts'
 import { checkQuantity, groupByBrand } from '../../domain/cart.ts'
@@ -50,10 +51,10 @@ async function purchasableProduct(productId: string) {
     },
     select: {
       id: true,
-      moq: true,
-      caseSize: true,
-      stockQty: true,
-      unitPriceMinor: true,
+      minPacks: true,
+      unitsPerPack: true,
+      stockPacks: true,
+      pricePerPackMinor: true,
     },
   })
 
@@ -66,11 +67,8 @@ async function purchasableProduct(productId: string) {
 
 /** Turn a domain rule failure into an HTTP error. The domain layer stays
  *  ignorant of HTTP; this is the single place that bridges them. */
-function assertQuantity(
-  quantity: number,
-  rules: { moq: number; caseSize: number }
-) {
-  const result = checkQuantity(quantity, rules)
+function assertQuantity(packs: number, rules: { minPacks: number }) {
+  const result = checkQuantity(packs, rules)
   if (!result.ok) {
     throw new AppError(422, result.code, result.message)
   }
@@ -82,15 +80,15 @@ export async function getCart(cartId: string) {
     orderBy: { createdAt: 'asc' },
     select: {
       id: true,
-      quantity: true,
+      packs: true,
       product: {
         select: {
           id: true,
           name: true,
           photoUrl: true,
-          unitPriceMinor: true,
-          moq: true,
-          caseSize: true,
+          pricePerPackMinor: true,
+          minPacks: true,
+          unitsPerPack: true,
           isActive: true,
           brand: { select: { id: true, name: true } },
         },
@@ -100,10 +98,10 @@ export async function getCart(cartId: string) {
 
   const lines = items.map((item) => ({
     id: item.id,
-    quantity: item.quantity,
+    packs: item.packs,
     brandId: item.product.brand.id,
-    unitPriceMinor: item.product.unitPriceMinor,
-    lineTotalMinor: item.product.unitPriceMinor * item.quantity,
+    pricePerPackMinor: item.product.pricePerPackMinor,
+    lineTotalMinor: item.product.pricePerPackMinor * item.packs,
     product: item.product,
   }))
 
@@ -111,15 +109,15 @@ export async function getCart(cartId: string) {
     brand: group.items[0]!.product.brand,
     items: group.items.map((line) => ({
       id: line.id,
-      quantity: line.quantity,
+      packs: line.packs,
       lineTotalMinor: line.lineTotalMinor,
       product: {
         id: line.product.id,
         name: line.product.name,
         photoUrl: line.product.photoUrl,
-        unitPriceMinor: line.product.unitPriceMinor,
-        moq: line.product.moq,
-        caseSize: line.product.caseSize,
+        pricePerPackMinor: line.product.pricePerPackMinor,
+        minPacks: line.product.minPacks,
+        unitsPerPack: line.product.unitsPerPack,
         isActive: line.product.isActive,
       },
     })),
@@ -139,26 +137,25 @@ export async function getCart(cartId: string) {
 export async function addItem(
   cartId: string,
   productId: string,
-  quantity: number
+  packs: number
 ) {
   const product = await purchasableProduct(productId)
-  assertQuantity(quantity, product)
+  assertQuantity(packs, product)
 
-  if (product.stockQty !== null && quantity > product.stockQty) {
+  if (product.stockPacks !== null && packs > product.stockPacks) {
     throw new AppError(
       422,
       'INSUFFICIENT_STOCK',
-      `Only ${product.stockQty} left in stock.`
+      `Only ${product.stockPacks} packs left in stock.`
     )
   }
 
-  // Adding a product already in the cart replaces the quantity rather than
-  // summing: summing could land on a non-multiple of the case size and would
-  // surprise anyone who re-submitted a form.
+  // Adding a product already in the cart replaces the pack count rather than
+  // adding to it, so re-submitting a form does not silently double an order.
   await prisma.cartItem.upsert({
     where: { cartId_productId: { cartId, productId } },
-    update: { quantity },
-    create: { cartId, productId, quantity },
+    update: { packs },
+    create: { cartId, productId, packs },
   })
 
   return getCart(cartId)
@@ -167,7 +164,7 @@ export async function addItem(
 export async function updateItem(
   cartId: string,
   itemId: string,
-  quantity: number
+  packs: number
 ) {
   const item = await prisma.cartItem.findFirst({
     where: { id: itemId, cartId },
@@ -179,9 +176,9 @@ export async function updateItem(
   }
 
   const product = await purchasableProduct(item.productId)
-  assertQuantity(quantity, product)
+  assertQuantity(packs, product)
 
-  await prisma.cartItem.update({ where: { id: item.id }, data: { quantity } })
+  await prisma.cartItem.update({ where: { id: item.id }, data: { packs } })
   return getCart(cartId)
 }
 
