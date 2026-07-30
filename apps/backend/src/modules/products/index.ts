@@ -18,27 +18,27 @@ const productResponse = t.Object({
   name: t.String(),
   description: t.Union([t.String(), t.Null()]),
   photoUrl: t.Union([t.String(), t.Null()]),
-  unitPriceMinor: t.Integer(),
-  moq: t.Integer(),
-  caseSize: t.Integer(),
+  pricePerPackMinor: t.Integer(),
+  minPacks: t.Integer(),
+  unitsPerPack: t.Integer(),
   category: categorySchema,
-  stockQty: t.Union([t.Integer(), t.Null()]),
+  stockPacks: t.Union([t.Integer(), t.Null()]),
   isActive: t.Boolean(),
   createdAt: t.Date(),
   updatedAt: t.Date(),
 })
 
 // Prices are integer satang, never a decimal — see CLAUDE.md. Exposing this as
-// `unitPriceMinor` in the API keeps the frontend honest about the unit too.
+// `pricePerPackMinor` in the API keeps the frontend honest about the unit too.
 const productBody = t.Object({
   name: t.String({ minLength: 1, maxLength: 200 }),
   description: t.Optional(t.String({ maxLength: 2000 })),
   photoUrl: t.Optional(t.String({ format: 'uri', maxLength: 2000 })),
-  unitPriceMinor: t.Integer({ minimum: 1 }),
-  moq: t.Integer({ minimum: 1, default: 1 }),
-  caseSize: t.Integer({ minimum: 1, default: 1 }),
+  pricePerPackMinor: t.Integer({ minimum: 1 }),
+  minPacks: t.Integer({ minimum: 1, default: 1 }),
+  unitsPerPack: t.Integer({ minimum: 1, default: 1 }),
   category: categorySchema,
-  stockQty: t.Optional(t.Integer({ minimum: 0 })),
+  stockPacks: t.Optional(t.Integer({ minimum: 0 })),
   isActive: t.Optional(t.Boolean()),
 })
 
@@ -74,7 +74,7 @@ export const productsModule = new Elysia({
         summary: 'Create a product',
         description:
           'photoUrl is a plain image URL for now; a Supabase upload route ' +
-          'replaces it later. moq and caseSize are the wholesale terms ' +
+          'replaces it later. minPacks and unitsPerPack are the wholesale terms ' +
           'enforced when a retailer adds this to a cart.',
         tags: ['Brand · Products'],
       },

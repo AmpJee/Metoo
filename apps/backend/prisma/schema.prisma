@@ -36,19 +36,63 @@ enum Role {
   RETAILER
 }
 
-/// Rejection sets RESUBMIT_REQUIRED rather than a terminal state: a signup
-/// must always have a way forward, never a dead end.
-enum AccountStatus {
+/// Where an account sits in the sales pipeline the admin console tracks.
+///
+/// This is also the authorisation gate: **only ONBOARDED accounts can trade.**
+/// A self-registered applicant starts at NOT_CONTACTED — the design shows
+/// exactly that, an account with a signup date still marked "Not Contacted".
+enum PipelineStatus {
+  NOT_CONTACTED
+  CONTACTED
+  INTERESTED
+  ONBOARDED
+  DECLINED
+}
+
+/// อย. (Thai FDA) certification, tracked as its own column in the admin
+/// console. It informs the decision to onboard a brand rather than gating
+/// access itself — a brand can be chased for a certificate while still sitting
+/// at INTERESTED.
+enum FdaStatus {
+  YES
   PENDING
-  APPROVED
-  REJECTED
-  RESUBMIT_REQUIRED
+  NO
+}
+
+/// Headcount bands the console filters brands by.
+enum SizeBand {
+  SIZE_1_5
+  SIZE_6_20
+  SIZE_21_50
+  SIZE_51_PLUS
+}
+
+enum ShopType {
+  MINIMART
+  SUNDRIES
+  SPECIALTY
+  MARKET_STALL
+}
+
+/// How a retailer prefers to pay. CASH is cash on delivery.
+enum PaymentPreference {
+  PROMPTPAY
+  CASH
+  CARD
+}
+
+/// Payment track record, maintained by admin from experience.
+enum PaymentReliability {
+  ON_TIME
+  PENDING
+  LATE
 }
 
 enum Category {
   FOOD_BEVERAGE
   HEALTH_BEAUTY
   HOME_LIVING
+  FASHION_ACCESSORIES
 }
 
 enum DocumentType {
@@ -63,15 +107,23 @@ enum DocumentStatus {
   REJECTED
 }
 
-/// PENDING -> CONFIRMED -> PREPARING -> PICKED_UP -> DELIVERED -> SETTLED
+/// The seven steps the seller's order tracker shows, in order:
 ///
-/// SETTLED is a financial state, not a shipping one: it means the sale was
-/// credited to the brand's wallet ledger. CANCELLED and CLOSED are terminal —
-/// CLOSED is where an order lands once a return has been resolved.
+///   PENDING          "Incoming"
+///   CONFIRMED        the brand accepted the order
+///   PREPARING        packing
+///   READY_FOR_PICKUP waiting on the courier
+///   PICKED_UP        collected
+///   DELIVERED        with the retailer
+///   SETTLED          "Money Received" — credited to the brand's wallet ledger
+///
+/// SETTLED is a financial state, not a shipping one. CANCELLED and CLOSED are
+/// terminal; CLOSED is where an order lands once a return has been resolved.
 enum OrderStatus {
   PENDING
   CONFIRMED
   PREPARING
+  READY_FOR_PICKUP
   PICKED_UP
   DELIVERED
   SETTLED
@@ -116,16 +168,17 @@ enum WithdrawalStatus {
 // --------------------------------------------------------------- identity --
 
 model User {
-  id           String        @id @default(uuid())
-  email        String        @unique
+  id           String         @id @default(uuid())
+  email        String         @unique
   passwordHash String
   role         Role
-  status       AccountStatus @default(PENDING)
-  /// Shown to the user when status is REJECTED or RESUBMIT_REQUIRED, so a
-  /// rejection is actionable rather than mysterious.
+  /// Doubles as the authorisation gate — only ONBOARDED accounts can trade.
+  status       PipelineStatus @default(NOT_CONTACTED)
+  /// Shown to the applicant so being blocked or declined is actionable rather
+  /// than mysterious. Distinct from adminNotes, which they never see.
   reviewNote   String?
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
 
   brand         BrandProfile?
   retailer      RetailerProfile?
@@ -171,6 +224,22 @@ model BrandProfile {
   bankAccountName   String?
   bankAccountNumber String?
 
+  // --- Sales pipeline, maintained by admin -------------------------------
+  // Everything below is outreach data the console shows and the brand never
+  // edits. adminNotes in particular is internal and must not leak to a
+  // non-admin route.
+  fdaStatus             FdaStatus @default(NO)
+  sizeBand              SizeBand?
+  socialHandle          String?
+  /// Logistics case spec, e.g. "5.2 kg", "30x20x18 cm", 24 bags per case.
+  caseWeightKg          Decimal?  @db.Decimal(6, 2)
+  caseDimensionsCm      String?
+  caseUnits             Int?
+  /// How many retailers the brand already supplies, outside the platform.
+  existingRetailerCount Int?
+  referralSource        String?
+  adminNotes            String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -194,6 +263,22 @@ model RetailerProfile {
   province    String
   postalCode  String
   taxId       String?
+
+  // --- Sales pipeline, maintained by admin -------------------------------
+  shopType           ShopType?
+  /// District or neighbourhood within the province, e.g. "Mueang / Nimman".
+  zone               String?
+  socialHandle       String?
+  /// What the shop already stocks, free text, e.g. "Snacks, Beverages".
+  currentProducts    String?
+  /// Orders per month the shop can absorb — used to size restock cadence.
+  monthlyCapacity    Int?
+  preferredPayment   PaymentPreference?
+  paymentReliability PaymentReliability @default(PENDING)
+  /// Preferred delivery slot, e.g. "Tue AM".
+  deliveryWindow     String?
+  referralSource     String?
+  adminNotes         String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -234,23 +319,29 @@ model VerificationDocument {
 
 // ---------------------------------------------------------------- catalog --
 
+/// Sold BY THE PACK. Price, stock and order quantities are all counted in
+/// packs; `unitsPerPack` only describes what is inside one ("5 units/pack") and
+/// never constrains how many packs may be ordered.
 model Product {
-  id             String   @id @default(uuid())
-  brandId        String
-  name           String
-  description    String?
-  photoUrl       String?
-  unitPriceMinor Int
-  /// Minimum order quantity, and the multiple that quantities must arrive in.
-  /// Both are enforced when writing a cart item, not at checkout — a retailer
-  /// should find out immediately, not after filling a cart.
-  moq            Int      @default(1)
-  caseSize       Int      @default(1)
-  category       Category
-  stockQty       Int?
-  isActive       Boolean  @default(true)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id                String   @id @default(uuid())
+  brandId           String
+  name              String
+  description       String?
+  photoUrl          String?
+  /// Price of ONE PACK, in satang.
+  pricePerPackMinor Int
+  /// Fewest packs a retailer may order. Enforced when writing a cart item, not
+  /// at checkout — a retailer should find out immediately, not after filling
+  /// a cart.
+  minPacks          Int      @default(1)
+  /// Descriptive only: how many units are inside one pack.
+  unitsPerPack      Int      @default(1)
+  category          Category
+  /// Stock on hand, in packs.
+  stockPacks        Int?
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   brand      BrandProfile @relation(fields: [brandId], references: [id], onDelete: Cascade)
   cartItems  CartItem[]
@@ -290,7 +381,8 @@ model CartItem {
   id        String   @id @default(uuid())
   cartId    String
   productId String
-  quantity  Int
+  /// Number of packs.
+  packs     Int
   createdAt DateTime @default(now())
 
   cart    Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
@@ -325,11 +417,12 @@ model Order {
   /// Copy of the retailer's address at order time.
   shippingAddress Json
 
-  confirmedAt DateTime?
-  pickedUpAt  DateTime?
-  deliveredAt DateTime?
-  settledAt   DateTime?
-  closedAt    DateTime?
+  confirmedAt      DateTime?
+  readyForPickupAt DateTime?
+  pickedUpAt       DateTime?
+  deliveredAt      DateTime?
+  settledAt        DateTime?
+  closedAt         DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
@@ -347,14 +440,17 @@ model Order {
 }
 
 model OrderItem {
-  id             String @id @default(uuid())
-  orderId        String
-  productId      String
+  id                String @id @default(uuid())
+  orderId           String
+  productId         String
   /// Snapshots — the product may be renamed or repriced after the sale.
-  productName    String
-  unitPriceMinor Int
-  quantity       Int
-  lineTotalMinor Int
+  productName       String
+  pricePerPackMinor Int
+  /// Units per pack at the time of sale, so a past order still reads correctly
+  /// after the brand repackages.
+  unitsPerPack      Int    @default(1)
+  packs             Int
+  lineTotalMinor    Int
 
   order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product Product @relation(fields: [productId], references: [id])

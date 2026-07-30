@@ -10,12 +10,14 @@ describe('resolveCommissionBps', () => {
     expect(resolveCommissionBps('FOOD_BEVERAGE', 0)).toBe(400)
     expect(resolveCommissionBps('HEALTH_BEAUTY', 0)).toBe(800)
     expect(resolveCommissionBps('HOME_LIVING', 0)).toBe(500)
+    expect(resolveCommissionBps('FASHION_ACCESSORIES', 0)).toBe(600)
   })
 
   test('a high-volume brand pays the reduced rate', () => {
     expect(resolveCommissionBps('FOOD_BEVERAGE', 100)).toBe(200)
     expect(resolveCommissionBps('HEALTH_BEAUTY', 100)).toBe(500)
     expect(resolveCommissionBps('HOME_LIVING', 100)).toBe(300)
+    expect(resolveCommissionBps('FASHION_ACCESSORIES', 100)).toBe(400)
   })
 
   test('the threshold is inclusive at exactly 30 orders', () => {
@@ -27,10 +29,12 @@ describe('resolveCommissionBps', () => {
   })
 
   test('every category has both tiers wired', () => {
+    // Guards against a new category being added to the enum without a rate.
     for (const category of [
       'FOOD_BEVERAGE',
       'HEALTH_BEAUTY',
       'HOME_LIVING',
+      'FASHION_ACCESSORIES',
     ] as const) {
       const low = resolveCommissionBps(category, 0)
       const high = resolveCommissionBps(category, VOLUME_THRESHOLD)

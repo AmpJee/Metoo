@@ -17,7 +17,7 @@
  * reach from a service module.
  */
 import { SignJWT, jwtVerify } from 'jose'
-import type { AccountStatus, Role } from '@metoo/shared'
+import type { PipelineStatus, Role } from '@metoo/shared'
 import { env } from '../config/env.ts'
 
 const ISSUER = 'metoo-api'
@@ -28,7 +28,7 @@ const refreshSecret = new TextEncoder().encode(env.JWT_REFRESH_SECRET)
 export interface AccessClaims {
   sub: string
   role: Role
-  status: AccountStatus
+  status: PipelineStatus
 }
 
 export interface RefreshClaims {
@@ -69,7 +69,7 @@ export async function verifyAccessToken(
     return {
       sub: payload.sub,
       role: payload.role as Role,
-      status: payload.status as AccountStatus,
+      status: payload.status as PipelineStatus,
     }
   } catch {
     return null

@@ -13,7 +13,7 @@ import { AppError } from '../../middleware/error.ts'
 /** The single definition of "a retailer may see this". */
 const VISIBLE = {
   isActive: true,
-  brand: { user: { status: 'APPROVED' } },
+  brand: { user: { status: 'ONBOARDED' } },
 } satisfies Prisma.ProductWhereInput
 
 const catalogSelect = {
@@ -21,11 +21,11 @@ const catalogSelect = {
   name: true,
   description: true,
   photoUrl: true,
-  unitPriceMinor: true,
-  moq: true,
-  caseSize: true,
+  pricePerPackMinor: true,
+  minPacks: true,
+  unitsPerPack: true,
   category: true,
-  stockQty: true,
+  stockPacks: true,
   createdAt: true,
   brand: { select: { id: true, name: true, logoUrl: true, province: true } },
 } satisfies Prisma.ProductSelect
@@ -93,7 +93,7 @@ export async function getVisible(productId: string) {
 export function listBrands() {
   return prisma.brandProfile.findMany({
     where: {
-      user: { status: 'APPROVED' },
+      user: { status: 'ONBOARDED' },
       products: { some: { isActive: true } },
     },
     select: { id: true, name: true, logoUrl: true, province: true },

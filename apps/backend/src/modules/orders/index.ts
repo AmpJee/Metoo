@@ -29,8 +29,8 @@ const order = t.Object({
       id: t.String(),
       productId: t.String(),
       productName: t.String(),
-      unitPriceMinor: t.Integer(),
-      quantity: t.Integer(),
+      pricePerPackMinor: t.Integer(),
+      packs: t.Integer(),
       lineTotalMinor: t.Integer(),
     })
   ),

@@ -22,6 +22,10 @@ const RATES: Record<Category, readonly [number, number]> = {
   FOOD_BEVERAGE: [400, 200], // 4% / 2%
   HEALTH_BEAUTY: [800, 500], // 8% / 5%
   HOME_LIVING: [500, 300], // 5% / 3%
+  // Not in the original brief — the category appears only in the design. These
+  // rates sit between Home & Living and Health & Beauty and are a placeholder
+  // pending a commercial decision.
+  FASHION_ACCESSORIES: [600, 400], // 6% / 4%
 }
 
 /**

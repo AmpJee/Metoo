@@ -21,9 +21,9 @@ export async function list(retailerId: string) {
           id: true,
           name: true,
           photoUrl: true,
-          unitPriceMinor: true,
-          moq: true,
-          caseSize: true,
+          pricePerPackMinor: true,
+          minPacks: true,
+          unitsPerPack: true,
           category: true,
           isActive: true,
           brand: { select: { id: true, name: true } },
@@ -42,7 +42,7 @@ export async function add(retailerId: string, productId: string) {
     where: {
       id: productId,
       isActive: true,
-      brand: { user: { status: 'APPROVED' } },
+      brand: { user: { status: 'ONBOARDED' } },
     },
     select: { id: true },
   })
