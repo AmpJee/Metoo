@@ -6,6 +6,7 @@ import { logger } from './lib/logger.ts'
 import { errorHandler } from './middleware/error.ts'
 import { adminModule } from './modules/admin/index.ts'
 import { adminOrdersModule } from './modules/admin-orders/index.ts'
+import { adminWithdrawalsModule } from './modules/admin-withdrawals/index.ts'
 import { authModule } from './modules/auth/index.ts'
 import { brandOrdersModule } from './modules/brand-orders/index.ts'
 import { cartModule } from './modules/cart/index.ts'
@@ -15,6 +16,7 @@ import { favouritesModule } from './modules/favourites/index.ts'
 import { healthModule } from './modules/health/index.ts'
 import { ordersModule } from './modules/orders/index.ts'
 import { productsModule } from './modules/products/index.ts'
+import { walletModule } from './modules/wallet/index.ts'
 
 export const app = new Elysia()
   .use(cors({ origin: env.CORS_ORIGIN }))
@@ -43,6 +45,8 @@ export const app = new Elysia()
   .use(ordersModule)
   .use(brandOrdersModule)
   .use(adminOrdersModule)
+  .use(walletModule)
+  .use(adminWithdrawalsModule)
 
 // `0.0.0.0` rather than the default localhost: inside a container, binding to
 // the loopback interface makes the server unreachable from outside it.
