@@ -21,7 +21,10 @@
  * The whole thing runs in one transaction: N orders, their items, and the
  * cart clear either all happen or none do.
  */
-import type { Prisma } from '../../generated/prisma/client.ts'
+import type {
+  PaymentPreference,
+  Prisma,
+} from '../../generated/prisma/client.ts'
 import { prisma } from '../../config/prisma.ts'
 import { checkQuantity, groupByBrand } from '../../domain/cart.ts'
 import {
@@ -157,8 +160,12 @@ function dominantCategory(lines: CheckoutLine[]): CheckoutLine['category'] {
   return [...totals].sort((a, b) => b[1] - a[1])[0]![0]
 }
 
-export async function checkout(params: { cartId: string; retailerId: string }) {
-  const { cartId, retailerId } = params
+export async function checkout(params: {
+  cartId: string
+  retailerId: string
+  paymentMethod: PaymentPreference
+}) {
+  const { cartId, retailerId, paymentMethod } = params
 
   const retailer = await prisma.retailerProfile.findUnique({
     where: { id: retailerId },
@@ -206,9 +213,11 @@ export async function checkout(params: { cartId: string; retailerId: string }) {
           brandId: group.brandId,
           status: 'PENDING',
           subtotalMinor: group.subtotalMinor,
-          // Shipping is not modelled yet — manual logistics at MVP.
+          // Shipping is not charged to the retailer at MVP; what logistics
+          // costs the platform is recorded separately in deliveryCostMinor.
           shippingMinor: 0,
           totalMinor: group.subtotalMinor,
+          paymentMethod,
           commissionBps,
           commissionMinor,
           payoutMinor,

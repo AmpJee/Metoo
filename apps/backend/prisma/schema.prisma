@@ -414,6 +414,16 @@ model Order {
   commissionMinor Int
   payoutMinor     Int
 
+  /// How the retailer intends to settle, chosen at checkout and shown in the
+  /// admin order table. Payment itself is manual at MVP — the seller confirms
+  /// receipt by moving the order to SETTLED — so this records intent, not a
+  /// gateway result.
+  paymentMethod PaymentPreference @default(PROMPTPAY)
+
+  /// What logistics actually cost the platform for this order. Admin fills it
+  /// in; it feeds the contribution-margin figure on the admin dashboard.
+  deliveryCostMinor Int @default(0)
+
   /// Copy of the retailer's address at order time.
   shippingAddress Json
 
