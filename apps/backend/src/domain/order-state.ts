@@ -83,6 +83,41 @@ export const TIMESTAMP_FIELD: Partial<Record<OrderStatus, string>> = {
   CLOSED: 'closedAt',
 }
 
+/**
+ * Orders that count as real revenue — GMV on the admin summary, revenue on the
+ * seller dashboard.
+ *
+ * PENDING is excluded because a request a brand has not accepted is not a
+ * sale; counting it would make revenue fall whenever a brand declines
+ * something. CANCELLED is excluded for the obvious reason.
+ *
+ * Defined once and imported everywhere. Two copies of this list means one
+ * screen eventually disagrees with another about how much money was made.
+ */
+export const EARNS_REVENUE = [
+  'CONFIRMED',
+  'PREPARING',
+  'READY_FOR_PICKUP',
+  'PICKED_UP',
+  'DELIVERED',
+  'SETTLED',
+  'CLOSED',
+] as const satisfies readonly OrderStatus[]
+
+/**
+ * Orders that count toward a brand's commission volume tier.
+ *
+ * Identical to EARNS_REVENUE except that CLOSED is excluded: an order closed
+ * after a return should not help a brand reach the discounted rate.
+ *
+ * The two lists are deliberately separate rather than one with an exception —
+ * they answer different questions, and a future change to one is unlikely to
+ * apply to the other.
+ */
+export const COUNTS_TOWARD_VOLUME = EARNS_REVENUE.filter(
+  (status) => status !== 'CLOSED'
+) as Exclude<(typeof EARNS_REVENUE)[number], 'CLOSED'>[]
+
 export type TransitionCheck =
   { ok: true } | { ok: false; code: string; message: string }
 

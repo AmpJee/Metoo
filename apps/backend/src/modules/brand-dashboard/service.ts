@@ -11,23 +11,13 @@
  */
 import { prisma } from '../../config/prisma.ts'
 import type { Period } from '../../domain/analytics.ts'
+import { EARNS_REVENUE } from '../../domain/order-state.ts'
 import {
   averageOrderValue,
   bucketByDay,
   periodStart,
   repeatOrderRate,
 } from '../../domain/analytics.ts'
-
-/** Orders that count as revenue. Excludes PENDING and CANCELLED. */
-const EARNED_STATUSES = [
-  'CONFIRMED',
-  'PREPARING',
-  'READY_FOR_PICKUP',
-  'PICKED_UP',
-  'DELIVERED',
-  'SETTLED',
-  'CLOSED',
-] as const
 
 /** Stock at or below this many packs is flagged on the dashboard. */
 const LOW_STOCK_PACKS = 10
@@ -39,7 +29,7 @@ export async function dashboard(brandId: string, period: Period) {
     prisma.order.findMany({
       where: {
         brandId,
-        status: { in: [...EARNED_STATUSES] },
+        status: { in: [...EARNS_REVENUE] },
         createdAt: { gte: from },
       },
       select: {
@@ -59,7 +49,7 @@ export async function dashboard(brandId: string, period: Period) {
     prisma.order.findMany({
       where: {
         brandId,
-        status: { in: [...EARNED_STATUSES] },
+        status: { in: [...EARNS_REVENUE] },
         createdAt: { gte: periodStart('year') },
       },
       select: {

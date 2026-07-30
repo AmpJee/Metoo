@@ -2,6 +2,8 @@ import { describe, expect, test } from 'bun:test'
 import { ORDER_STATUSES } from '@metoo/shared'
 import type { OrderStatus } from '@metoo/shared'
 import {
+  COUNTS_TOWARD_VOLUME,
+  EARNS_REVENUE,
   TIMESTAMP_FIELD,
   availableTransitions,
   canTransition,
@@ -113,6 +115,51 @@ describe('cancellation', () => {
       expect(canTransition(status, 'CANCELLED', 'ADMIN')).toMatchObject({
         ok: false,
       })
+    }
+  })
+})
+
+describe('revenue status sets', () => {
+  test('an unaccepted or cancelled order is not revenue', () => {
+    // A PENDING order is a request. Counting it would make revenue fall
+    // whenever a brand declines something.
+    expect(EARNS_REVENUE).not.toContain('PENDING')
+    expect(EARNS_REVENUE).not.toContain('CANCELLED')
+  })
+
+  test('every state from CONFIRMED onward earns revenue', () => {
+    for (const status of [
+      'CONFIRMED',
+      'PREPARING',
+      'READY_FOR_PICKUP',
+      'PICKED_UP',
+      'DELIVERED',
+      'SETTLED',
+    ] as const) {
+      expect(EARNS_REVENUE).toContain(status)
+    }
+  })
+
+  test('volume excludes CLOSED but is otherwise identical to revenue', () => {
+    // An order closed after a return should not help a brand reach the
+    // discounted commission rate.
+    expect(COUNTS_TOWARD_VOLUME).not.toContain('CLOSED')
+    expect([...COUNTS_TOWARD_VOLUME].sort()).toEqual(
+      EARNS_REVENUE.filter((s) => s !== 'CLOSED').sort()
+    )
+  })
+
+  test('a new order status must be classified deliberately', () => {
+    // This fails when someone adds a status without deciding whether it earns
+    // revenue — which is the divergence that having two copies of these lists
+    // used to cause.
+    const classified = new Set<string>([
+      ...EARNS_REVENUE,
+      'PENDING',
+      'CANCELLED',
+    ])
+    for (const status of ORDER_STATUSES) {
+      expect(classified.has(status)).toBe(true)
     }
   })
 })

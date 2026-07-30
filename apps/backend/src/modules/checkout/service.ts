@@ -33,17 +33,8 @@ import {
   splitAmount,
 } from '../../domain/commission.ts'
 import { generateOrderNumber } from '../../domain/order-number.ts'
+import { COUNTS_TOWARD_VOLUME } from '../../domain/order-state.ts'
 import { AppError } from '../../middleware/error.ts'
-
-/** Orders that count toward a brand's volume tier. */
-const VOLUME_COUNTED_STATUSES = [
-  'CONFIRMED',
-  'PREPARING',
-  'READY_FOR_PICKUP',
-  'PICKED_UP',
-  'DELIVERED',
-  'SETTLED',
-] as const
 
 interface CheckoutLine {
   brandId: string
@@ -135,7 +126,7 @@ function countRecentOrders(brandId: string, tx: Prisma.TransactionClient) {
   return tx.order.count({
     where: {
       brandId,
-      status: { in: [...VOLUME_COUNTED_STATUSES] },
+      status: { in: [...COUNTS_TOWARD_VOLUME] },
       createdAt: { gte: since },
     },
   })
