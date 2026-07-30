@@ -8,22 +8,7 @@
 import { prisma } from '../../config/prisma.ts'
 import { AppError } from '../../middleware/error.ts'
 
-export async function retailerIdForUser(userId: string): Promise<string> {
-  const retailer = await prisma.retailerProfile.findUnique({
-    where: { userId },
-    select: { id: true },
-  })
-
-  if (!retailer) {
-    throw new AppError(
-      404,
-      'RETAILER_PROFILE_MISSING',
-      'This account has no retailer profile.'
-    )
-  }
-
-  return retailer.id
-}
+export { retailerIdForUser } from '../../lib/profile.ts'
 
 export async function list(retailerId: string) {
   const rows = await prisma.favourite.findMany({

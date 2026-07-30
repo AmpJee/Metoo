@@ -167,13 +167,39 @@ effect until the user's access token refreshes (≤15 min), and `/auth/login`
 deliberately succeeds for unapproved accounts so the frontend can show them why
 they are blocked.
 
+## Domain layer
+
+`src/domain/` holds the pure functions — no Prisma import, no I/O — that the
+unit-tests-only decision depends on. Anything money- or state-related belongs
+here, not inline in a handler:
+
+| File | What |
+| --- | --- |
+| `cart.ts` | `checkQuantity` (MOQ, case size), `groupByBrand`, `lineTotalMinor` |
+| `commission.ts` | `resolveCommissionBps` (tier table), `splitAmount` |
+| `order-number.ts` | `generateOrderNumber` — non-sequential references |
+
+`groupByBrand` is shared between the cart screen and checkout on purpose, so
+the split a retailer sees can never disagree with the orders they get.
+
+Run them with `bun run test`; CI runs the same job with no database.
+
+## Gotcha: optional enum query params
+
+`t.Optional(t.UnionEnum(values))` emits `default: values[0]`, and Elysia applies
+it to an **absent** query parameter — so an omitted `?category=` silently means
+"FOOD_BEVERAGE" and the endpoint returns a filtered subset with no error. Use
+`optionalEnum()` from `lib/schema.ts` for every optional enum filter.
+
 ## Status
 
 Done — the data layer (19 models, migrated and seeded), JWT auth with
-role/approval guards, and the admin signup approval queue.
+role/approval guards, the admin signup approval queue, product CRUD, catalog
+browse, favourites, the multi-brand cart, and checkout. A retailer can browse,
+fill a cart spanning brands, and place orders that split one per brand with the
+commission tier snapshotted.
 
-Still to build, in order: catalog (product CRUD + Supabase Storage uploads,
-browse, favourites), cart and checkout (per-brand splitting + commission),
-Stripe collection (card + PromptPay + webhooks), the order state machine and
-wallet ledger with withdrawals, then returns and chat. Unit tests land with the
-`src/domain/` pure functions.
+Still to build, in order: Stripe collection (card + PromptPay + webhooks, one
+`Payment` row per attempt), the 8-state order lifecycle, the wallet ledger with
+admin-approved withdrawals, returns with refunds, Supabase Storage uploads, and
+chat.

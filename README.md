@@ -3,9 +3,10 @@
 B2B wholesale marketplace connecting brands and retailers.
 
 > **Status: in progress.** The data layer is complete — 19 models, migrated
-> against Supabase and seeded. Auth (JWT + role-based access) and the admin
-> signup approval queue are built. The commerce features are not.
-> See [What to build next](#what-to-build-next).
+> against Supabase and seeded. Auth (JWT + role-based access), the admin signup
+> approval queue, the catalog, the cart, and checkout are built: a retailer can
+> browse, fill a multi-brand cart, and place orders. Payment, fulfilment and
+> payouts are not. See [What to build next](#what-to-build-next).
 
 ## Getting Started
 
@@ -133,23 +134,21 @@ guards), and the admin signup approval queue.
 
 Still to do, in dependency order:
 
-1. **Catalog** — brand product CRUD, Supabase Storage upload routes (public
-   bucket for photos, private + signed URLs for ID/อย. documents), retailer
-   browse and filter, favourites.
-2. **Cart and checkout** — cart with MOQ and case-size validation, then the
-   checkout that **splits one cart into one order per brand** and snapshots the
-   commission tier onto each order.
-3. **Payments** — Stripe card + PromptPay collection and webhooks. PromptPay
-   confirms asynchronously, so order state must come from the webhook, never
-   from the HTTP response.
-4. **Fulfilment and wallet** — the 8-state order lifecycle, the append-only
-   wallet ledger, and admin-approved withdrawals paid by manual bank transfer.
-5. **Post-sale** — returns with refunds, and chat.
+1. **Payments** — Stripe card + PromptPay collection and webhooks, a `Payment`
+   row per attempt, and `POST /orders/:id/retry-payment`. PromptPay confirms
+   asynchronously, so order state must come from the webhook, never from the
+   HTTP response to the payment call.
+2. **Fulfilment** — the 8-state order lifecycle, brand and admin transitions,
+   an `AuditLog` row per change, and `SETTLED` writing the wallet ledger.
+3. **Wallet** — balance as `SUM(amountMinor)`, withdrawal requests, and admin
+   approve/mark-paid with the balance re-checked inside the debit transaction.
+4. **Post-sale** — returns with refunds, and chat.
+5. **Uploads** — Supabase Storage signed uploads (public bucket for product
+   photos, private + signed URLs for ID/อย. documents). Product photos are a
+   plain URL field until then.
 6. **Pages** — one `.html` in `src/pages/` and one `.js` in
    `src/public/scripts/` per screen, all API calls going through
    `api-client.js`.
-7. **Unit tests** — pure functions under `src/domain/` (commission, cart
-   splitting, state transitions, ledger math), plus a `test` job in CI.
 
 Conventions and the decisions that supersede the brief below are in
 [CLAUDE.md](CLAUDE.md); module patterns are in
