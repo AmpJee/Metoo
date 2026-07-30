@@ -16,20 +16,21 @@
  *   .use(requireAuth)   // any signed-in account
  */
 import { Elysia } from 'elysia'
-import type { AccountStatus, Role } from '@metoo/shared'
+import { TRADING_STATUS } from '@metoo/shared'
+import type { PipelineStatus, Role } from '@metoo/shared'
 import { verifyAccessToken } from '../lib/jwt.ts'
 import { AppError } from './error.ts'
 
 export interface AuthContext {
   userId: string
   role: Role
-  status: AccountStatus
+  status: PipelineStatus
 }
 
 export interface AccessOptions {
   /** Allowed roles. Omit to accept any authenticated account. */
   roles?: Role[]
-  /** Require the account to have cleared admin approval. */
+  /** Require the account to be ONBOARDED — i.e. cleared to trade. */
   approved?: boolean
 }
 
@@ -43,17 +44,31 @@ function bearerToken(header: string | undefined): string | null {
 }
 
 /**
- * The three non-approved states get distinct error codes so the frontend can
- * route to the right screen — waiting, fix-your-documents, or finally refused
- * — instead of showing one generic "forbidden".
+ * Each non-trading state gets a distinct error code so the frontend can route
+ * to the right screen instead of showing one generic "forbidden". An applicant
+ * still being worked through the pipeline needs a different message from one
+ * who has been declined.
  */
-const BLOCKED: Record<Exclude<AccountStatus, 'APPROVED'>, [string, string]> = {
-  PENDING: ['ACCOUNT_PENDING', 'Your account is awaiting admin approval.'],
-  RESUBMIT_REQUIRED: [
-    'ACCOUNT_RESUBMIT_REQUIRED',
-    'Your documents need to be corrected and resubmitted.',
+const BLOCKED: Record<
+  Exclude<PipelineStatus, typeof TRADING_STATUS>,
+  [string, string]
+> = {
+  NOT_CONTACTED: [
+    'ACCOUNT_NOT_ONBOARDED',
+    'Your application is in the queue. We will be in touch shortly.',
   ],
-  REJECTED: ['ACCOUNT_REJECTED', 'Your account application was refused.'],
+  CONTACTED: [
+    'ACCOUNT_NOT_ONBOARDED',
+    'We are reviewing your application. We will be in touch shortly.',
+  ],
+  INTERESTED: [
+    'ACCOUNT_NOT_ONBOARDED',
+    'Your onboarding is in progress. We will be in touch shortly.',
+  ],
+  DECLINED: [
+    'ACCOUNT_DECLINED',
+    'Your application was not accepted at this time.',
+  ],
 }
 
 export function requireAccess(options: AccessOptions = {}) {
@@ -94,7 +109,7 @@ export function requireAccess(options: AccessOptions = {}) {
         )
       }
 
-      if (approved && claims.status !== 'APPROVED') {
+      if (approved && claims.status !== TRADING_STATUS) {
         const [code, message] = BLOCKED[claims.status]
         throw new AppError(403, code, message)
       }

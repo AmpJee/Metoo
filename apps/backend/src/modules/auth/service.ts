@@ -98,8 +98,9 @@ export type RegisterInput = RegisterBrandInput | RegisterRetailerInput
  * anything useful and cannot be reviewed by an admin, so a half-written signup
  * is worse than a failed one.
  *
- * Accounts always start PENDING. Only an admin moves them to APPROVED — there
- * is no self-service path to an active account, by design.
+ * Accounts always start NOT_CONTACTED — the bottom of the sales pipeline. Only
+ * an admin moves them to ONBOARDED, so there is no self-service path to an
+ * account that can trade.
  */
 export async function register(input: RegisterInput) {
   const email = input.email.trim().toLowerCase()
@@ -113,7 +114,7 @@ export async function register(input: RegisterInput) {
 
   return prisma.$transaction(async (tx) => {
     const user = await tx.user.create({
-      data: { email, passwordHash, role: input.role, status: 'PENDING' },
+      data: { email, passwordHash, role: input.role, status: 'NOT_CONTACTED' },
     })
 
     if (input.role === 'BRAND') {
@@ -152,10 +153,10 @@ export async function register(input: RegisterInput) {
 }
 
 /**
- * Note what this does NOT check: account status. A PENDING or
- * RESUBMIT_REQUIRED user must be able to log in, precisely so the frontend can
- * show them why they are blocked and let them fix it. Route-level
- * `requireApproved` is what gates the actual features.
+ * Note what this does NOT check: pipeline status. An account still being worked
+ * through the pipeline must be able to log in, precisely so the frontend can
+ * show them where they stand. `requireAccess({ approved: true })` is what gates
+ * the actual features.
  */
 export async function login(rawEmail: string, password: string) {
   const email = rawEmail.trim().toLowerCase()

@@ -26,12 +26,12 @@ const passwordHash = await Bun.password.hash(PASSWORD)
 
 const admin = await prisma.user.upsert({
   where: { email: 'admin@metoo.test' },
-  update: { passwordHash, role: 'ADMIN', status: 'APPROVED' },
+  update: { passwordHash, role: 'ADMIN', status: 'ONBOARDED' },
   create: {
     email: 'admin@metoo.test',
     passwordHash,
     role: 'ADMIN',
-    status: 'APPROVED',
+    status: 'ONBOARDED',
   },
 })
 
@@ -39,12 +39,12 @@ const admin = await prisma.user.upsert({
 
 const brandUser = await prisma.user.upsert({
   where: { email: 'brand@metoo.test' },
-  update: { passwordHash, role: 'BRAND', status: 'APPROVED' },
+  update: { passwordHash, role: 'BRAND', status: 'ONBOARDED' },
   create: {
     email: 'brand@metoo.test',
     passwordHash,
     role: 'BRAND',
-    status: 'APPROVED',
+    status: 'ONBOARDED',
   },
 })
 
@@ -69,12 +69,12 @@ const brand = await prisma.brandProfile.upsert({
 
 const retailerUser = await prisma.user.upsert({
   where: { email: 'retailer@metoo.test' },
-  update: { passwordHash, role: 'RETAILER', status: 'APPROVED' },
+  update: { passwordHash, role: 'RETAILER', status: 'ONBOARDED' },
   create: {
     email: 'retailer@metoo.test',
     passwordHash,
     role: 'RETAILER',
-    status: 'APPROVED',
+    status: 'ONBOARDED',
   },
 })
 
@@ -98,16 +98,16 @@ await prisma.cart.upsert({
   create: { retailerId: retailer.id },
 })
 
-// --- a pending brand, to exercise the approval queue ------------------------
+// --- a prospect brand, to give the pipeline board something to work ---------
 
 const pendingUser = await prisma.user.upsert({
   where: { email: 'pending-brand@metoo.test' },
-  update: { passwordHash, role: 'BRAND', status: 'PENDING' },
+  update: { passwordHash, role: 'BRAND', status: 'INTERESTED' },
   create: {
     email: 'pending-brand@metoo.test',
     passwordHash,
     role: 'BRAND',
-    status: 'PENDING',
+    status: 'INTERESTED',
   },
 })
 
@@ -117,11 +117,18 @@ await prisma.brandProfile.upsert({
   create: {
     userId: pendingUser.id,
     name: 'Chiang Mai Herbals',
-    description: 'Awaiting document review — use this to test the admin queue.',
+    description: 'Mid-pipeline — use this to exercise the admin board.',
     phone: '053-000-000',
     addressLine: '8 Nimmanhaemin Road',
     province: 'Chiang Mai',
     postalCode: '50200',
+    // Blocked on อย. — the exact case the design's notes describe in prose.
+    fdaStatus: 'PENDING',
+    sizeBand: 'SIZE_1_5',
+    socialHandle: '@cmherbals',
+    existingRetailerCount: 5,
+    referralSource: 'Instagram',
+    adminNotes: 'Waiting on อย. cert before we list the soaps.',
   },
 })
 
@@ -154,6 +161,16 @@ const products = [
     unitsPerPack: 2,
     stockPacks: 60,
   },
+  {
+    // Min 6 packs at 5 units/pack: the exact shape that the old case-size
+    // divisibility rule rejected, kept here as a regression guard.
+    name: 'Slim Card Holder',
+    category: 'FASHION_ACCESSORIES' as const,
+    pricePerPackMinor: 149000,
+    minPacks: 6,
+    unitsPerPack: 5,
+    stockPacks: 96,
+  },
 ]
 
 for (const product of products) {
@@ -174,8 +191,8 @@ console.warn(
   [
     'Seeded:',
     `  admin           ${admin.email}`,
-    `  brand           ${brandUser.email} (${brand.name}, APPROVED)`,
-    `  pending brand   ${pendingUser.email} (PENDING — for the approval queue)`,
+    `  brand           ${brandUser.email} (${brand.name}, ONBOARDED)`,
+    `  prospect brand  ${pendingUser.email} (INTERESTED — for the pipeline board)`,
     `  retailer        ${retailerUser.email} (${retailer.shopName})`,
     `  products        ${products.length}`,
     '',

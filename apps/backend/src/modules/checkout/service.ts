@@ -87,7 +87,7 @@ async function loadAndValidateCart(
   }
 
   return items.map(({ packs, product }) => {
-    if (!product.isActive || product.brand.user.status !== 'APPROVED') {
+    if (!product.isActive || product.brand.user.status !== 'ONBOARDED') {
       throw new AppError(
         422,
         'PRODUCT_UNAVAILABLE',

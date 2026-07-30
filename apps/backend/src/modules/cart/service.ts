@@ -47,7 +47,7 @@ async function purchasableProduct(productId: string) {
     where: {
       id: productId,
       isActive: true,
-      brand: { user: { status: 'APPROVED' } },
+      brand: { user: { status: 'ONBOARDED' } },
     },
     select: {
       id: true,

@@ -7,14 +7,14 @@
  * the Prisma work delegated to service.ts.
  */
 import { Elysia, t } from 'elysia'
-import { ACCOUNT_STATUSES, ROLES } from '@metoo/shared'
+import { PIPELINE_STATUSES, ROLES } from '@metoo/shared'
 import { requireAuth } from '../../middleware/auth.ts'
 import * as service from './service.ts'
 
 // t.UnionEnum, not t.Union(...map(t.Literal)): mapping widens the literals to
 // `string`, which collapses the inferred response type to `never`.
 const roleSchema = t.UnionEnum(ROLES)
-const statusSchema = t.UnionEnum(ACCOUNT_STATUSES)
+const statusSchema = t.UnionEnum(PIPELINE_STATUSES)
 
 const publicUser = t.Object({
   id: t.String(),
