@@ -31,6 +31,7 @@ export const CATEGORIES = [
   'FOOD_BEVERAGE',
   'HEALTH_BEAUTY',
   'HOME_LIVING',
+  'FASHION_ACCESSORIES',
 ] as const
 
 /**

@@ -49,6 +49,7 @@ enum Category {
   FOOD_BEVERAGE
   HEALTH_BEAUTY
   HOME_LIVING
+  FASHION_ACCESSORIES
 }
 
 enum DocumentType {
