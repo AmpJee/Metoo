@@ -19,6 +19,11 @@ import { healthModule } from './modules/health/index.ts'
 import { ordersModule } from './modules/orders/index.ts'
 import { productsModule } from './modules/products/index.ts'
 import { reviewsModule } from './modules/reviews/index.ts'
+import {
+  adminReturnsModule,
+  brandReturnsModule,
+  returnsModule,
+} from './modules/returns/index.ts'
 import { walletModule } from './modules/wallet/index.ts'
 
 export const app = new Elysia()
@@ -53,6 +58,9 @@ export const app = new Elysia()
   .use(adminWithdrawalsModule)
   .use(adminSummaryModule)
   .use(reviewsModule)
+  .use(returnsModule)
+  .use(brandReturnsModule)
+  .use(adminReturnsModule)
 
 // `0.0.0.0` rather than the default localhost: inside a container, binding to
 // the loopback interface makes the server unreachable from outside it.
