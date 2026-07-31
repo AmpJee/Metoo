@@ -39,6 +39,25 @@ function secret(name: string): string {
   return value
 }
 
+/**
+ * A Supabase key is a JWT, so it starts with a base64url-encoded `{"alg"` —
+ * always `eyJ`.
+ *
+ * Worth checking at boot because the failure otherwise surfaces as a 500 from
+ * Supabase reading "Invalid Compact JWS" on the first upload, which gives no
+ * hint that the cause is an unfilled placeholder in .env.
+ */
+function jwtLike(name: string): string {
+  const value = required(name)
+  if (!value.startsWith('eyJ')) {
+    throw new Error(
+      `${name} does not look like a Supabase key — they are JWTs and begin with "eyJ".\n` +
+        `Copy it from: Supabase dashboard > Project Settings > API > service_role.`
+    )
+  }
+  return value
+}
+
 function port(name: string, fallback: number): number {
   const raw = process.env[name]
   if (!raw) return fallback
@@ -83,7 +102,7 @@ export const env = Object.freeze({
 
   /** Service role key — full bypass of row-level security. Server-side only:
    *  this must never reach the browser. */
-  SUPABASE_SERVICE_ROLE_KEY: required('SUPABASE_SERVICE_ROLE_KEY'),
+  SUPABASE_SERVICE_ROLE_KEY: jwtLike('SUPABASE_SERVICE_ROLE_KEY'),
 
   SUPABASE_PUBLIC_BUCKET: optional('SUPABASE_PUBLIC_BUCKET', 'product-photos'),
   SUPABASE_PRIVATE_BUCKET: optional(
