@@ -52,9 +52,10 @@ protection.
 
 ## Current state
 
-- **62 routes**, **18 modules**, **20 models**, **8 migrations**
+- **79 routes**, **21 modules**, **22 models**, **11 migrations**
 - **135 domain unit tests**, no database in CI
-- Merged through **PR #19**; `develop` green
+- Merged through **PR #19**; `develop` green, `feature/social-and-storefront`
+  pushed and awaiting a PR
 
 **What works end to end:** a brand registers → admin walks it through the sales
 pipeline to ONBOARDED → brand lists products → retailer browses, fills a cart
@@ -105,14 +106,51 @@ separately, not just the branch tip.
 
 ### In flight
 
-`feature/social-and-storefront` — five small screen items, unpushed. Save for
-later is built (schema `SavedItemKind`, migration, `/favourites` and
-`/saved-for-later` as separate routes over one model, plus a combined status
-route). Still to do on that branch: **follows**, **public storefront**,
-**seller Customers list**, **admin Feedback Log**.
+`feature/social-and-storefront` — **complete and pushed**, four commits, no PR
+opened yet. All five screen items are done:
 
-Its first commit was made while `develop` was red, so it wants rebasing onto
-current develop before anything else.
+| Commit | What |
+| --- | --- |
+| `d02cf04` | Save for later — `SavedItemKind` on the existing `Favourite` model |
+| `7b66039` | Brand follows and the public storefront |
+| `d06da56` | Seller Customers list |
+| `069c848` | Admin Feedback Log |
+
+Four decisions on that branch worth not re-litigating:
+
+**Save for later is a discriminator, not a second model.** The design shows two
+distinct actions, but they are the same shape — a retailer, a product, a date.
+`SavedItemKind` on `Favourite` with `@@unique([retailerId, productId, kind])`
+means a product can sit in both lists at once, which is what the screens do,
+and unfavouriting cannot disturb the saved list.
+
+**A customer is not a row you create.** The Customers screen is a `groupBy`
+over orders, so nothing has to be kept in sync. It counts `EARNS_REVENUE`
+statuses only — an unaccepted request or a cancelled order does not make
+someone a customer — and reuses that constant rather than restating it, so the
+Customers screen and the dashboard cannot disagree about what a sale is.
+Sorted by spend, because the question is who matters, not who is newest.
+
+**One storefront query serves two callers.** `/stores/:brandId` (retailer) and
+`/brand/storefront` (the seller's own preview) return the same shape;
+`following` is `null` for a viewer who is not a retailer, rather than `false`.
+The seller previewing their page sees exactly what a retailer sees.
+
+**Feedback uses `requireAuth`, not `requireAccess`.** Anyone signed in can
+write, including accounts still in the pipeline — someone stuck waiting on an
+อย. review is precisely who most needs a way to say so, and gating the
+complaint channel on the thing being complained about is how you stop hearing
+about it. There is no category or subject field for the same reason. The author
+label is snapshotted at write time and `authorId` is `SET NULL` on delete, so
+the log survives the account closing.
+
+Verified live end to end: a product held in both save lists simultaneously
+(`{favourite: true, savedForLater: true}`) and unfavouriting leaving
+save-for-later intact; three POSTs to `/follow` yielding `followerCount: 1`;
+the Customers figures cross-checked against raw SQL (402,000 / 54,000 satang,
+with a cancelled ฿8,940 order correctly excluded); and a not-yet-onboarded
+brand submitting feedback, an admin resolving it, the author reading the reply,
+and a second resolve returning 422.
 
 ---
 
@@ -264,11 +302,11 @@ Purely design surface — nothing functional is missing:
 | Item | Notes |
 | --- | --- |
 | ~~Save for later~~ | Done on `feature/social-and-storefront`, unmerged |
-| Follows | Follower counts and a Follow button on the storefront |
-| Public storefront | Brand page; mostly assembling what exists |
-| Customers list | Seller side, aggregated from orders |
-| Feedback Log | Admin nav item, new model |
-| Chat | Threads and messages; polling, no websockets |
+| ~~Follows~~ | Same branch |
+| ~~Public storefront~~ | Same branch |
+| ~~Customers list~~ | Same branch |
+| ~~Feedback Log~~ | Same branch |
+| Chat | Threads and messages; polling, no websockets — the only one left |
 
 Two things worth doing before more features, now that the backend is
 functionally complete:
