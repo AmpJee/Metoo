@@ -9,6 +9,7 @@ import { adminOrdersModule } from './modules/admin-orders/index.ts'
 import { adminSummaryModule } from './modules/admin-summary/index.ts'
 import { adminWithdrawalsModule } from './modules/admin-withdrawals/index.ts'
 import { authModule } from './modules/auth/index.ts'
+import { brandCustomersModule } from './modules/brand-customers/index.ts'
 import { brandDashboardModule } from './modules/brand-dashboard/index.ts'
 import { brandOrdersModule } from './modules/brand-orders/index.ts'
 import { cartModule } from './modules/cart/index.ts'
@@ -65,6 +66,7 @@ export const app = new Elysia()
   .use(ordersModule)
   .use(brandOrdersModule)
   .use(brandDashboardModule)
+  .use(brandCustomersModule)
   .use(adminOrdersModule)
   .use(walletModule)
   .use(adminWithdrawalsModule)
