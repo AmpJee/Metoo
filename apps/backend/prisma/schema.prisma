@@ -250,6 +250,7 @@ model BrandProfile {
   walletTxns  WalletTransaction[]
   withdrawals WithdrawalRequest[]
   threads     ChatThread[]
+  followers   BrandFollow[]
 
   @@map("brand_profiles")
 }
@@ -290,6 +291,7 @@ model RetailerProfile {
   reviews    Review[]
   documents  VerificationDocument[]
   threads    ChatThread[]
+  follows    BrandFollow[]
 
   @@map("retailer_profiles")
 }
@@ -646,6 +648,25 @@ model WithdrawalRequest {
   @@index([brandId, status])
   @@index([status])
   @@map("withdrawal_requests")
+}
+
+/// A retailer following a brand's storefront.
+///
+/// The design shows a follower count and a Follow button on every store page.
+/// Unique per pair, so following twice is idempotent rather than inflating the
+/// count.
+model BrandFollow {
+  id         String   @id @default(uuid())
+  retailerId String
+  brandId    String
+  createdAt  DateTime @default(now())
+
+  retailer RetailerProfile @relation(fields: [retailerId], references: [id], onDelete: Cascade)
+  brand    BrandProfile    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  @@unique([retailerId, brandId])
+  @@index([brandId])
+  @@map("brand_follows")
 }
 
 // ------------------------------------------------------------------- chat --
