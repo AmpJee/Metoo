@@ -9,6 +9,13 @@
 import type { Category, Prisma } from '../../generated/prisma/client.ts'
 import { prisma } from '../../config/prisma.ts'
 import { AppError } from '../../middleware/error.ts'
+import {
+  storeRatingsForBrands,
+  summariesForProducts,
+} from '../reviews/service.ts'
+
+/** A product nobody has rated yet. Null average, not zero — see domain/rating. */
+const EMPTY_RATING = { average: null, count: 0 } as const
 
 /** The single definition of "a retailer may see this". */
 const VISIBLE = {
@@ -68,8 +75,15 @@ export async function browse(filter: BrowseFilter) {
   const hasMore = items.length > limit
   const page = hasMore ? items.slice(0, limit) : items
 
+  // One groupBy for the whole page. Every card shows stars, so fetching them
+  // per product would be an N+1 on the busiest screen in the app.
+  const ratings = await summariesForProducts(page.map((p) => p.id))
+
   return {
-    items: page,
+    items: page.map((product) => ({
+      ...product,
+      rating: ratings.get(product.id) ?? EMPTY_RATING,
+    })),
     nextCursor: hasMore ? (page.at(-1)?.id ?? null) : null,
   }
 }
@@ -86,12 +100,14 @@ export async function getVisible(productId: string) {
     throw new AppError(404, 'PRODUCT_NOT_FOUND', 'No such product.')
   }
 
-  return product
+  const ratings = await summariesForProducts([product.id])
+
+  return { ...product, rating: ratings.get(product.id) ?? EMPTY_RATING }
 }
 
 /** Brands with at least one visible product — for a filter dropdown. */
-export function listBrands() {
-  return prisma.brandProfile.findMany({
+export async function listBrands() {
+  const brands = await prisma.brandProfile.findMany({
     where: {
       user: { status: 'ONBOARDED' },
       products: { some: { isActive: true } },
@@ -99,4 +115,13 @@ export function listBrands() {
     select: { id: true, name: true, logoUrl: true, province: true },
     orderBy: { name: 'asc' },
   })
+
+  // One groupBy across every brand rather than a query each: the filter
+  // dropdown loads the whole list at once.
+  const ratings = await storeRatingsForBrands(brands.map((b) => b.id))
+
+  return brands.map((brand) => ({
+    ...brand,
+    rating: ratings.get(brand.id) ?? EMPTY_RATING,
+  }))
 }

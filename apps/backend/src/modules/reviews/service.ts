@@ -10,6 +10,7 @@
  * delivered order containing the product.
  */
 import { prisma } from '../../config/prisma.ts'
+import type { RatingSummary } from '../../domain/rating.ts'
 import { checkRating, summarise, summariseTotals } from '../../domain/rating.ts'
 import { AppError } from '../../middleware/error.ts'
 
@@ -157,6 +158,35 @@ export async function storeRating(brandId: string) {
   })
 
   return summariseTotals(totals._sum.rating, totals._count._all)
+}
+
+/**
+ * Store ratings for many brands at once.
+ *
+ * Prisma cannot group by a relation field, so this aggregates the brand id in
+ * SQL directly. One query for a whole brand list rather than one per brand.
+ */
+export async function storeRatingsForBrands(brandIds: string[]) {
+  if (brandIds.length === 0) return new Map<string, RatingSummary>()
+
+  const rows = await prisma.$queryRaw<
+    Array<{ brandId: string; sum: bigint; count: bigint }>
+  >`
+    SELECT p."brandId" AS "brandId",
+           SUM(r."rating")::bigint AS sum,
+           COUNT(*)::bigint AS count
+    FROM reviews r
+    JOIN products p ON p.id = r."productId"
+    WHERE p."brandId" = ANY(${brandIds})
+    GROUP BY p."brandId"
+  `
+
+  return new Map(
+    rows.map((row) => [
+      row.brandId,
+      summariseTotals(Number(row.sum), Number(row.count)),
+    ])
+  )
 }
 
 /**

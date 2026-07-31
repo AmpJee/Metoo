@@ -17,6 +17,12 @@ const brandStub = t.Object({
   province: t.String(),
 })
 
+/** Null average rather than zero — an unrated product is not a bad one. */
+const rating = t.Object({
+  average: t.Union([t.Number(), t.Null()]),
+  count: t.Integer(),
+})
+
 const catalogProduct = t.Object({
   id: t.String(),
   name: t.String(),
@@ -29,6 +35,7 @@ const catalogProduct = t.Object({
   stockPacks: t.Union([t.Integer(), t.Null()]),
   createdAt: t.Date(),
   brand: brandStub,
+  rating,
 })
 
 export const catalogModule = new Elysia({
@@ -76,10 +83,14 @@ export const catalogModule = new Elysia({
   .get('/brands', () => service.listBrands(), {
     detail: {
       summary: 'Brands that currently have products',
-      description: 'For the brand filter on the browse screen.',
+      description:
+        'For the brand filter and the storefront header. Each carries its ' +
+        'store rating, aggregated across that brand’s product reviews.',
       tags: ['Catalog'],
     },
-    response: { 200: t.Array(brandStub) },
+    response: {
+      200: t.Array(t.Composite([brandStub, t.Object({ rating })])),
+    },
   })
 
   .get('/products/:id', ({ params }) => service.getVisible(params.id), {
