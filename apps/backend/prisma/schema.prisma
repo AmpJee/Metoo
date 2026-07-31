@@ -355,16 +355,29 @@ model Product {
   @@map("products")
 }
 
+/// The two save actions the marketplace shows on every product card.
+///
+/// FAVOURITE is a lasting "I like this brand's product"; SAVED_FOR_LATER is
+/// "not this order, maybe the next one". The design renders them as separate
+/// icons, so a product can legitimately be in both at once — which is why the
+/// unique key includes the kind.
+enum SavedItemKind {
+  FAVOURITE
+  SAVED_FOR_LATER
+}
+
 model Favourite {
-  id         String   @id @default(uuid())
+  id         String        @id @default(uuid())
   retailerId String
   productId  String
-  createdAt  DateTime @default(now())
+  kind       SavedItemKind @default(FAVOURITE)
+  createdAt  DateTime      @default(now())
 
   retailer RetailerProfile @relation(fields: [retailerId], references: [id], onDelete: Cascade)
   product  Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-  @@unique([retailerId, productId])
+  @@unique([retailerId, productId, kind])
+  @@index([retailerId, kind])
   @@map("favourites")
 }
 

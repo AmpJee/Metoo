@@ -14,7 +14,11 @@ import { brandOrdersModule } from './modules/brand-orders/index.ts'
 import { cartModule } from './modules/cart/index.ts'
 import { catalogModule } from './modules/catalog/index.ts'
 import { checkoutModule } from './modules/checkout/index.ts'
-import { favouritesModule } from './modules/favourites/index.ts'
+import {
+  favouritesModule,
+  savedForLaterModule,
+  savedStatusModule,
+} from './modules/favourites/index.ts'
 import { healthModule } from './modules/health/index.ts'
 import { ordersModule } from './modules/orders/index.ts'
 import { productsModule } from './modules/products/index.ts'
@@ -49,6 +53,8 @@ export const app = new Elysia()
   .use(productsModule)
   .use(catalogModule)
   .use(favouritesModule)
+  .use(savedForLaterModule)
+  .use(savedStatusModule)
   .use(cartModule)
   .use(checkoutModule)
   .use(ordersModule)
