@@ -41,6 +41,10 @@ export const brandDashboardModule = new Elysia({
             activeProducts: t.Integer(),
             totalProducts: t.Integer(),
             newOrders: t.Integer(),
+            rating: t.Object({
+              average: t.Union([t.Number(), t.Null()]),
+              count: t.Integer(),
+            }),
           }),
           revenueMinor: t.Integer(),
           orderCount: t.Integer(),

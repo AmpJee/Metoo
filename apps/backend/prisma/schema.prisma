@@ -287,6 +287,7 @@ model RetailerProfile {
   cart       Cart?
   orders     Order[]
   favourites Favourite[]
+  reviews    Review[]
   documents  VerificationDocument[]
   threads    ChatThread[]
 
@@ -347,6 +348,7 @@ model Product {
   cartItems  CartItem[]
   orderItems OrderItem[]
   favourites Favourite[]
+  reviews    Review[]
 
   @@index([category, isActive])
   @@index([brandId, isActive])
@@ -364,6 +366,35 @@ model Favourite {
 
   @@unique([retailerId, productId])
   @@map("favourites")
+}
+
+/// A retailer's star rating of a product they bought.
+///
+/// `orderId` is the proof of purchase: a review can only be written against a
+/// delivered order containing the product, which is what stops a brand rating
+/// its own goods or a competitor rating them down.
+///
+/// One review per retailer per product, not per order — a shop that reorders
+/// the same crisps every month has one opinion of them, not twelve.
+model Review {
+  id         String   @id @default(uuid())
+  productId  String
+  retailerId String
+  orderId    String
+  /// Whole stars, 1 to 5.
+  rating     Int
+  comment    String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  product  Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  retailer RetailerProfile @relation(fields: [retailerId], references: [id], onDelete: Cascade)
+  order    Order           @relation(fields: [orderId], references: [id])
+
+  @@unique([retailerId, productId])
+  // Listing a product's reviews newest-first is the common read.
+  @@index([productId, createdAt])
+  @@map("reviews")
 }
 
 model Cart {
@@ -442,6 +473,7 @@ model Order {
   payments      Payment[]
   returnRequest ReturnRequest?
   walletTxns    WalletTransaction[]
+  reviews       Review[]
 
   @@index([retailerId, status])
   @@index([brandId, status])

@@ -18,6 +18,7 @@ import {
   repeatOrderRate,
 } from '../../domain/analytics.ts'
 import { loadOrderFacts } from '../../lib/order-facts.ts'
+import { storeRating } from '../reviews/service.ts'
 
 /** Stock at or below this many packs is flagged on the dashboard. */
 const LOW_STOCK_PACKS = 10
@@ -70,16 +71,18 @@ function recentOrders(brandId: string) {
 export async function dashboard(brandId: string, period: Period) {
   const from = periodStart(period)
 
-  const [orders, trailingYear, products, recent, brand] = await Promise.all([
-    loadOrderFacts({ brandId, since: from }),
-    // Repeat rate is a trailing-twelve-month figure regardless of the toggle —
-    // a one-day window would say 0% on most days and mean nothing. The design
-    // captions it "Trailing 12 months" for the same reason.
-    loadOrderFacts({ brandId, since: periodStart('year') }),
-    stockLevels(brandId),
-    recentOrders(brandId),
-    storeStats(brandId),
-  ])
+  const [orders, trailingYear, products, recent, brand, rating] =
+    await Promise.all([
+      loadOrderFacts({ brandId, since: from }),
+      // Repeat rate is a trailing-twelve-month figure regardless of the toggle
+      // — a one-day window would say 0% on most days and mean nothing. The
+      // design captions it "Trailing 12 months" for the same reason.
+      loadOrderFacts({ brandId, since: periodStart('year') }),
+      stockLevels(brandId),
+      recentOrders(brandId),
+      storeStats(brandId),
+      storeRating(brandId),
+    ])
 
   return {
     period,
@@ -89,6 +92,8 @@ export async function dashboard(brandId: string, period: Period) {
       activeProducts: products.filter((p) => p.isActive).length,
       totalProducts: brand?._count.products ?? 0,
       newOrders: recent.filter((o) => o.status === 'PENDING').length,
+      // The "4.8 Store rating" tile. Null until someone reviews.
+      rating,
     },
     revenueMinor: orders.reduce((sum, o) => sum + o.subtotalMinor, 0),
     orderCount: orders.length,
