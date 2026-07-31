@@ -52,9 +52,9 @@ protection.
 
 ## Current state
 
-- **65 routes**, **18 modules**, **20 models**, **8 migrations**
+- **62 routes**, **18 modules**, **20 models**, **8 migrations**
 - **135 domain unit tests**, no database in CI
-- Merged through **PR #13**; `feature/uploads` open
+- Merged through **PR #19**; `develop` green
 
 **What works end to end:** a brand registers → admin walks it through the sales
 pipeline to ONBOARDED → brand lists products → retailer browses, fills a cart
@@ -98,7 +98,21 @@ separately, not just the branch tip.
 | #11 | `fix/consolidate-revenue-statuses` | Removed duplicated status lists and selects |
 | #12 | `feature/product-reviews` | Ratings with a verified-purchase guard |
 | #13 | `feature/returns` | Returns, refunds, wallet unwind |
-| — | `feature/uploads` *(open)* | Photo + verification document uploads |
+| #16 | `feature/uploads` | Photo + อย./ID uploads, signed URLs |
+| #15, #17 | `docs/backend-log` | This file |
+| #18 | `feature/commission` | Fashion & Accessories rate set to 800/500 |
+| #19 | `fix/commission-tests` | Repaired the tests PR #18 left failing |
+
+### In flight
+
+`feature/social-and-storefront` — five small screen items, unpushed. Save for
+later is built (schema `SavedItemKind`, migration, `/favourites` and
+`/saved-for-later` as separate routes over one model, plus a combined status
+route). Still to do on that branch: **follows**, **public storefront**,
+**seller Customers list**, **admin Feedback Log**.
+
+Its first commit was made while `develop` was red, so it wants rebasing onto
+current develop before anything else.
 
 ---
 
@@ -137,11 +151,12 @@ referral source, notes — not a signup queue.
 HOME_LIVING 500/300 bps at ≥30 orders/month). The admin prototype shows a flat
 10%, treated as placeholder data.
 
-### Open question
+**`FASHION_ACCESSORIES` is 800/500 bps**, matching Health & Beauty (PR #18).
+That category exists only in the design, so no rate came from the brief; it was
+set to match because both are discretionary, higher-margin goods rather than
+the staples a minimart restocks weekly.
 
-**`FASHION_ACCESSORIES` commission is a placeholder at 600/400 bps.** That
-category exists only in the design, so no commercial rate was ever set for it.
-One line in `domain/commission.ts` when someone decides.
+There are no open commercial questions left.
 
 ---
 
@@ -217,6 +232,13 @@ as variables fail with a confusing "bad math expression".
 quickly dies with `EADDRINUSE` and the old one keeps serving — which looks
 exactly like "the new routes 404". Check the log, not the response.
 
+**Changing a value in `src/domain/` almost always means changing its test.**
+That layer is where the real coverage is. PR #18 changed the Fashion &
+Accessories rate and shipped without touching `commission.test.ts`, leaving
+`develop` red until PR #19. Run `bun run test` before opening a PR, and read
+the count rather than trusting a chained shell command — `&&` on a lint step
+will happily carry on past a failing test suite.
+
 ---
 
 ## How verification is done
@@ -241,12 +263,25 @@ Purely design surface — nothing functional is missing:
 
 | Item | Notes |
 | --- | --- |
-| Save for later | The design treats it as separate from favourites; a `type` discriminator on `Favourite` |
+| ~~Save for later~~ | Done on `feature/social-and-storefront`, unmerged |
 | Follows | Follower counts and a Follow button on the storefront |
 | Public storefront | Brand page; mostly assembling what exists |
 | Customers list | Seller side, aggregated from orders |
 | Feedback Log | Admin nav item, new model |
 | Chat | Threads and messages; polling, no websockets |
+
+Two things worth doing before more features, now that the backend is
+functionally complete:
+
+**Deploy to Railway.** Both `railway.json` files exist and CI builds both
+images, but nothing has ever run outside a laptop. The frontend team is
+pointing at `localhost:3000`. Deploy problems are far cheaper to find now than
+the night before a demo.
+
+**Richer seed data.** The seed has 4 products and 4 accounts. The dashboards
+compute repeat rate, GMV-by-brand and fulfilment time, all of which look empty
+or nonsensical at that size. A demo wants several brands, dozens of orders
+across every state, and some reviews.
 
 Also outstanding: `gh` is not authenticated on the dev machine, so PRs are
 opened by hand; and the frontend (owned by teammates) builds against
