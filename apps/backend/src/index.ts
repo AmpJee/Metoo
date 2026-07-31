@@ -19,6 +19,7 @@ import { healthModule } from './modules/health/index.ts'
 import { ordersModule } from './modules/orders/index.ts'
 import { productsModule } from './modules/products/index.ts'
 import { reviewsModule } from './modules/reviews/index.ts'
+import { brandDocumentsModule, uploadsModule } from './modules/uploads/index.ts'
 import {
   adminReturnsModule,
   brandReturnsModule,
@@ -58,6 +59,8 @@ export const app = new Elysia()
   .use(adminWithdrawalsModule)
   .use(adminSummaryModule)
   .use(reviewsModule)
+  .use(uploadsModule)
+  .use(brandDocumentsModule)
   .use(returnsModule)
   .use(brandReturnsModule)
   .use(adminReturnsModule)
