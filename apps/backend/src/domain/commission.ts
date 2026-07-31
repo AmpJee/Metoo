@@ -17,7 +17,14 @@ export const VOLUME_THRESHOLD = 30
 /** Days counted as "the trailing month" when measuring volume. */
 export const VOLUME_WINDOW_DAYS = 30
 
-/** [new brand, high volume] in basis points. Source: the product brief. */
+/**
+ * [new brand, high volume] in basis points.
+ *
+ * The first three come from the product brief. Fashion & Accessories appears
+ * only in the design and was set to match Health & Beauty — both are
+ * discretionary, higher-margin goods rather than the staples a minimart
+ * restocks weekly.
+ */
 const RATES: Record<Category, readonly [number, number]> = {
   FOOD_BEVERAGE: [400, 200], // 4% / 2%
   HEALTH_BEAUTY: [800, 500], // 8% / 5%
