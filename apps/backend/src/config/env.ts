@@ -23,6 +23,22 @@ function optional(name: string, fallback: string): string {
   return value && value.trim() !== '' ? value : fallback
 }
 
+/**
+ * A secret must be long enough that brute-forcing the signature is not
+ * practical. 32 characters is the floor for HS256; a short one here would make
+ * every token in the system forgeable.
+ */
+function secret(name: string): string {
+  const value = required(name)
+  if (value.length < 32) {
+    throw new Error(
+      `${name} must be at least 32 characters, got ${value.length}.\n` +
+        `Generate one with: openssl rand -base64 32`
+    )
+  }
+  return value
+}
+
 function port(name: string, fallback: number): number {
   const raw = process.env[name]
   if (!raw) return fallback
@@ -49,6 +65,31 @@ export const env = Object.freeze({
 
   /** Browser origin allowed to call this API. */
   CORS_ORIGIN: optional('CORS_ORIGIN', 'http://localhost:5173'),
+
+  // --- Auth ----------------------------------------------------------------
+  // Two separate secrets on purpose: if the access secret ever leaks, refresh
+  // tokens signed with the other one are still trustworthy, so sessions can be
+  // rotated rather than all invalidated.
+  JWT_ACCESS_SECRET: secret('JWT_ACCESS_SECRET'),
+  JWT_REFRESH_SECRET: secret('JWT_REFRESH_SECRET'),
+
+  /** Short by design — the access token lives in localStorage, where any XSS
+   *  can read it. A small window limits what a stolen token is worth. */
+  JWT_ACCESS_TTL: optional('JWT_ACCESS_TTL', '15m'),
+  JWT_REFRESH_TTL: optional('JWT_REFRESH_TTL', '30d'),
+
+  // --- Supabase Storage ----------------------------------------------------
+  SUPABASE_URL: required('SUPABASE_URL'),
+
+  /** Service role key — full bypass of row-level security. Server-side only:
+   *  this must never reach the browser. */
+  SUPABASE_SERVICE_ROLE_KEY: required('SUPABASE_SERVICE_ROLE_KEY'),
+
+  SUPABASE_PUBLIC_BUCKET: optional('SUPABASE_PUBLIC_BUCKET', 'product-photos'),
+  SUPABASE_PRIVATE_BUCKET: optional(
+    'SUPABASE_PRIVATE_BUCKET',
+    'verification-docs'
+  ),
 })
 
 export const isProduction = env.NODE_ENV === 'production'
