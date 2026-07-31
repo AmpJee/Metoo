@@ -51,3 +51,88 @@ export async function createDocumentReadUrl(
 
   return data.signedUrl
 }
+
+export interface SignedUpload {
+  /** PUT the file here. Expires shortly after being issued. */
+  uploadUrl: string
+  /** Supabase's one-shot token for this upload. */
+  token: string
+  /** The object path to hand back when confirming. */
+  storageKey: string
+}
+
+/**
+ * Mint a one-shot upload URL.
+ *
+ * The client PUTs the file straight to Supabase rather than streaming it
+ * through this API — bytes never touch the server, which keeps a 10 MB scan
+ * off the request path entirely.
+ *
+ * The caller supplies the key; it is built server-side from the brand id, so a
+ * client cannot choose where its file lands.
+ */
+async function createUploadUrl(
+  bucket: string,
+  storageKey: string
+): Promise<SignedUpload> {
+  const { data, error } = await supabase.storage
+    .from(bucket)
+    .createSignedUploadUrl(storageKey)
+
+  if (error) {
+    throw new Error(
+      `Could not sign an upload for ${storageKey}: ${error.message}`
+    )
+  }
+
+  return { uploadUrl: data.signedUrl, token: data.token, storageKey }
+}
+
+/** Product photos go to the public bucket — they are shown to every buyer. */
+export function createPhotoUploadUrl(storageKey: string) {
+  return createUploadUrl(env.SUPABASE_PUBLIC_BUCKET, storageKey)
+}
+
+/** Verification documents go to the private bucket, read only via signed URL. */
+export function createDocumentUploadUrl(storageKey: string) {
+  return createUploadUrl(env.SUPABASE_PRIVATE_BUCKET, storageKey)
+}
+
+/**
+ * The permanent URL of a public object.
+ *
+ * Only valid for the public bucket. Calling this for a verification document
+ * would produce a URL that looks right and always 404s, which is worse than an
+ * error — hence two clearly separate functions.
+ */
+export function publicPhotoUrl(storageKey: string): string {
+  return supabase.storage
+    .from(env.SUPABASE_PUBLIC_BUCKET)
+    .getPublicUrl(storageKey).data.publicUrl
+}
+
+/**
+ * Confirm an object actually exists.
+ *
+ * The upload happens between the client and Supabase, so the API never sees
+ * whether it succeeded. Checking before recording a row is what stops a
+ * product pointing at a photo that was never uploaded.
+ */
+export async function objectExists(
+  bucket: string,
+  storageKey: string
+): Promise<boolean> {
+  const lastSlash = storageKey.lastIndexOf('/')
+  const folder = storageKey.slice(0, lastSlash)
+  const name = storageKey.slice(lastSlash + 1)
+
+  const { data, error } = await supabase.storage
+    .from(bucket)
+    .list(folder, { search: name, limit: 1 })
+
+  if (error) return false
+  return data.some((entry) => entry.name === name)
+}
+
+export const PUBLIC_BUCKET = env.SUPABASE_PUBLIC_BUCKET
+export const PRIVATE_BUCKET = env.SUPABASE_PRIVATE_BUCKET
