@@ -474,6 +474,7 @@ model Order {
   returnRequest ReturnRequest?
   walletTxns    WalletTransaction[]
   reviews       Review[]
+  refunds       Refund[]
 
   @@index([retailerId, status])
   @@index([brandId, status])
@@ -525,16 +526,29 @@ model Payment {
   @@map("payments")
 }
 
+/// Money returned to a retailer after an accepted return.
+///
+/// Attached to the ORDER rather than a Payment: payment is manual, so there
+/// are no Payment rows to hang a refund off. `paymentId` and `providerRefundId`
+/// stay optional for when a gateway exists — a card refund would fill both,
+/// a bank transfer fills `reference` instead.
 model Refund {
-  id             String   @id @default(uuid())
-  paymentId      String
-  stripeRefundId String   @unique
-  amountMinor    Int
-  reason         String?
-  createdAt      DateTime @default(now())
+  id               String   @id @default(uuid())
+  orderId          String
+  paymentId        String?
+  providerRefundId String?  @unique
+  amountMinor      Int
+  /// Bank transfer reference for a manual refund.
+  reference        String?
+  reason           String?
+  /// The admin or brand user who issued it.
+  issuedBy         String?
+  createdAt        DateTime @default(now())
 
-  payment Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  payment Payment? @relation(fields: [paymentId], references: [id], onDelete: SetNull)
 
+  @@index([orderId])
   @@map("refunds")
 }
 
