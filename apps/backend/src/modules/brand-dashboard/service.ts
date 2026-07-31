@@ -5,9 +5,9 @@
  * round-trips to render one page would show the numbers arriving one at a
  * time.
  *
- * Revenue counts orders that were actually confirmed. A PENDING order is a
- * request, not a sale, and showing it as revenue would make the figure fall
- * whenever a brand declines something.
+ * The queries are split into named functions below rather than one long
+ * Promise.all, so each tile's data has an obvious home and the assembly at the
+ * bottom reads as a description of the screen.
  */
 import { prisma } from '../../config/prisma.ts'
 import type { Period } from '../../domain/analytics.ts'
@@ -17,99 +17,69 @@ import {
   periodStart,
   repeatOrderRate,
 } from '../../domain/analytics.ts'
-
-/** Orders that count as revenue. Excludes PENDING and CANCELLED. */
-const EARNED_STATUSES = [
-  'CONFIRMED',
-  'PREPARING',
-  'READY_FOR_PICKUP',
-  'PICKED_UP',
-  'DELIVERED',
-  'SETTLED',
-  'CLOSED',
-] as const
+import { loadOrderFacts } from '../../lib/order-facts.ts'
 
 /** Stock at or below this many packs is flagged on the dashboard. */
 const LOW_STOCK_PACKS = 10
+
+/** How many recent orders the dashboard lists. */
+const RECENT_ORDER_LIMIT = 6
+
+function storeStats(brandId: string) {
+  return prisma.brandProfile.findUnique({
+    where: { id: brandId },
+    select: {
+      name: true,
+      createdAt: true,
+      _count: { select: { products: true } },
+    },
+  })
+}
+
+function stockLevels(brandId: string) {
+  return prisma.product.findMany({
+    where: { brandId },
+    select: {
+      id: true,
+      name: true,
+      photoUrl: true,
+      stockPacks: true,
+      isActive: true,
+    },
+    // Lowest stock first: the products needing attention are the point.
+    orderBy: { stockPacks: 'asc' },
+  })
+}
+
+function recentOrders(brandId: string) {
+  return prisma.order.findMany({
+    where: { brandId },
+    select: {
+      id: true,
+      orderNumber: true,
+      status: true,
+      totalMinor: true,
+      createdAt: true,
+      retailer: { select: { shopName: true } },
+    },
+    orderBy: { createdAt: 'desc' },
+    take: RECENT_ORDER_LIMIT,
+  })
+}
 
 export async function dashboard(brandId: string, period: Period) {
   const from = periodStart(period)
 
   const [orders, trailingYear, products, recent, brand] = await Promise.all([
-    prisma.order.findMany({
-      where: {
-        brandId,
-        status: { in: [...EARNED_STATUSES] },
-        createdAt: { gte: from },
-      },
-      select: {
-        createdAt: true,
-        subtotalMinor: true,
-        commissionMinor: true,
-        deliveryCostMinor: true,
-        retailerId: true,
-        deliveredAt: true,
-      },
-      // Oldest first: repeat-rate depends on which order came first.
-      orderBy: { createdAt: 'asc' },
-    }),
-
+    loadOrderFacts({ brandId, since: from }),
     // Repeat rate is a trailing-twelve-month figure regardless of the toggle —
-    // a one-day window would say 0% on most days and mean nothing.
-    prisma.order.findMany({
-      where: {
-        brandId,
-        status: { in: [...EARNED_STATUSES] },
-        createdAt: { gte: periodStart('year') },
-      },
-      select: {
-        createdAt: true,
-        subtotalMinor: true,
-        commissionMinor: true,
-        deliveryCostMinor: true,
-        retailerId: true,
-        deliveredAt: true,
-      },
-      orderBy: { createdAt: 'asc' },
-    }),
-
-    prisma.product.findMany({
-      where: { brandId },
-      select: {
-        id: true,
-        name: true,
-        photoUrl: true,
-        stockPacks: true,
-        isActive: true,
-      },
-      orderBy: { stockPacks: 'asc' },
-    }),
-
-    prisma.order.findMany({
-      where: { brandId },
-      select: {
-        id: true,
-        orderNumber: true,
-        status: true,
-        totalMinor: true,
-        createdAt: true,
-        retailer: { select: { shopName: true } },
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 6,
-    }),
-
-    prisma.brandProfile.findUnique({
-      where: { id: brandId },
-      select: {
-        name: true,
-        createdAt: true,
-        _count: { select: { products: true } },
-      },
-    }),
+    // a one-day window would say 0% on most days and mean nothing. The design
+    // captions it "Trailing 12 months" for the same reason.
+    loadOrderFacts({ brandId, since: periodStart('year') }),
+    stockLevels(brandId),
+    recentOrders(brandId),
+    storeStats(brandId),
   ])
-
-  const repeat = repeatOrderRate(trailingYear)
 
   return {
     period,
@@ -123,7 +93,7 @@ export async function dashboard(brandId: string, period: Period) {
     revenueMinor: orders.reduce((sum, o) => sum + o.subtotalMinor, 0),
     orderCount: orders.length,
     averageOrderValueMinor: averageOrderValue(orders),
-    repeatOrderRate: repeat,
+    repeatOrderRate: repeatOrderRate(trailingYear),
     chart: bucketByDay(orders, from),
     stock: products.map((p) => ({
       id: p.id,

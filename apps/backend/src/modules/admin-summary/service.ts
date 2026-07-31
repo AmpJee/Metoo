@@ -7,6 +7,7 @@
  */
 import { prisma } from '../../config/prisma.ts'
 import type { Period } from '../../domain/analytics.ts'
+import { EARNS_REVENUE } from '../../domain/order-state.ts'
 import {
   averageDaysToFirstOrder,
   averageFulfilmentHours,
@@ -15,37 +16,13 @@ import {
   periodStart,
   repeatOrderRate,
 } from '../../domain/analytics.ts'
-
-/** Orders that count as GMV. Excludes PENDING and CANCELLED. */
-const EARNED_STATUSES = [
-  'CONFIRMED',
-  'PREPARING',
-  'READY_FOR_PICKUP',
-  'PICKED_UP',
-  'DELIVERED',
-  'SETTLED',
-  'CLOSED',
-] as const
-
-const orderFactSelect = {
-  createdAt: true,
-  subtotalMinor: true,
-  commissionMinor: true,
-  deliveryCostMinor: true,
-  retailerId: true,
-  deliveredAt: true,
-}
+import { loadOrderFacts } from '../../lib/order-facts.ts'
 
 export async function summary(period: Period) {
   const from = periodStart(period)
 
   const [orders, pipeline, gmvByBrand, retailers] = await Promise.all([
-    prisma.order.findMany({
-      where: { status: { in: [...EARNED_STATUSES] }, createdAt: { gte: from } },
-      select: orderFactSelect,
-      // Oldest first: repeat-rate depends on which order came first.
-      orderBy: { createdAt: 'asc' },
-    }),
+    loadOrderFacts({ since: from }),
 
     prisma.user.groupBy({
       by: ['role', 'status'],
@@ -55,7 +32,7 @@ export async function summary(period: Period) {
 
     prisma.order.groupBy({
       by: ['brandId'],
-      where: { status: { in: [...EARNED_STATUSES] }, createdAt: { gte: from } },
+      where: { status: { in: [...EARNS_REVENUE] }, createdAt: { gte: from } },
       _sum: { subtotalMinor: true },
       orderBy: { _sum: { subtotalMinor: 'desc' } },
       take: 10,
