@@ -185,6 +185,7 @@ model User {
   refreshTokens RefreshToken[]
   messages      Message[]
   auditLogs     AuditLog[]       @relation("AuditActor")
+  feedback      Feedback[]       @relation("FeedbackAuthor")
 
   @@index([role, status])
   @@map("users")
@@ -667,6 +668,36 @@ model BrandFollow {
   @@unique([retailerId, brandId])
   @@index([brandId])
   @@map("brand_follows")
+}
+
+/// Feedback from anyone using the platform, for the admin Feedback Log.
+///
+/// Deliberately not tied to an order or a product: the design's nav item is a
+/// general channel, and forcing a category on someone reporting a problem is
+/// how you stop them reporting it.
+enum FeedbackStatus {
+  OPEN
+  RESOLVED
+}
+
+model Feedback {
+  id        String         @id @default(uuid())
+  /// Null once the author's account is removed — the feedback still matters.
+  authorId  String?
+  /// Snapshot of who wrote it, so the log stays readable after an account goes.
+  authorRole Role
+  authorLabel String
+  message   String
+  status    FeedbackStatus @default(OPEN)
+  adminNote String?
+  resolvedBy String?
+  resolvedAt DateTime?
+  createdAt DateTime       @default(now())
+
+  author User? @relation("FeedbackAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@map("feedback")
 }
 
 // ------------------------------------------------------------------- chat --

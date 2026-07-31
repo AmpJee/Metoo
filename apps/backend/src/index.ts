@@ -20,6 +20,10 @@ import {
   savedForLaterModule,
   savedStatusModule,
 } from './modules/favourites/index.ts'
+import {
+  adminFeedbackModule,
+  feedbackModule,
+} from './modules/feedback/index.ts'
 import { healthModule } from './modules/health/index.ts'
 import { ordersModule } from './modules/orders/index.ts'
 import { productsModule } from './modules/products/index.ts'
@@ -75,6 +79,8 @@ export const app = new Elysia()
   .use(storefrontModule)
   .use(followingModule)
   .use(storePreviewModule)
+  .use(feedbackModule)
+  .use(adminFeedbackModule)
   .use(uploadsModule)
   .use(brandDocumentsModule)
   .use(returnsModule)
