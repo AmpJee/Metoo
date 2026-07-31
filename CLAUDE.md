@@ -193,13 +193,15 @@ it to an **absent** query parameter — so an omitted `?category=` silently mean
 
 ## Status
 
-Done — the data layer (19 models, migrated and seeded), JWT auth with
-role/approval guards, the admin signup approval queue, product CRUD, catalog
-browse, favourites, the multi-brand cart, and checkout. A retailer can browse,
-fill a cart spanning brands, and place orders that split one per brand with the
-commission tier snapshotted.
+**Read [docs/BACKEND_LOG.md](docs/BACKEND_LOG.md) first.** It records what was
+built in what order, the decisions behind it, and the gotchas — enough to pick
+the work up cold.
 
-Still to build, in order: Stripe collection (card + PromptPay + webhooks, one
-`Payment` row per attempt), the 8-state order lifecycle, the wallet ledger with
-admin-approved withdrawals, returns with refunds, Supabase Storage uploads, and
-chat.
+Merged through PR #13: 65 routes, 18 modules, 20 models, 135 domain tests. The
+whole commercial loop runs — brand onboarding through the sales pipeline,
+catalog, multi-brand cart, per-brand checkout, the nine-state order lifecycle,
+the wallet ledger with admin-approved withdrawals, ratings, and returns with
+refunds. `feature/uploads` adds product photos and อย./ID documents.
+
+Left to build is design surface only: save-for-later, follows, the public
+storefront, the seller Customers list, the admin Feedback Log, and chat.
