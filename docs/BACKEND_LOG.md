@@ -41,9 +41,12 @@ Without one you get 401s and it looks like the docs are wrong.
 - `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` — the key is a JWT starting `eyJ`;
   the server refuses to boot otherwise
 
-**Known gap:** `SUPABASE_SERVICE_ROLE_KEY` is still a placeholder on the
-development machine, so the Supabase upload round trip has never been executed
-against real storage. Everything up to the storage call is verified.
+Storage is verified end to end against real Supabase: a signed URL is issued,
+the file PUTs straight to the bucket, and confirming records it. A product photo
+is readable at its public URL with no auth; a verification document is **not**
+(400 without a signed URL) and opens only through the short-lived link admin
+mints. The private bucket has no RLS policies at all — that absence is the
+protection.
 
 ---
 
