@@ -185,6 +185,7 @@ model User {
   refreshTokens RefreshToken[]
   messages      Message[]
   auditLogs     AuditLog[]       @relation("AuditActor")
+  feedback      Feedback[]       @relation("FeedbackAuthor")
 
   @@index([role, status])
   @@map("users")
@@ -250,6 +251,7 @@ model BrandProfile {
   walletTxns  WalletTransaction[]
   withdrawals WithdrawalRequest[]
   threads     ChatThread[]
+  followers   BrandFollow[]
 
   @@map("brand_profiles")
 }
@@ -290,6 +292,7 @@ model RetailerProfile {
   reviews    Review[]
   documents  VerificationDocument[]
   threads    ChatThread[]
+  follows    BrandFollow[]
 
   @@map("retailer_profiles")
 }
@@ -355,16 +358,29 @@ model Product {
   @@map("products")
 }
 
+/// The two save actions the marketplace shows on every product card.
+///
+/// FAVOURITE is a lasting "I like this brand's product"; SAVED_FOR_LATER is
+/// "not this order, maybe the next one". The design renders them as separate
+/// icons, so a product can legitimately be in both at once — which is why the
+/// unique key includes the kind.
+enum SavedItemKind {
+  FAVOURITE
+  SAVED_FOR_LATER
+}
+
 model Favourite {
-  id         String   @id @default(uuid())
+  id         String        @id @default(uuid())
   retailerId String
   productId  String
-  createdAt  DateTime @default(now())
+  kind       SavedItemKind @default(FAVOURITE)
+  createdAt  DateTime      @default(now())
 
   retailer RetailerProfile @relation(fields: [retailerId], references: [id], onDelete: Cascade)
   product  Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-  @@unique([retailerId, productId])
+  @@unique([retailerId, productId, kind])
+  @@index([retailerId, kind])
   @@map("favourites")
 }
 
@@ -633,6 +649,55 @@ model WithdrawalRequest {
   @@index([brandId, status])
   @@index([status])
   @@map("withdrawal_requests")
+}
+
+/// A retailer following a brand's storefront.
+///
+/// The design shows a follower count and a Follow button on every store page.
+/// Unique per pair, so following twice is idempotent rather than inflating the
+/// count.
+model BrandFollow {
+  id         String   @id @default(uuid())
+  retailerId String
+  brandId    String
+  createdAt  DateTime @default(now())
+
+  retailer RetailerProfile @relation(fields: [retailerId], references: [id], onDelete: Cascade)
+  brand    BrandProfile    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  @@unique([retailerId, brandId])
+  @@index([brandId])
+  @@map("brand_follows")
+}
+
+/// Feedback from anyone using the platform, for the admin Feedback Log.
+///
+/// Deliberately not tied to an order or a product: the design's nav item is a
+/// general channel, and forcing a category on someone reporting a problem is
+/// how you stop them reporting it.
+enum FeedbackStatus {
+  OPEN
+  RESOLVED
+}
+
+model Feedback {
+  id        String         @id @default(uuid())
+  /// Null once the author's account is removed — the feedback still matters.
+  authorId  String?
+  /// Snapshot of who wrote it, so the log stays readable after an account goes.
+  authorRole Role
+  authorLabel String
+  message   String
+  status    FeedbackStatus @default(OPEN)
+  adminNote String?
+  resolvedBy String?
+  resolvedAt DateTime?
+  createdAt DateTime       @default(now())
+
+  author User? @relation("FeedbackAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@map("feedback")
 }
 
 // ------------------------------------------------------------------- chat --

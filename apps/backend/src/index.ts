@@ -9,16 +9,30 @@ import { adminOrdersModule } from './modules/admin-orders/index.ts'
 import { adminSummaryModule } from './modules/admin-summary/index.ts'
 import { adminWithdrawalsModule } from './modules/admin-withdrawals/index.ts'
 import { authModule } from './modules/auth/index.ts'
+import { brandCustomersModule } from './modules/brand-customers/index.ts'
 import { brandDashboardModule } from './modules/brand-dashboard/index.ts'
 import { brandOrdersModule } from './modules/brand-orders/index.ts'
 import { cartModule } from './modules/cart/index.ts'
 import { catalogModule } from './modules/catalog/index.ts'
 import { checkoutModule } from './modules/checkout/index.ts'
-import { favouritesModule } from './modules/favourites/index.ts'
+import {
+  favouritesModule,
+  savedForLaterModule,
+  savedStatusModule,
+} from './modules/favourites/index.ts'
+import {
+  adminFeedbackModule,
+  feedbackModule,
+} from './modules/feedback/index.ts'
 import { healthModule } from './modules/health/index.ts'
 import { ordersModule } from './modules/orders/index.ts'
 import { productsModule } from './modules/products/index.ts'
 import { reviewsModule } from './modules/reviews/index.ts'
+import {
+  followingModule,
+  storePreviewModule,
+  storefrontModule,
+} from './modules/storefront/index.ts'
 import { brandDocumentsModule, uploadsModule } from './modules/uploads/index.ts'
 import {
   adminReturnsModule,
@@ -49,16 +63,24 @@ export const app = new Elysia()
   .use(productsModule)
   .use(catalogModule)
   .use(favouritesModule)
+  .use(savedForLaterModule)
+  .use(savedStatusModule)
   .use(cartModule)
   .use(checkoutModule)
   .use(ordersModule)
   .use(brandOrdersModule)
   .use(brandDashboardModule)
+  .use(brandCustomersModule)
   .use(adminOrdersModule)
   .use(walletModule)
   .use(adminWithdrawalsModule)
   .use(adminSummaryModule)
   .use(reviewsModule)
+  .use(storefrontModule)
+  .use(followingModule)
+  .use(storePreviewModule)
+  .use(feedbackModule)
+  .use(adminFeedbackModule)
   .use(uploadsModule)
   .use(brandDocumentsModule)
   .use(returnsModule)
