@@ -52,9 +52,10 @@ protection.
 
 ## Current state
 
-- **65 routes**, **18 modules**, **20 models**, **8 migrations**
+- **79 routes**, **21 modules**, **22 models**, **11 migrations**
 - **135 domain unit tests**, no database in CI
-- Merged through **PR #13**; `feature/uploads` open
+- Merged through **PR #19**; `develop` green, `feature/social-and-storefront`
+  pushed and awaiting a PR
 
 **What works end to end:** a brand registers → admin walks it through the sales
 pipeline to ONBOARDED → brand lists products → retailer browses, fills a cart
@@ -98,7 +99,58 @@ separately, not just the branch tip.
 | #11 | `fix/consolidate-revenue-statuses` | Removed duplicated status lists and selects |
 | #12 | `feature/product-reviews` | Ratings with a verified-purchase guard |
 | #13 | `feature/returns` | Returns, refunds, wallet unwind |
-| — | `feature/uploads` *(open)* | Photo + verification document uploads |
+| #16 | `feature/uploads` | Photo + อย./ID uploads, signed URLs |
+| #15, #17 | `docs/backend-log` | This file |
+| #18 | `feature/commission` | Fashion & Accessories rate set to 800/500 |
+| #19 | `fix/commission-tests` | Repaired the tests PR #18 left failing |
+
+### In flight
+
+`feature/social-and-storefront` — **complete and pushed**, four commits, no PR
+opened yet. All five screen items are done:
+
+| Commit | What |
+| --- | --- |
+| `d02cf04` | Save for later — `SavedItemKind` on the existing `Favourite` model |
+| `7b66039` | Brand follows and the public storefront |
+| `d06da56` | Seller Customers list |
+| `069c848` | Admin Feedback Log |
+
+Four decisions on that branch worth not re-litigating:
+
+**Save for later is a discriminator, not a second model.** The design shows two
+distinct actions, but they are the same shape — a retailer, a product, a date.
+`SavedItemKind` on `Favourite` with `@@unique([retailerId, productId, kind])`
+means a product can sit in both lists at once, which is what the screens do,
+and unfavouriting cannot disturb the saved list.
+
+**A customer is not a row you create.** The Customers screen is a `groupBy`
+over orders, so nothing has to be kept in sync. It counts `EARNS_REVENUE`
+statuses only — an unaccepted request or a cancelled order does not make
+someone a customer — and reuses that constant rather than restating it, so the
+Customers screen and the dashboard cannot disagree about what a sale is.
+Sorted by spend, because the question is who matters, not who is newest.
+
+**One storefront query serves two callers.** `/stores/:brandId` (retailer) and
+`/brand/storefront` (the seller's own preview) return the same shape;
+`following` is `null` for a viewer who is not a retailer, rather than `false`.
+The seller previewing their page sees exactly what a retailer sees.
+
+**Feedback uses `requireAuth`, not `requireAccess`.** Anyone signed in can
+write, including accounts still in the pipeline — someone stuck waiting on an
+อย. review is precisely who most needs a way to say so, and gating the
+complaint channel on the thing being complained about is how you stop hearing
+about it. There is no category or subject field for the same reason. The author
+label is snapshotted at write time and `authorId` is `SET NULL` on delete, so
+the log survives the account closing.
+
+Verified live end to end: a product held in both save lists simultaneously
+(`{favourite: true, savedForLater: true}`) and unfavouriting leaving
+save-for-later intact; three POSTs to `/follow` yielding `followerCount: 1`;
+the Customers figures cross-checked against raw SQL (402,000 / 54,000 satang,
+with a cancelled ฿8,940 order correctly excluded); and a not-yet-onboarded
+brand submitting feedback, an admin resolving it, the author reading the reply,
+and a second resolve returning 422.
 
 ---
 
@@ -137,11 +189,12 @@ referral source, notes — not a signup queue.
 HOME_LIVING 500/300 bps at ≥30 orders/month). The admin prototype shows a flat
 10%, treated as placeholder data.
 
-### Open question
+**`FASHION_ACCESSORIES` is 800/500 bps**, matching Health & Beauty (PR #18).
+That category exists only in the design, so no rate came from the brief; it was
+set to match because both are discretionary, higher-margin goods rather than
+the staples a minimart restocks weekly.
 
-**`FASHION_ACCESSORIES` commission is a placeholder at 600/400 bps.** That
-category exists only in the design, so no commercial rate was ever set for it.
-One line in `domain/commission.ts` when someone decides.
+There are no open commercial questions left.
 
 ---
 
@@ -217,6 +270,13 @@ as variables fail with a confusing "bad math expression".
 quickly dies with `EADDRINUSE` and the old one keeps serving — which looks
 exactly like "the new routes 404". Check the log, not the response.
 
+**Changing a value in `src/domain/` almost always means changing its test.**
+That layer is where the real coverage is. PR #18 changed the Fashion &
+Accessories rate and shipped without touching `commission.test.ts`, leaving
+`develop` red until PR #19. Run `bun run test` before opening a PR, and read
+the count rather than trusting a chained shell command — `&&` on a lint step
+will happily carry on past a failing test suite.
+
 ---
 
 ## How verification is done
@@ -241,12 +301,25 @@ Purely design surface — nothing functional is missing:
 
 | Item | Notes |
 | --- | --- |
-| Save for later | The design treats it as separate from favourites; a `type` discriminator on `Favourite` |
-| Follows | Follower counts and a Follow button on the storefront |
-| Public storefront | Brand page; mostly assembling what exists |
-| Customers list | Seller side, aggregated from orders |
-| Feedback Log | Admin nav item, new model |
-| Chat | Threads and messages; polling, no websockets |
+| ~~Save for later~~ | Done on `feature/social-and-storefront`, unmerged |
+| ~~Follows~~ | Same branch |
+| ~~Public storefront~~ | Same branch |
+| ~~Customers list~~ | Same branch |
+| ~~Feedback Log~~ | Same branch |
+| Chat | Threads and messages; polling, no websockets — the only one left |
+
+Two things worth doing before more features, now that the backend is
+functionally complete:
+
+**Deploy to Railway.** Both `railway.json` files exist and CI builds both
+images, but nothing has ever run outside a laptop. The frontend team is
+pointing at `localhost:3000`. Deploy problems are far cheaper to find now than
+the night before a demo.
+
+**Richer seed data.** The seed has 4 products and 4 accounts. The dashboards
+compute repeat rate, GMV-by-brand and fulfilment time, all of which look empty
+or nonsensical at that size. A demo wants several brands, dozens of orders
+across every state, and some reviews.
 
 Also outstanding: `gh` is not authenticated on the dev machine, so PRs are
 opened by hand; and the frontend (owned by teammates) builds against
