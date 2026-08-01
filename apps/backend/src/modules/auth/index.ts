@@ -69,9 +69,10 @@ export const authModule = new Elysia({ name: 'auth', prefix: '/auth' })
       detail: {
         summary: 'Register a brand or retailer',
         description:
-          'Creates the account and its profile, always with status PENDING. ' +
-          'An admin must approve it before protected routes become reachable. ' +
-          'Admins are not self-registerable.',
+          'Creates the account and its profile at pipeline status ' +
+          'NOT_CONTACTED. An admin walks it to ONBOARDED before trading ' +
+          'routes become reachable — until then login succeeds but those ' +
+          'routes return 403. Admins are not self-registerable.',
         tags: ['Auth'],
       },
       response: { 201: session },
