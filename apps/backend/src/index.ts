@@ -4,6 +4,7 @@ import { Elysia } from 'elysia'
 import { env } from './config/env.ts'
 import { logger } from './lib/logger.ts'
 import { errorHandler } from './middleware/error.ts'
+import { retailerProfileModule } from './modules/account/index.ts'
 import { adminModule } from './modules/admin/index.ts'
 import { adminOrdersModule } from './modules/admin-orders/index.ts'
 import { adminSummaryModule } from './modules/admin-summary/index.ts'
@@ -59,6 +60,7 @@ export const app = new Elysia()
   .use(healthModule)
   // Register new domain modules here.
   .use(authModule)
+  .use(retailerProfileModule)
   .use(adminModule)
   .use(productsModule)
   .use(catalogModule)
