@@ -40,8 +40,13 @@ const productBody = t.Object({
   description: t.Optional(t.String({ maxLength: 2000 })),
   photoUrl: t.Optional(t.String({ format: 'uri', maxLength: 2000 })),
   pricePerPackMinor: t.Integer({ minimum: 1 }),
-  minPacks: t.Integer({ minimum: 1, default: 1 }),
-  unitsPerPack: t.Integer({ minimum: 1, default: 1 }),
+  // Optional with NO schema `default`. Elysia applies a TypeBox default to an
+  // absent property and t.Partial keeps defaults, so `default: 1` here meant
+  // every PATCH silently carried minPacks:1 — renaming a product reset its
+  // real minimum order. Prisma's @default(1) covers creation instead, where it
+  // cannot leak into an update.
+  minPacks: t.Optional(t.Integer({ minimum: 1 })),
+  unitsPerPack: t.Optional(t.Integer({ minimum: 1 })),
   category: categorySchema,
   stockPacks: t.Optional(t.Integer({ minimum: 0 })),
   isActive: t.Optional(t.Boolean()),

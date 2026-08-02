@@ -4,6 +4,19 @@
 import { t } from 'elysia'
 
 /**
+ * A warning that applies to every schema in this codebase, not just enums:
+ *
+ * **Elysia applies a TypeBox `default` to an ABSENT property.** That is fine
+ * on a POST and wrong on a PATCH, where absent means "leave it alone" — and
+ * `t.Partial` preserves defaults, so a shared body schema carries them into
+ * the update route. `minPacks: t.Integer({ default: 1 })` on the product body
+ * meant renaming a product silently reset its minimum order to 1.
+ *
+ * Never put `default` on a body field that a PATCH also uses. Let the database
+ * column default handle creation, where it cannot leak into an update.
+ */
+
+/**
  * An optional enum-valued query parameter.
  *
  * Why this exists: `t.UnionEnum(values)` emits `default: values[0]`, and Elysia

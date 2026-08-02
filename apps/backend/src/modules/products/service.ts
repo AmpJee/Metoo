@@ -18,8 +18,9 @@ export interface ProductInput {
   description?: string
   photoUrl?: string
   pricePerPackMinor: number
-  minPacks: number
-  unitsPerPack: number
+  /** Omitted on create means Prisma's @default(1). Never defaulted at the edge. */
+  minPacks?: number
+  unitsPerPack?: number
   category: Category
   stockPacks?: number
   isActive?: boolean
