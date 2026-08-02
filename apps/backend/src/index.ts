@@ -18,6 +18,7 @@ import { brandDashboardModule } from './modules/brand-dashboard/index.ts'
 import { brandOrdersModule } from './modules/brand-orders/index.ts'
 import { cartModule } from './modules/cart/index.ts'
 import { catalogModule } from './modules/catalog/index.ts'
+import { chatModule } from './modules/chat/index.ts'
 import { checkoutModule } from './modules/checkout/index.ts'
 import {
   favouritesModule,
@@ -72,6 +73,7 @@ export const app = new Elysia()
   .use(savedForLaterModule)
   .use(savedStatusModule)
   .use(cartModule)
+  .use(chatModule)
   .use(checkoutModule)
   .use(ordersModule)
   .use(brandOrdersModule)

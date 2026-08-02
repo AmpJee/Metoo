@@ -29,6 +29,29 @@ export async function brandIdForUser(userId: string): Promise<string> {
   return brand.id
 }
 
+/**
+ * Whichever profile this user has, without throwing when they have neither.
+ *
+ * The two functions above answer "this is a brand, give me its id" and are
+ * right to throw. Chat asks a different question — "which side of a
+ * conversation is this?" — where an admin legitimately holds neither, and
+ * that has to come back as an answer rather than a 404.
+ */
+export async function profileIdsForUser(userId: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      brand: { select: { id: true } },
+      retailer: { select: { id: true } },
+    },
+  })
+
+  return {
+    brandId: user?.brand?.id ?? null,
+    retailerId: user?.retailer?.id ?? null,
+  }
+}
+
 export async function retailerIdForUser(userId: string): Promise<string> {
   const retailer = await prisma.retailerProfile.findUnique({
     where: { userId },
