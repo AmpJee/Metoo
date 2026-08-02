@@ -185,6 +185,15 @@ const products = [
     minPacks: 12,
     unitsPerPack: 12,
     stockPacks: 480,
+    description:
+      'Thin jasmine rice crackers, lightly salted. Shelf-stable and steady on a counter display.',
+    sku: 'JRC-090',
+    // Real GTINs — the check digit is verified on write, so a made-up number
+    // here would make the seed fail its own validation.
+    barcode: '8850999320014',
+    packWeightGrams: 1200,
+    ingredients: 'Jasmine rice, palm oil, salt, cane sugar',
+    shelfLifeDays: 270,
   },
   {
     name: 'Coconut Soap Bar 100g',
@@ -193,6 +202,13 @@ const products = [
     minPacks: 24,
     unitsPerPack: 6,
     stockPacks: 300,
+    description:
+      'Cold-pressed coconut oil soap, unscented. Sells well next to the till.',
+    sku: 'CSB-100',
+    barcode: '8851234567898',
+    packWeightGrams: 700,
+    ingredients: 'Coconut oil, water, sodium hydroxide, glycerin, coconut milk',
+    shelfLifeDays: 1095,
   },
   {
     name: 'Woven Rattan Basket',
@@ -201,6 +217,12 @@ const products = [
     minPacks: 6,
     unitsPerPack: 2,
     stockPacks: 60,
+    description:
+      'Hand-woven rattan, two sizes nested. No two are identical, which is the point.',
+    sku: 'WRB-001',
+    // No barcode and no shelf life: a non-food handmade good genuinely has
+    // neither, which keeps a null in the seed for the frontend to render.
+    packWeightGrams: 1800,
   },
   {
     // Min 6 packs at 5 units/pack: the exact shape that the old case-size
@@ -211,6 +233,11 @@ const products = [
     minPacks: 6,
     unitsPerPack: 5,
     stockPacks: 96,
+    description:
+      'Vegetable-tanned leather, four card slots. Ages rather than wears out.',
+    sku: 'SCH-004',
+    barcode: '036000291452',
+    packWeightGrams: 450,
   },
 ]
 
