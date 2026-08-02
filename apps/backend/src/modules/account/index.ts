@@ -2,7 +2,37 @@ import { Elysia, t } from 'elysia'
 import { brandIdForUser, retailerIdForUser } from '../../lib/profile.ts'
 import { CONTACT_FIELDS } from '../../lib/schema.ts'
 import { requireAccess } from '../../middleware/auth.ts'
+import * as uploads from '../uploads/service.ts'
 import * as service from './service.ts'
+
+/**
+ * The two-step upload contract, identical for both roles.
+ *
+ * POST returns a one-shot signed URL; the client PUTs the file straight to
+ * Supabase; PUT here records it. The server picks the storage key, so a caller
+ * can never write outside its own folder.
+ */
+const avatarRequestBody = t.Object({
+  contentType: t.String({ maxLength: 100 }),
+  sizeBytes: t.Integer({ minimum: 1 }),
+})
+const signedUpload = t.Object({ uploadUrl: t.String(), storageKey: t.String() })
+const avatarConfirmBody = t.Object({ storageKey: t.String({ maxLength: 500 }) })
+const avatarResult = t.Object({
+  id: t.String(),
+  name: t.String(),
+  /** The retailer's avatarUrl comes back under this name too, so one component renders both. */
+  logoUrl: t.Union([t.String(), t.Null()]),
+})
+
+const avatarDetail = (who: string) => ({
+  description:
+    `Step one returns a signed URL; PUT the file to it, then confirm with the ` +
+    `returned storageKey. JPEG, PNG or WebP up to 5 MB. The key is built from ` +
+    `your own ${who} id, so an upload can never land in another account's ` +
+    `folder, and confirming a key that is not yours is a 403.`,
+  tags: [who === 'brand' ? 'Brand · Profile' : 'Retailer · Profile'],
+})
 
 const retailerProfile = t.Object({
   id: t.String(),
@@ -12,6 +42,7 @@ const retailerProfile = t.Object({
   province: t.String(),
   postalCode: t.String(),
   taxId: t.Union([t.String(), t.Null()]),
+  avatarUrl: t.Union([t.String(), t.Null()]),
   updatedAt: t.Date(),
 })
 
@@ -67,6 +98,43 @@ export const retailerProfileModule = new Elysia({
         tags: ['Retailer · Profile'],
       },
       response: { 200: retailerProfile },
+    }
+  )
+
+  .post(
+    '/picture',
+    async ({ auth, body }) =>
+      uploads.requestAvatarUpload({
+        owner: 'retailers',
+        ownerId: await retailerIdForUser(auth.userId),
+        contentType: body.contentType,
+        sizeBytes: body.sizeBytes,
+      }),
+    {
+      body: avatarRequestBody,
+      detail: {
+        summary: 'Get a signed URL for your shop photo',
+        ...avatarDetail('retailer'),
+      },
+      response: { 200: signedUpload },
+    }
+  )
+
+  .put(
+    '/picture',
+    async ({ auth, body }) =>
+      uploads.confirmAvatarUpload({
+        owner: 'retailers',
+        ownerId: await retailerIdForUser(auth.userId),
+        storageKey: body.storageKey,
+      }),
+    {
+      body: avatarConfirmBody,
+      detail: {
+        summary: 'Confirm your shop photo',
+        ...avatarDetail('retailer'),
+      },
+      response: { 200: avatarResult },
     }
   )
 
@@ -164,5 +232,46 @@ export const brandProfileModule = new Elysia({
         tags: ['Brand · Profile'],
       },
       response: { 200: brandProfile },
+    }
+  )
+
+  .post(
+    '/picture',
+    async ({ auth, body }) =>
+      uploads.requestAvatarUpload({
+        owner: 'brands',
+        ownerId: await brandIdForUser(auth.userId),
+        contentType: body.contentType,
+        sizeBytes: body.sizeBytes,
+      }),
+    {
+      body: avatarRequestBody,
+      detail: {
+        summary: 'Get a signed URL for your logo',
+        ...avatarDetail('brand'),
+      },
+      response: { 200: signedUpload },
+    }
+  )
+
+  .put(
+    '/picture',
+    async ({ auth, body }) =>
+      uploads.confirmAvatarUpload({
+        owner: 'brands',
+        ownerId: await brandIdForUser(auth.userId),
+        storageKey: body.storageKey,
+      }),
+    {
+      body: avatarConfirmBody,
+      detail: {
+        summary: 'Confirm your logo',
+        ...avatarDetail('brand'),
+        description:
+          avatarDetail('brand').description +
+          ' Until this is set, logoUrl is null everywhere it is read — the ' +
+          'catalog, the storefront and every order row.',
+      },
+      response: { 200: avatarResult },
     }
   )
