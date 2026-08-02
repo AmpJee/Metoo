@@ -268,3 +268,60 @@ export async function findUserById(userId: string) {
     retailer: user.retailer,
   }
 }
+
+/**
+ * Change a password, then re-issue the session.
+ *
+ * Every existing refresh token is revoked, including the caller's own, and a
+ * fresh pair is returned. That is the point of the operation: someone changing
+ * a password usually suspects another session exists, and leaving those alive
+ * would defeat the change. Handing back a new pair keeps the caller signed in
+ * while everyone else is signed out.
+ */
+export async function changePassword(params: {
+  userId: string
+  currentPassword: string
+  newPassword: string
+}) {
+  const user = await prisma.user.findUnique({ where: { id: params.userId } })
+
+  if (!user) {
+    throw new AppError(404, 'USER_NOT_FOUND', 'This account no longer exists.')
+  }
+
+  if (!(await verifyPassword(params.currentPassword, user.passwordHash))) {
+    // 403, not 401: the caller *is* authenticated. A 401 would tell the
+    // frontend to bounce them to /login, losing the form they just filled in.
+    throw new AppError(
+      403,
+      'CURRENT_PASSWORD_WRONG',
+      'That is not your current password.'
+    )
+  }
+
+  if (params.currentPassword === params.newPassword) {
+    throw new AppError(
+      422,
+      'PASSWORD_UNCHANGED',
+      'The new password must be different from the current one.'
+    )
+  }
+
+  const passwordHash = await hashPassword(params.newPassword)
+
+  return prisma.$transaction(async (tx) => {
+    await tx.user.update({
+      where: { id: user.id },
+      data: { passwordHash },
+    })
+
+    await tx.refreshToken.updateMany({
+      where: { userId: user.id, revokedAt: null },
+      data: { revokedAt: new Date() },
+    })
+
+    // Issued inside the transaction so the new token cannot be revoked by the
+    // sweep above — order matters here, not just atomicity.
+    return issueTokens(user, tx)
+  })
+}

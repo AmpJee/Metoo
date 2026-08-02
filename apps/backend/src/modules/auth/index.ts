@@ -127,6 +127,36 @@ export const authModule = new Elysia({ name: 'auth', prefix: '/auth' })
   )
 
   .use(requireAuth)
+
+  .post(
+    '/password',
+    ({ auth, body }) =>
+      service.changePassword({
+        userId: auth.userId,
+        currentPassword: body.currentPassword,
+        newPassword: body.newPassword,
+      }),
+    {
+      body: t.Object({
+        currentPassword: t.String({ minLength: 1 }),
+        newPassword: password,
+      }),
+      detail: {
+        summary: 'Change your password',
+        description:
+          'Requires the current password — an open session is not enough, ' +
+          'because a borrowed laptop is exactly the case this protects ' +
+          'against. Every other session is signed out, and a fresh token pair ' +
+          'comes back so the caller stays signed in. Store both: the old ' +
+          'refresh token is dead the moment this returns. Any role.',
+        tags: ['Auth'],
+      },
+      response: {
+        200: t.Object({ accessToken: t.String(), refreshToken: t.String() }),
+      },
+    }
+  )
+
   .get('/me', ({ auth }) => service.findUserById(auth.userId), {
     detail: {
       summary: 'Current account',
