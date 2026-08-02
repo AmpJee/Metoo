@@ -194,6 +194,8 @@ const products = [
     packWeightGrams: 1200,
     ingredients: 'Jasmine rice, palm oil, salt, cane sugar',
     shelfLifeDays: 270,
+    // Every preset is >= minPacks (12), which the domain check enforces.
+    packPresets: [12, 24, 48, 96],
   },
   {
     name: 'Coconut Soap Bar 100g',
@@ -209,6 +211,7 @@ const products = [
     packWeightGrams: 700,
     ingredients: 'Coconut oil, water, sodium hydroxide, glycerin, coconut milk',
     shelfLifeDays: 1095,
+    packPresets: [24, 48, 72, 120],
   },
   {
     name: 'Woven Rattan Basket',
@@ -220,8 +223,12 @@ const products = [
     description:
       'Hand-woven rattan, two sizes nested. No two are identical, which is the point.',
     sku: 'WRB-001',
-    // No barcode and no shelf life: a non-food handmade good genuinely has
-    // neither, which keeps a null in the seed for the frontend to render.
+    // Deliberately empty: a handmade item is ordered on purpose, not by
+    // tapping a shortcut. The frontend needs this case to build the
+    // stepper-only layout against.
+    packPresets: [],
+    // No barcode and no shelf life either: a non-food handmade good genuinely
+    // has neither, which keeps nulls in the seed for the frontend to render.
     packWeightGrams: 1800,
   },
   {
@@ -238,6 +245,7 @@ const products = [
     sku: 'SCH-004',
     barcode: '036000291452',
     packWeightGrams: 450,
+    packPresets: [6, 12, 24],
   },
 ]
 

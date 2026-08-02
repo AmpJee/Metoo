@@ -47,6 +47,10 @@ const catalogProduct = t.Object({
 const catalogProductDetail = t.Composite([
   catalogProduct,
   t.Object({
+    /** Extra images for the thumbnail strip. The cover is `photoUrl`. */
+    galleryUrls: t.Array(t.String()),
+    /** The "Amount" quick-pick buttons, in display order. */
+    packPresets: t.Array(t.Integer()),
     sku: t.Union([t.String(), t.Null()]),
     barcode: t.Union([t.String(), t.Null()]),
     packWeightGrams: t.Union([t.Integer(), t.Null()]),

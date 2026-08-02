@@ -331,7 +331,12 @@ model Product {
   brandId           String
   name              String
   description       String?
+  /// The cover image — the one every card, cart line and order row renders.
   photoUrl          String?
+  /// Extra images for the product page's thumbnail strip, in display order.
+  /// Separate from `photoUrl` so a list query stays one column wide: eight
+  /// surfaces read the cover, and only the detail page needs the rest.
+  galleryUrls       String[] @default([])
   /// Price of ONE PACK, in satang.
   pricePerPackMinor Int
   /// Fewest packs a retailer may order. Enforced when writing a cart item, not
@@ -340,6 +345,11 @@ model Product {
   minPacks          Int      @default(1)
   /// Descriptive only: how many units are inside one pack.
   unitsPerPack      Int      @default(1)
+  /// The "Amount" quick-pick buttons beside the stepper, in display order.
+  /// Per-product because a 12-pack minimum and a single cannot offer the same
+  /// shortcuts. Every entry must be >= minPacks, or the button renders a
+  /// quantity the cart will refuse.
+  packPresets       Int[]    @default([])
   category          Category
   /// Stock on hand, in packs.
   stockPacks        Int?

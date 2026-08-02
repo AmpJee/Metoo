@@ -46,6 +46,8 @@ const catalogSelect = {
  */
 const catalogDetailSelect = {
   ...catalogSelect,
+  galleryUrls: true,
+  packPresets: true,
   sku: true,
   barcode: true,
   packWeightGrams: true,

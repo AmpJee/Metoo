@@ -9,6 +9,7 @@
 import type { Category, Prisma } from '../../generated/prisma/client.ts'
 import { prisma } from '../../config/prisma.ts'
 import { checkBarcode } from '../../domain/barcode.ts'
+import { MAX_PRESETS, checkPackPresets } from '../../domain/pack-presets.ts'
 import { AppError } from '../../middleware/error.ts'
 
 export { brandIdForUser } from '../../lib/profile.ts'
@@ -29,6 +30,8 @@ export interface ProductInput {
   packWeightGrams?: number | null
   ingredients?: string | null
   shelfLifeDays?: number | null
+  galleryUrls?: string[]
+  packPresets?: number[]
 }
 
 const BARCODE_MESSAGES: Record<string, string> = {
@@ -48,6 +51,37 @@ function assertBarcode(barcode: string | null | undefined) {
   const result = checkBarcode(barcode)
   if (!result.ok) {
     throw new AppError(422, result.code, BARCODE_MESSAGES[result.code]!)
+  }
+}
+
+const PRESET_MESSAGES: Record<string, (v?: number) => string> = {
+  PRESETS_TOO_MANY: () =>
+    `At most ${MAX_PRESETS} quick-pick amounts — the row does not fit more.`,
+  PRESETS_NOT_ASCENDING: (v) =>
+    `Quick-pick amounts must increase; ${v} does not follow the one before it.`,
+  PRESETS_BELOW_MINIMUM: (v) =>
+    `${v} is below this product’s minimum order, so that button could never be used.`,
+}
+
+/**
+ * Checked against the *effective* minimum, not the stored one: a PATCH may be
+ * raising minPacks and setting presets in the same request, and validating
+ * against the old minimum would let through a pairing that is invalid the
+ * moment it lands.
+ */
+function assertPackPresets(
+  presets: number[] | undefined,
+  effectiveMinPacks: number
+) {
+  if (!presets) return
+
+  const result = checkPackPresets(presets, effectiveMinPacks)
+  if (!result.ok) {
+    throw new AppError(
+      422,
+      result.code,
+      PRESET_MESSAGES[result.code]!(result.value)
+    )
   }
 }
 
@@ -87,6 +121,8 @@ export async function getForBrand(brandId: string, productId: string) {
 
 export async function create(brandId: string, input: ProductInput) {
   assertBarcode(input.barcode)
+  // Mirrors Prisma's @default(1) for the omitted case.
+  assertPackPresets(input.packPresets, input.minPacks ?? 1)
 
   try {
     return await prisma.product.create({ data: { ...input, brandId } })
@@ -109,8 +145,19 @@ export async function update(
 ) {
   // Ownership check first: updateMany with a brandId filter would silently
   // affect zero rows and report success on someone else's id.
-  await getForBrand(brandId, productId)
+  const existing = await getForBrand(brandId, productId)
   assertBarcode(input.barcode)
+
+  // A single PATCH can raise minPacks and set presets at once, so validate
+  // against whichever minimum the row is about to have.
+  const effectiveMinPacks = input.minPacks ?? existing.minPacks
+  assertPackPresets(input.packPresets, effectiveMinPacks)
+
+  // Raising minPacks alone can strand presets that were valid before. Rejecting
+  // is better than silently keeping a button that no longer works.
+  if (input.minPacks !== undefined && input.packPresets === undefined) {
+    assertPackPresets(existing.packPresets, effectiveMinPacks)
+  }
 
   try {
     return await prisma.product.update({

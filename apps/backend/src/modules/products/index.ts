@@ -7,6 +7,7 @@
  */
 import { Elysia, t } from 'elysia'
 import { CATEGORIES } from '@metoo/shared'
+import { MAX_PRESETS } from '../../domain/pack-presets.ts'
 import { requireAccess } from '../../middleware/auth.ts'
 import * as service from './service.ts'
 
@@ -18,9 +19,11 @@ const productResponse = t.Object({
   name: t.String(),
   description: t.Union([t.String(), t.Null()]),
   photoUrl: t.Union([t.String(), t.Null()]),
+  galleryUrls: t.Array(t.String()),
   pricePerPackMinor: t.Integer(),
   minPacks: t.Integer(),
   unitsPerPack: t.Integer(),
+  packPresets: t.Array(t.Integer()),
   category: categorySchema,
   stockPacks: t.Union([t.Integer(), t.Null()]),
   isActive: t.Boolean(),
@@ -39,14 +42,25 @@ const productBody = t.Object({
   name: t.String({ minLength: 1, maxLength: 200 }),
   description: t.Optional(t.String({ maxLength: 2000 })),
   photoUrl: t.Optional(t.String({ format: 'uri', maxLength: 2000 })),
+  // The thumbnail strip, in display order. The cover lives in photoUrl and is
+  // not repeated here.
+  galleryUrls: t.Optional(
+    t.Array(t.String({ format: 'uri', maxLength: 2000 }), { maxItems: 8 })
+  ),
   pricePerPackMinor: t.Integer({ minimum: 1 }),
   // Optional with NO schema `default`. Elysia applies a TypeBox default to an
-  // absent property and t.Partial keeps defaults, so `default: 1` here meant
-  // every PATCH silently carried minPacks:1 — renaming a product reset its
-  // real minimum order. Prisma's @default(1) covers creation instead, where it
-  // cannot leak into an update.
+  // absent property, and t.Partial keeps defaults — so `default: 1` here meant
+  // every PATCH silently carried minPacks:1 and reset the product's real
+  // minimum. Prisma's @default(1) covers creation instead, where it cannot
+  // leak into an update. Same failure as the t.UnionEnum gotcha in
+  // lib/schema.ts, but this one corrupted stored data rather than a filter.
   minPacks: t.Optional(t.Integer({ minimum: 1 })),
   unitsPerPack: t.Optional(t.Integer({ minimum: 1 })),
+  // Ascending, each at least minPacks — enforced in the domain layer, which
+  // can see minPacks. The bound here only caps the row length.
+  packPresets: t.Optional(
+    t.Array(t.Integer({ minimum: 1 }), { maxItems: MAX_PRESETS })
+  ),
   category: categorySchema,
   stockPacks: t.Optional(t.Integer({ minimum: 0 })),
   isActive: t.Optional(t.Boolean()),
