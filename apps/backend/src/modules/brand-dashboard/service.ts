@@ -14,6 +14,7 @@ import type { Period } from '../../domain/analytics.ts'
 import {
   averageOrderValue,
   bucketByDay,
+  bucketByMonth,
   periodStart,
   repeatOrderRate,
 } from '../../domain/analytics.ts'
@@ -32,7 +33,10 @@ function storeStats(brandId: string) {
     select: {
       name: true,
       createdAt: true,
-      _count: { select: { products: true } },
+      logoUrl: true,
+      // The design's header reads "Member since Jan 2026 · 1,240 followers",
+      // so both counts come from the same query rather than a second round trip.
+      _count: { select: { products: true, followers: true } },
     },
   })
 }
@@ -88,7 +92,9 @@ export async function dashboard(brandId: string, period: Period) {
     period,
     store: {
       name: brand?.name ?? '',
+      logoUrl: brand?.logoUrl ?? null,
       memberSince: brand?.createdAt ?? null,
+      followerCount: brand?._count.followers ?? 0,
       activeProducts: products.filter((p) => p.isActive).length,
       totalProducts: brand?._count.products ?? 0,
       newOrders: recent.filter((o) => o.status === 'PENDING').length,
@@ -99,7 +105,13 @@ export async function dashboard(brandId: string, period: Period) {
     orderCount: orders.length,
     averageOrderValueMinor: averageOrderValue(orders),
     repeatOrderRate: repeatOrderRate(trailingYear),
-    chart: bucketByDay(orders, from),
+    // Months for the Year view, days for everything shorter. 366 bars is
+    // not a chart. The `date` key tells the frontend which it got:
+    // YYYY-MM-DD for days, YYYY-MM for months.
+    chart:
+      period === 'year'
+        ? bucketByMonth(orders, from)
+        : bucketByDay(orders, from),
     stock: products.map((p) => ({
       id: p.id,
       name: p.name,

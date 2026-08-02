@@ -5,6 +5,7 @@ import {
   averageFulfilmentHours,
   averageOrderValue,
   bucketByDay,
+  bucketByMonth,
   contributionMarginMinor,
   periodStart,
   repeatOrderRate,
@@ -254,5 +255,62 @@ describe('averageDaysToFirstOrder', () => {
         { createdAt: new Date('2026-07-01T00:00:00Z'), firstOrderAt: null },
       ])
     ).toBeNull()
+  })
+})
+
+describe('bucketByMonth', () => {
+  const order = (iso: string, valueMinor = 100) =>
+    ({
+      createdAt: new Date(iso),
+      subtotalMinor: valueMinor,
+      commissionMinor: 0,
+      payoutMinor: 0,
+      deliveryCostMinor: 0,
+      status: 'DELIVERED',
+      retailerId: 'r1',
+      deliveredAt: null,
+    }) as never
+
+  test('twelve bars for a year, not 366', () => {
+    const from = new Date('2026-01-01T00:00:00Z')
+    const to = new Date('2026-12-31T00:00:00Z')
+    expect(bucketByMonth([], from, to)).toHaveLength(12)
+  })
+
+  test('keys are YYYY-MM so the frontend can tell them from days', () => {
+    const buckets = bucketByMonth(
+      [],
+      new Date('2026-03-01T00:00:00Z'),
+      new Date('2026-04-15T00:00:00Z')
+    )
+    expect(buckets.map((b) => b.date)).toEqual(['2026-03', '2026-04'])
+  })
+
+  test('sums every order in a month', () => {
+    const buckets = bucketByMonth(
+      [order('2026-03-02T00:00:00Z', 500), order('2026-03-28T00:00:00Z', 250)],
+      new Date('2026-03-01T00:00:00Z'),
+      new Date('2026-03-31T00:00:00Z')
+    )
+    expect(buckets).toEqual([{ date: '2026-03', valueMinor: 750, count: 2 }])
+  })
+
+  test('an empty month is still a bar', () => {
+    // Same reason as empty days: a missing bar reads as a good month.
+    const buckets = bucketByMonth(
+      [order('2026-01-05T00:00:00Z')],
+      new Date('2026-01-01T00:00:00Z'),
+      new Date('2026-02-28T00:00:00Z')
+    )
+    expect(buckets[1]).toEqual({ date: '2026-02', valueMinor: 0, count: 0 })
+  })
+
+  test('ignores an order outside the window', () => {
+    const buckets = bucketByMonth(
+      [order('2025-12-31T00:00:00Z')],
+      new Date('2026-01-01T00:00:00Z'),
+      new Date('2026-01-31T00:00:00Z')
+    )
+    expect(buckets).toEqual([{ date: '2026-01', valueMinor: 0, count: 0 }])
   })
 })

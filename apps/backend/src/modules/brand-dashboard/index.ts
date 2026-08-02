@@ -37,7 +37,10 @@ export const brandDashboardModule = new Elysia({
           period: t.UnionEnum(['day', 'week', 'month', 'year']),
           store: t.Object({
             name: t.String(),
+            logoUrl: t.Union([t.String(), t.Null()]),
             memberSince: t.Union([t.Date(), t.Null()]),
+            /** The design's header: "Member since Jan 2026 · 1,240 followers". */
+            followerCount: t.Integer(),
             activeProducts: t.Integer(),
             totalProducts: t.Integer(),
             newOrders: t.Integer(),
