@@ -17,7 +17,13 @@ import {
   planReorder,
   positionsAfterRemoval,
 } from '../../domain/product-images.ts'
-import { checkPhoto, keyBelongsToBrand, photoKey } from '../../domain/upload.ts'
+import type { Prisma } from '../../generated/prisma/client.ts'
+import {
+  checkPhoto,
+  keyBelongsToBrand,
+  photoKey,
+  stagedPhotoKey,
+} from '../../domain/upload.ts'
 import {
   PUBLIC_BUCKET,
   createPhotoUploadUrl,
@@ -279,4 +285,101 @@ export async function remove(params: {
   await removeObject(PUBLIC_BUCKET, storageKey)
 
   return { deleted: true }
+}
+
+/**
+ * Sign an upload for a product that does not exist yet.
+ *
+ * The Add Product form lets a brand pick photos before saving, so there is no
+ * product id to scope the key with. Brand-scoped is the property that matters:
+ * `keyBelongsToBrand` still refuses another brand's folder, which is the same
+ * guarantee the per-product route gives.
+ *
+ * No count limit here — there is nothing to count against yet. The limit is
+ * enforced when the product is created and the keys are attached.
+ */
+export async function requestStagedUpload(params: {
+  brandId: string
+  contentType: string
+  sizeBytes: number
+}) {
+  const check = checkPhoto(params.contentType, params.sizeBytes)
+  if (!check.ok) throw new AppError(422, check.code, check.message)
+
+  return createPhotoUploadUrl(
+    stagedPhotoKey({ brandId: params.brandId, extension: check.extension })
+  )
+}
+
+export interface StagedImage {
+  storageKey: string
+  altText?: string
+}
+
+/**
+ * Turn staged uploads into rows for a product that has just been created.
+ *
+ * Runs inside the caller's transaction so a product is never created with half
+ * its photos: if one key is bad, the whole create rolls back and the brand
+ * fixes the form rather than finding a half-built product in their catalog.
+ *
+ * Returns the cover URL for the caller to write onto the product.
+ */
+export async function attachStagedImages(
+  tx: Prisma.TransactionClient,
+  params: { brandId: string; productId: string; images: StagedImage[] }
+): Promise<string | null> {
+  const { brandId, productId, images } = params
+
+  if (images.length === 0) return null
+
+  if (images.length > MAX_PRODUCT_IMAGES) {
+    throw new AppError(
+      422,
+      'TOO_MANY_IMAGES',
+      `A product can have at most ${MAX_PRODUCT_IMAGES} images.`
+    )
+  }
+
+  const seen = new Set<string>()
+
+  for (const [index, image] of images.entries()) {
+    if (seen.has(image.storageKey)) {
+      throw new AppError(
+        422,
+        'DUPLICATE_IMAGE',
+        'The same upload was listed twice.'
+      )
+    }
+    seen.add(image.storageKey)
+
+    if (!keyBelongsToBrand(image.storageKey, brandId)) {
+      throw new AppError(
+        403,
+        'KEY_NOT_YOURS',
+        'That upload does not belong to this brand.'
+      )
+    }
+
+    if (!(await objectExists(PUBLIC_BUCKET, image.storageKey))) {
+      throw new AppError(
+        422,
+        'UPLOAD_NOT_FOUND',
+        `No file was found at ${image.storageKey}. Upload it before saving the product.`
+      )
+    }
+
+    await tx.productImage.create({
+      data: {
+        productId,
+        url: publicPhotoUrl(image.storageKey),
+        storageKey: image.storageKey,
+        position: index,
+        altText: image.altText?.trim() || null,
+      },
+    })
+  }
+
+  // Array order is display order, so the first one is the cover.
+  return publicPhotoUrl(images[0]!.storageKey)
 }

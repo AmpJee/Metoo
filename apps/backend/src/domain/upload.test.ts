@@ -7,6 +7,7 @@ import {
   documentKey,
   keyBelongsToBrand,
   photoKey,
+  stagedPhotoKey,
 } from './upload.ts'
 
 describe('checkPhoto', () => {
@@ -145,5 +146,21 @@ describe('keyBelongsToBrand', () => {
   test('rejects a traversal attempt', () => {
     expect(keyBelongsToBrand('../../etc/passwd', 'b1')).toBe(false)
     expect(keyBelongsToBrand('brands/b1/../b2/x.png', 'b2')).toBe(false)
+  })
+})
+
+describe('stagedPhotoKey', () => {
+  test('is brand-scoped without needing a product id', () => {
+    expect(
+      stagedPhotoKey({ brandId: 'b1', extension: 'png', unique: 'u' })
+    ).toBe('brands/b1/staging/u.png')
+  })
+
+  test('passes the same ownership check as any other brand key', () => {
+    // This is the safety property: no product id, but still impossible to
+    // write into another brand's folder.
+    const key = stagedPhotoKey({ brandId: 'b1', extension: 'png' })
+    expect(keyBelongsToBrand(key, 'b1')).toBe(true)
+    expect(keyBelongsToBrand(key, 'b2')).toBe(false)
   })
 })

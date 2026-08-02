@@ -143,3 +143,50 @@ export const productImagesModule = new Elysia({
       response: { 200: t.Object({ deleted: t.Boolean() }) },
     }
   )
+
+/**
+ * Uploading before the product exists.
+ *
+ * Its own prefix, not `/brand/products/...`, because a static `images` segment
+ * there would sit in the same router position as `:id` and the two would be
+ * ambiguous. This is the route the Add Product form calls for each photo the
+ * brand picks; the returned storageKeys then go in the POST /brand/products
+ * body.
+ */
+export const productImageUploadModule = new Elysia({
+  name: 'product-image-uploads',
+  prefix: '/brand/product-images',
+})
+  .use(requireAccess({ roles: ['BRAND'], approved: true }))
+
+  .post(
+    '/upload-url',
+    async ({ auth, body }) =>
+      service.requestStagedUpload({
+        brandId: await brandIdForUser(auth.userId),
+        contentType: body.contentType,
+        sizeBytes: body.sizeBytes,
+      }),
+    {
+      body: t.Object({
+        contentType: t.String({ maxLength: 100 }),
+        sizeBytes: t.Integer({ minimum: 1 }),
+      }),
+      detail: {
+        summary: 'Get an upload URL for a product you have not created yet',
+        description:
+          'For the Add Product form, which picks photos before the product ' +
+          'has an id. PUT the file to uploadUrl, keep the storageKey, and send ' +
+          `the keys in the \`images\` array of POST /brand/products — array ` +
+          `order is display order and the first is the cover. At most ` +
+          `${MAX_PRODUCT_IMAGES} per product, enforced when the product is ` +
+          'created. JPEG, PNG or WebP up to 5 MB. ' +
+          'A key that is never used just leaves an unreferenced file; nothing ' +
+          'is recorded until the product is saved.',
+        tags: ['Brand · Product images'],
+      },
+      response: {
+        200: t.Object({ uploadUrl: t.String(), storageKey: t.String() }),
+      },
+    }
+  )

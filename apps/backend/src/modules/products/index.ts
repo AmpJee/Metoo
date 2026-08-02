@@ -8,6 +8,7 @@
 import { Elysia, t } from 'elysia'
 import { CATEGORIES } from '@metoo/shared'
 import { MAX_PRESETS } from '../../domain/pack-presets.ts'
+import { MAX_PRODUCT_IMAGES } from '../../domain/product-images.ts'
 import { requireAccess } from '../../middleware/auth.ts'
 import * as service from './service.ts'
 
@@ -106,10 +107,30 @@ export const productsModule = new Elysia({
     '/',
     async ({ auth, body, set }) => {
       set.status = 201
-      return service.create(await service.brandIdForUser(auth.userId), body)
+      const { images, ...product } = body
+      return service.create(
+        await service.brandIdForUser(auth.userId),
+        product,
+        images
+      )
     },
     {
-      body: productBody,
+      body: t.Composite([
+        productBody,
+        t.Object({
+          // Storage keys from POST /brand/product-images/upload-url. Array
+          // order is display order; the first becomes the cover.
+          images: t.Optional(
+            t.Array(
+              t.Object({
+                storageKey: t.String({ maxLength: 500 }),
+                altText: t.Optional(t.String({ maxLength: 200 })),
+              }),
+              { maxItems: MAX_PRODUCT_IMAGES }
+            )
+          ),
+        }),
+      ]),
       detail: {
         summary: 'Create a product',
         description:
@@ -119,7 +140,11 @@ export const productsModule = new Elysia({
           'sku must be unique within your own catalog (409 otherwise) but may ' +
           'collide with another brand’s. barcode is checked against its GTIN ' +
           'check digit, so a mistyped or transposed digit is rejected here ' +
-          'rather than at the retailer’s till.',
+          'rather than at the retailer’s till. ' +
+          'Photos: upload each one via POST /brand/product-images/upload-url ' +
+          'first, then send the storageKeys in `images`. Product and images ' +
+          'are written in one transaction, so a bad key fails the whole ' +
+          'create rather than leaving a half-built product.',
         tags: ['Brand · Products'],
       },
       response: { 201: productResponse },
