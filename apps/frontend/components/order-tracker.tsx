@@ -1,5 +1,5 @@
 import { Check } from 'lucide-react'
-import { statusLabel, TRACKER_STEPS } from '@/lib/order-status'
+import { buyerStatusLabel, TRACKER_STEPS } from '@/lib/order-status'
 import type { OrderStatus } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
@@ -56,7 +56,7 @@ export function OrderTracker({ status }: { status: OrderStatus }) {
                 done ? 'font-medium' : 'text-muted-foreground'
               )}
             >
-              {statusLabel(step)}
+              {buyerStatusLabel(step)}
             </span>
           </li>
         )

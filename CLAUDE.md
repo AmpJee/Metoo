@@ -151,6 +151,15 @@ record. Three things have since changed — follow these, not the brief:
 - **`GET /orders/group/:checkoutGroupId` returns an envelope**
   (`{ checkoutGroupId, orderCount, totalMinor, orders }`), not a bare array —
   unlike `GET /orders`, which is an array.
+- **The order-status PATCH body key is `status`, not `to`** — on both
+  `/brand/orders/:id/status` and `/admin/orders/:id/status` — even though the
+  `actions` array those endpoints return calls the destination `to`. Sending
+  `{ to }` silently defaults `status` to the first enum value and fails with
+  "this order is already PENDING", which does not point at the real problem.
+- **Order transition buttons come from the API.** Both order endpoints return
+  `actions: [{ to, label }]` from `availableTransitions()` in
+  `domain/order-state.ts`. Render those; never restate the state machine in
+  the frontend.
 - **`GET /stores` is the brand's own preview** (`/brand/storefront`, BRAND
   only). Retailers list brands via `GET /catalog/brands`.
 - **Bank account numbers are sensitive PII.** `BrandProfile.bankAccountNumber`
@@ -167,10 +176,18 @@ apps/frontend/    Next.js — app/, components/, lib/, proxy.ts
 packages/shared/  types + constants shared by both apps
 ```
 
-The frontend is the **retailer (buyer) site**. The seller and admin dashboards
-are separate designs, and belong in `app/(seller)/` and `app/(admin)/` route
-groups alongside `app/(shop)/`, each with its own layout and role check. All
-three designs share one palette, so `app/globals.css` already covers them.
+One Next.js app serves all three surfaces, as three route groups, each with its
+own layout and role gate:
+
+| Group | Role | Home |
+| --- | --- | --- |
+| `app/(shop)/` | RETAILER, ONBOARDED | `/explore` |
+| `app/(seller)/` | BRAND, ONBOARDED | `/seller` |
+| `app/(admin)/` | ADMIN (no approval check) | `/admin` |
+
+`lib/roles.ts` owns where each role belongs; every layout bounces the wrong
+role to its own home rather than 403ing. All three designs share one palette,
+so `app/globals.css` covers them all.
 
 Backend modules follow one pattern per domain folder — copy an existing module
 and register it in `src/index.ts` with `.use(...)`. Details in

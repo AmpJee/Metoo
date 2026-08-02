@@ -244,6 +244,282 @@ export interface ReturnRequest {
   }
 }
 
+// --- seller (BRAND) --------------------------------------------------------
+
+/** A move the API says is legal from the order's current state. */
+export interface OrderAction {
+  to: OrderStatus
+  label: string
+}
+
+export type DashboardPeriod = 'day' | 'week' | 'month' | 'year'
+
+export interface BrandDashboard {
+  period: DashboardPeriod
+  store: {
+    name: string
+    memberSince: string | null
+    activeProducts: number
+    totalProducts: number
+    newOrders: number
+    rating: Rating
+  }
+  revenueMinor: number
+  orderCount: number
+  averageOrderValueMinor: number
+  repeatOrderRate: {
+    repeatOrders: number
+    totalOrders: number
+    percent: number
+  }
+  /** A real time series — the only chartable series on either dashboard. */
+  chart: { date: string; valueMinor: number; count: number }[]
+  stock: {
+    id: string
+    name: string
+    photoUrl: string | null
+    stockPacks: number | null
+    isActive: boolean
+    needsAttention: boolean
+  }[]
+  recentOrders: {
+    id: string
+    orderNumber: string
+    status: OrderStatus
+    totalMinor: number
+    createdAt: string
+  }[]
+}
+
+export interface BrandOrder {
+  id: string
+  orderNumber: string
+  status: OrderStatus
+  subtotalMinor: number
+  totalMinor: number
+  /** What the brand keeps after commission. */
+  payoutMinor: number
+  commissionBps: number
+  commissionMinor: number
+  paymentMethod: 'PROMPTPAY' | 'CASH' | 'CARD'
+  shippingAddress: Order['shippingAddress']
+  confirmedAt: string | null
+  readyForPickupAt: string | null
+  pickedUpAt: string | null
+  deliveredAt: string | null
+  settledAt: string | null
+  createdAt: string
+  retailer: { id: string; shopName: string; province: string }
+  items: {
+    id: string
+    productId: string
+    productName: string
+    pricePerPackMinor: number
+    unitsPerPack: number
+    packs: number
+    lineTotalMinor: number
+  }[]
+  actions: OrderAction[]
+}
+
+export interface BrandProduct {
+  id: string
+  brandId: string
+  name: string
+  description: string | null
+  photoUrl: string | null
+  pricePerPackMinor: number
+  minPacks: number
+  unitsPerPack: number
+  category: Category
+  stockPacks: number | null
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface WalletBalance {
+  availableMinor: number
+  /** Payout on delivered orders not yet confirmed as Money Received. */
+  pendingClearanceMinor: number
+  minWithdrawalMinor: number
+  bankName: string | null
+  bankAccountLast4: string | null
+}
+
+export type WalletTxnType =
+  | 'SALE_CREDIT'
+  | 'COMMISSION_DEBIT'
+  | 'REFUND_DEBIT'
+  | 'WITHDRAWAL_DEBIT'
+  | 'ADJUSTMENT'
+
+export interface WalletTransaction {
+  id: string
+  type: WalletTxnType
+  /** Signed: credits positive, debits negative. */
+  amountMinor: number
+  note: string | null
+  createdAt: string
+  order: { id: string; orderNumber: string } | null
+  withdrawal: { id: string; bankName: string } | null
+}
+
+export type WithdrawalStatus = 'REQUESTED' | 'APPROVED' | 'REJECTED' | 'PAID'
+
+export interface Withdrawal {
+  id: string
+  amountMinor: number
+  status: WithdrawalStatus
+  bankName: string
+  bankAccountName: string
+  reviewNote: string | null
+  paymentRef: string | null
+  paidAt: string | null
+  createdAt: string
+}
+
+export interface BrandCustomer {
+  id: string
+  shopName: string
+  shopType: string | null
+  province: string
+  zone: string | null
+  phone: string
+  orderCount: number
+  totalSpentMinor: number
+  firstOrderAt: string | null
+  lastOrderAt: string | null
+  isRepeat: boolean
+}
+
+// --- admin -----------------------------------------------------------------
+
+export interface AdminSummary {
+  period: DashboardPeriod
+  onboarding: {
+    brandsOnboarded: number
+    brandsInPipeline: number
+    retailersOnboarded: number
+    retailersInPipeline: number
+  }
+  orderCount: number
+  gmvMinor: number
+  averageOrderValueMinor: number
+  commissionMinor: number
+  logisticsCostMinor: number
+  /** Commission minus logistics. No gateway yet, so no payment fees term. */
+  contributionMarginMinor: number
+  repeatOrderRate: {
+    repeatOrders: number
+    totalOrders: number
+    percent: number
+  }
+  /** Null until something has been delivered. */
+  averageFulfilmentHours: number | null
+  /** Null until a retailer has placed a first order. */
+  averageDaysToFirstOrder: number | null
+  gmvByBrand: { brandId: string; name: string; gmvMinor: number }[]
+}
+
+export interface BrandPipelineFields {
+  id: string
+  name: string
+  phone: string
+  province: string
+  fdaStatus: 'YES' | 'PENDING' | 'NO'
+  sizeBand: string | null
+  socialHandle: string | null
+  caseWeightKg: number | null
+  caseDimensionsCm: string | null
+  caseUnits: number | null
+  existingRetailerCount: number | null
+  referralSource: string | null
+  adminNotes: string | null
+  _count: { products: number }
+}
+
+export interface RetailerPipelineFields {
+  id: string
+  shopName: string
+  phone: string
+  province: string
+  shopType: string | null
+  zone: string | null
+  socialHandle: string | null
+  currentProducts: string | null
+  monthlyCapacity: number | null
+  preferredPayment: 'PROMPTPAY' | 'CASH' | 'CARD' | null
+  paymentReliability: 'ON_TIME' | 'PENDING' | 'LATE'
+  deliveryWindow: string | null
+  referralSource: string | null
+  adminNotes: string | null
+}
+
+export interface Applicant {
+  id: string
+  email: string
+  role: Role
+  status: PipelineStatus
+  reviewNote: string | null
+  createdAt: string
+  updatedAt: string
+  brand: BrandPipelineFields | null
+  retailer: RetailerPipelineFields | null
+}
+
+export interface VerificationDocument {
+  id: string
+  type: 'SME_ID' | 'NATIONAL_ID' | 'FDA_CERT'
+  status: 'PENDING' | 'APPROVED' | 'REJECTED'
+  createdAt: string
+  /** Short-lived signed URL — link to it, never cache it. */
+  url: string
+}
+
+export interface AdminOrder {
+  id: string
+  orderNumber: string
+  status: OrderStatus
+  subtotalMinor: number
+  totalMinor: number
+  commissionBps: number
+  commissionMinor: number
+  payoutMinor: number
+  /** What logistics cost the platform, entered by admin after the fact. */
+  deliveryCostMinor: number
+  paymentMethod: 'PROMPTPAY' | 'CASH' | 'CARD'
+  confirmedAt: string | null
+  deliveredAt: string | null
+  settledAt: string | null
+  createdAt: string
+  brand: { id: string; name: string }
+  retailer: { id: string; shopName: string; province: string }
+  items: { productName: string; packs: number; lineTotalMinor: number }[]
+  actions: OrderAction[]
+}
+
+export interface AdminWithdrawal extends Withdrawal {
+  /** Full number, admin-only — it is what the transfer is made against. */
+  bankAccountNumber: string
+  reviewedBy: string | null
+  reviewedAt: string | null
+  brand: { id: string; name: string }
+}
+
+export type FeedbackStatus = 'OPEN' | 'RESOLVED'
+
+export interface Feedback {
+  id: string
+  authorRole: Role
+  authorLabel: string
+  message: string
+  status: FeedbackStatus
+  adminNote: string | null
+  resolvedAt: string | null
+  createdAt: string
+}
+
 /** From GET /following — the retailer's own followed brands. */
 export interface FollowedBrand {
   followedAt: string

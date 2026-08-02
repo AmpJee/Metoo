@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { Field } from '@/components/auth-shell'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { homeForUser } from '@/lib/roles'
 
 export function LoginForm() {
   const router = useRouter()
@@ -37,13 +38,14 @@ export function LoginForm() {
       }
 
       // Login succeeds even for unapproved accounts, so the destination
-      // depends on status rather than on success alone.
+      // depends on role and status, not on success alone. /api/auth/login
+      // returns both for exactly this.
       const next = params.get('next')
-      if (payload.status !== 'ONBOARDED') {
-        router.replace('/pending')
-      } else {
-        router.replace(next && next.startsWith('/') ? next : '/explore')
-      }
+      router.replace(
+        next && next.startsWith('/')
+          ? next
+          : homeForUser({ role: payload.role, status: payload.status })
+      )
       // The session lives in httpOnly cookies the client cannot see; refresh
       // so server components re-run with it.
       router.refresh()

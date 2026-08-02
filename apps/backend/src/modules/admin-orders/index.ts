@@ -35,6 +35,10 @@ const adminOrder = t.Object({
       lineTotalMinor: t.Integer(),
     })
   ),
+  /** The moves an admin may make from here, in order. */
+  actions: t.Array(
+    t.Object({ to: t.UnionEnum(ORDER_STATUSES), label: t.String() })
+  ),
 })
 
 export const adminOrdersModule = new Elysia({

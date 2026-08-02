@@ -2,7 +2,10 @@ import { ArrowRight, PackageCheck, Store, Truck } from 'lucide-react'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { Button } from '@/components/ui/button'
+import { ApiError, api } from '@/lib/api'
+import { homeForUser } from '@/lib/roles'
 import { readTokens } from '@/lib/session'
+import type { Me } from '@/lib/types'
 
 /**
  * The logged-out landing page.
@@ -12,9 +15,24 @@ import { readTokens } from '@/lib/session'
  * The copy is the designer's.
  */
 export default async function LandingPage() {
-  // Someone already signed in wants the catalog, not the sales pitch.
+  // Someone already signed in wants their own console, not the sales pitch.
+  // `/` is where proxy.ts sends them after login precisely because this is
+  // the one place that resolves the role.
   const { accessToken, refreshToken } = await readTokens()
-  if (accessToken || refreshToken) redirect('/explore')
+
+  let destination: string | null = null
+  if (accessToken || refreshToken) {
+    try {
+      destination = homeForUser(await api.get<Me>('/auth/me'))
+    } catch (error) {
+      // A dead session falls through to the public page rather than looping.
+      if (!(error instanceof ApiError)) throw error
+    }
+  }
+
+  // Outside the try on purpose: redirect() signals by throwing, and a catch
+  // around it would swallow the redirect.
+  if (destination) redirect(destination)
 
   return <Landing />
 }

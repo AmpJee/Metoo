@@ -1,37 +1,41 @@
 'use client'
 
-import { Banknote, CreditCard, Loader2, QrCode } from 'lucide-react'
+import { CreditCard, Loader2, QrCode } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { placeOrder } from '@/app/actions/checkout'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
-type PaymentPreference = 'PROMPTPAY' | 'CASH' | 'CARD'
+/**
+ * Only PROMPTPAY is selectable.
+ *
+ * Card is shown but disabled — a buyer who expects to pay by card should see
+ * it is coming rather than wonder. Cash on delivery is gone entirely: it is
+ * still a valid `RetailerProfile.preferredPayment` the admin console reads, so
+ * the shared enum keeps it; this screen just does not offer it.
+ */
+type PaymentPreference = 'PROMPTPAY' | 'CARD'
 
 const OPTIONS: {
   value: PaymentPreference
   label: string
   hint: string
   icon: typeof QrCode
+  disabled?: boolean
 }[] = [
   {
     value: 'PROMPTPAY',
     label: 'QR PromptPay',
-    hint: 'Transfer when the brand confirms',
+    hint: 'Scan and transfer once the order is placed',
     icon: QrCode,
   },
   {
     value: 'CARD',
     label: 'Credit / Debit Card',
-    hint: 'Arranged after confirmation',
+    hint: 'Coming soon',
     icon: CreditCard,
-  },
-  {
-    value: 'CASH',
-    label: 'Cash on delivery',
-    hint: 'Pay the courier on arrival',
-    icon: Banknote,
+    disabled: true,
   },
 ]
 
@@ -49,11 +53,17 @@ export function CheckoutForm({ brandCount }: { brandCount: number }) {
           {OPTIONS.map((option) => (
             <label
               key={option.value}
+              aria-disabled={option.disabled}
               className={cn(
-                'flex cursor-pointer items-center gap-3 rounded-[9px] border p-4 transition-colors',
-                method === option.value
+                'flex items-center gap-3 rounded-[9px] border p-4 transition-colors',
+                option.disabled
+                  ? 'cursor-not-allowed border-border opacity-50'
+                  : 'cursor-pointer',
+                !option.disabled && method === option.value
                   ? 'border-primary bg-primary/5'
-                  : 'border-border hover:border-neutral-line'
+                  : !option.disabled
+                    ? 'border-border hover:border-neutral-line'
+                    : ''
               )}
             >
               <input
@@ -61,6 +71,7 @@ export function CheckoutForm({ brandCount }: { brandCount: number }) {
                 name="paymentMethod"
                 value={option.value}
                 checked={method === option.value}
+                disabled={option.disabled}
                 onChange={() => setMethod(option.value)}
                 className="sr-only"
               />
@@ -76,11 +87,11 @@ export function CheckoutForm({ brandCount }: { brandCount: number }) {
         </div>
 
         {/* Honest about what this button does. There is no payment module on
-            the API yet, so nothing is charged — recording the preference and
-            saying so is better than a Pay Now button that does not pay. */}
+            the API yet, so nothing is charged — the QR comes after the order
+            is placed, and the seller confirms the transfer arrived. */}
         <p className="rounded-md bg-secondary p-3 text-xs text-muted-foreground">
-          No payment is taken now. Placing the order sends it to the brand to
-          confirm; you will arrange payment with them directly.
+          No payment is taken now. Once the order is placed you will get a
+          PromptPay QR to transfer to; the seller confirms when it arrives.
         </p>
       </section>
 

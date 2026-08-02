@@ -10,9 +10,11 @@ import { formatBaht } from '@/lib/format'
 /**
  * Quantity stepper + add to cart.
  *
- * Steps in whole packs starting at the MOQ, because the API rejects anything
- * below `minPacks` or off that multiple with a 422. Enforcing it in the
- * control means the shopper never has to discover the rule from an error.
+ * Steps by ONE pack, starting at the MOQ. The only rule the API enforces is
+ * `packs >= minPacks` — see `checkQuantity` in the backend's domain layer,
+ * whose comment records that an exact-multiple rule was deliberately removed
+ * because it would reject 6 packs of a 5-unit product. Stepping by `minPacks`
+ * would reimpose a constraint that does not exist.
  */
 export function AddToCart({
   productId,
@@ -34,8 +36,8 @@ export function AddToCart({
   const [pending, startTransition] = useTransition()
 
   const max = stockPacks ?? Infinity
-  const canDecrease = packs - minPacks >= minPacks
-  const canIncrease = packs + minPacks <= max
+  const canDecrease = packs > minPacks
+  const canIncrease = packs < max
 
   return (
     <div className="flex flex-col gap-4">
@@ -45,7 +47,7 @@ export function AddToCart({
             type="button"
             aria-label="Decrease quantity"
             disabled={!canDecrease || pending}
-            onClick={() => setPacks((n) => n - minPacks)}
+            onClick={() => setPacks((n) => Math.max(minPacks, n - 1))}
             className="flex size-10 items-center justify-center disabled:opacity-40"
           >
             <Minus className="size-4" />
@@ -57,7 +59,7 @@ export function AddToCart({
             type="button"
             aria-label="Increase quantity"
             disabled={!canIncrease || pending}
-            onClick={() => setPacks((n) => n + minPacks)}
+            onClick={() => setPacks((n) => Math.min(max, n + 1))}
             className="flex size-10 items-center justify-center disabled:opacity-40"
           >
             <Plus className="size-4" />
@@ -72,9 +74,10 @@ export function AddToCart({
         </div>
       </div>
 
+      {/* The MOQ is real; the "multiples" rule never was. */}
       {minPacks > 1 ? (
         <p className="text-xs text-muted-foreground">
-          Sold in multiples of {minPacks} packs.
+          Minimum order {minPacks} packs.
         </p>
       ) : null}
 

@@ -22,6 +22,18 @@ export const env = {
   API_URL: process.env.API_URL ?? 'http://localhost:3000',
 
   /**
+   * Public URL of the platform's PromptPay QR image, in Supabase Storage.
+   *
+   * The whole URL rather than a bucket and key, so this app needs no Supabase
+   * credentials — those stay in the API. Swapping the QR is then a re-upload
+   * to the same path, or one variable change.
+   *
+   * Empty is a valid state: the pay screen says the QR is not set up yet
+   * rather than rendering a broken image.
+   */
+  PROMPTPAY_QR_URL: process.env.PROMPTPAY_QR_URL ?? '',
+
+  /**
    * Cookies are Secure in production. Left off locally because localhost is
    * served over plain HTTP and a Secure cookie would simply never be stored.
    */
