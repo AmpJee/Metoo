@@ -1,0 +1,85 @@
+@import 'tailwindcss';
+
+/**
+ * Design tokens.
+ *
+ * Values are taken from the published design, not invented: the palette is
+ * stock shadcn/ui except for --primary, which is the Metoo crimson used
+ * throughout the designer's file. Tailwind v4 has no JS config — @theme IS
+ * the config, and every token here becomes a utility (bg-primary, text-muted-
+ * foreground, rounded-lg, and so on).
+ */
+@theme {
+  /* Brand */
+  --color-primary: #cb2957;
+  --color-primary-foreground: #ffffff;
+
+  /* Surfaces */
+  --color-background: #ffffff;
+  --color-foreground: #030213;
+  --color-card: #ffffff;
+  --color-card-foreground: #030213;
+  --color-muted: #ececf0;
+  --color-muted-foreground: #717182;
+  --color-accent: #e9ebef;
+  --color-accent-foreground: #030213;
+  --color-secondary: #f5f5f5;
+  --color-secondary-foreground: #030213;
+
+  /* Lines and inputs */
+  --color-border: #ebebeb;
+  --color-input: #f3f3f5;
+  --color-ring: #cb2957;
+
+  /* Status — each maps to a real order or document state */
+  --color-success: #1f7a4d;
+  --color-warning: #c47f00;
+  --color-info: #7a4dcb;
+  --color-destructive: #d4183d;
+  --color-destructive-foreground: #ffffff;
+
+  /* Neutrals from the design */
+  --color-neutral-line: #d9d9d9;
+  --color-neutral-mid: #8a8a8a;
+  --color-neutral-dark: #3f3f3f;
+
+  --radius: 0.625rem;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  body {
+    background: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* The design has no dedicated focus styling; this keeps keyboard users
+     served without changing the visual language. */
+  :focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+  }
+}
+
+@utility container-page {
+  /* The design's page gutter: tight on mobile, generous on desktop. */
+  margin-inline: auto;
+  width: 100%;
+  max-width: 1440px;
+  padding-inline: 16px;
+
+  @media (width >= 48rem) {
+    padding-inline: 40px;
+  }
+}

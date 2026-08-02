@@ -3,6 +3,9 @@ node_modules
 # Build output
 dist
 .turbo
+.next
+next-env.d.ts
+*.tsbuildinfo
 
 # Environment — never commit real credentials
 .env

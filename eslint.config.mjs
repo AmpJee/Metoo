@@ -10,7 +10,9 @@ export default tseslint.config(
       '**/node_modules/**',
       '**/dist/**',
       '**/.turbo/**',
+      '**/.next/**',
       '**/src/generated/**',
+      '**/next-env.d.ts',
     ],
   },
 
@@ -36,27 +38,41 @@ export default tseslint.config(
   },
 
   {
-    // The frontend server is Bun; only src/scripts ships to the browser.
-    files: ['apps/frontend/src/index.ts'],
-    languageOptions: {
-      globals: { Bun: 'readonly', process: 'readonly', console: 'readonly' },
-    },
-  },
-
-  {
-    // Vanilla browser JS — no bundler, no module resolution, DOM globals.
-    files: ['apps/frontend/src/public/scripts/**/*.js'],
+    // Next.js frontend. Server Components, Route Handlers and proxy.ts run on
+    // the server; Client Components run in the browser — and a single file
+    // can be either, so both global sets are available here rather than being
+    // split by path.
+    files: ['apps/frontend/**/*.{ts,tsx}'],
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',
       globals: {
+        // Server
+        process: 'readonly',
+        console: 'readonly',
+        Bun: 'readonly',
+        // Browser
         window: 'readonly',
         document: 'readonly',
-        console: 'readonly',
         fetch: 'readonly',
         localStorage: 'readonly',
         location: 'readonly',
+        FormData: 'readonly',
+        URLSearchParams: 'readonly',
+        Response: 'readonly',
+        Request: 'readonly',
+        RequestCache: 'readonly',
+        HTMLElement: 'readonly',
+        HTMLInputElement: 'readonly',
+        HTMLButtonElement: 'readonly',
+        HTMLFormElement: 'readonly',
+        HTMLSpanElement: 'readonly',
       },
+    },
+    rules: {
+      // JSX components are referenced as types, which the base rule reads as
+      // an unused variable.
+      'no-undef': 'off',
     },
   },
 
