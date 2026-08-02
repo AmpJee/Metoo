@@ -2,7 +2,7 @@
  * Auth use-cases. The route file stays declarative; the Prisma work lives here.
  */
 import { randomUUID } from 'node:crypto'
-import type { Prisma, User } from '../../generated/prisma/client.ts'
+import type { Prisma, Role, User } from '../../generated/prisma/client.ts'
 import { prisma } from '../../config/prisma.ts'
 import {
   hashToken,
@@ -158,7 +158,25 @@ export async function register(input: RegisterInput) {
  * show them where they stand. `requireAccess({ approved: true })` is what gates
  * the actual features.
  */
-export async function login(rawEmail: string, password: string) {
+/**
+ * Which site the caller signed in on, so the wrong one can be refused.
+ *
+ * Each of the three frontends has its own login page. Without this a brand
+ * signing in on the retailer site would get a perfectly valid token and then
+ * hit 403 on every screen, which reads as "the site is broken" rather than
+ * "you are in the wrong place".
+ */
+const PORTAL_FOR: Record<Role, { account: string; site: string }> = {
+  RETAILER: { account: 'a retailer', site: 'the shop' },
+  BRAND: { account: 'a brand', site: 'Seller Centre' },
+  ADMIN: { account: 'an admin', site: 'the management console' },
+}
+
+export async function login(
+  rawEmail: string,
+  password: string,
+  expectedRole?: Role
+) {
   const email = rawEmail.trim().toLowerCase()
   const user = await prisma.user.findUnique({ where: { email } })
 
@@ -179,6 +197,20 @@ export async function login(rawEmail: string, password: string) {
   }
 
   if (!(await verifyPassword(password, user.passwordHash))) throw invalid
+
+  // Checked only after the password, and deliberately so. Answering "wrong
+  // site" before verifying would turn this into a way to discover which
+  // accounts exist and what they are. After a correct password the caller
+  // already owns the account, so naming their site tells them nothing they
+  // did not know — and saves them resetting a password that was never wrong.
+  if (expectedRole && user.role !== expectedRole) {
+    const portal = PORTAL_FOR[user.role]
+    throw new AppError(
+      403,
+      'WRONG_PORTAL',
+      `That is ${portal.account} account. Sign in at ${portal.site} instead.`
+    )
+  }
 
   const tokens = await issueTokens(user)
   return { user: toPublicUser(user), ...tokens }
