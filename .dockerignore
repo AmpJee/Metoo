@@ -6,6 +6,10 @@ node_modules
 .turbo
 dist
 
+# Next.js build output — the image builds its own; copying a host build in
+# would ship stale pages and break the standalone trace.
+**/.next
+
 .env
 .env.*
 !.env.example

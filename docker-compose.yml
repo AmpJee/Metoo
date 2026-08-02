@@ -24,8 +24,9 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3000
-      # The browser calls the API directly from the host, so the allowed
-      # origin is the host-mapped frontend port.
+      # The browser now only ever talks to Next, which calls this API
+      # server-to-server — so CORS is not on the critical path. It is kept
+      # pointed at the frontend origin for the /openapi console.
       CORS_ORIGIN: http://localhost:${FRONTEND_PORT:-5173}
     ports:
       - '${BACKEND_PORT:-3000}:3000'
@@ -54,16 +55,16 @@ services:
     environment:
       NODE_ENV: production
       PORT: 5173
-      # localhost, NOT http://backend:3000 — this URL is used by fetch() in
-      # the user's browser, which has no access to Docker's internal network.
-      PUBLIC_API_URL: http://localhost:${BACKEND_PORT:-3000}
+      # The service name, not localhost: this call is made by the Next server
+      # inside the Docker network, never by the browser. That is the whole
+      # point of proxying the API — the API origin stays private.
+      API_URL: http://backend:3000
     ports:
       - '${FRONTEND_PORT:-5173}:5173'
     depends_on:
       backend:
-        # service_started, not service_healthy: the frontend serves static
-        # files and does not need a working database to be useful. Gating on
-        # health would block all frontend work whenever Supabase is
-        # unreachable — and the page already renders a clear error state.
+        # service_started, not service_healthy: gating on health would block
+        # all frontend work whenever Supabase is unreachable, and the app
+        # already renders a clear error state.
         condition: service_started
     restart: unless-stopped

@@ -1,0 +1,6 @@
+# Prettier only reads the .prettierignore in its working directory, not the
+# repo root — so this file is required in addition to the root one.
+
+# Next.js build output, including the standalone bundle.
+.next
+next-env.d.ts

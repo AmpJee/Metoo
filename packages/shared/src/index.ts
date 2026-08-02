@@ -1,10 +1,10 @@
 /**
  * Types and constants shared between apps.
  *
- * Consumed by the backend via the `@metoo/shared` workspace dependency.
- * The frontend is plain browser JS with no bundler, so it cannot import this
- * package — values the browser needs are served at runtime from the frontend
- * server's `/config.js` route instead.
+ * Both apps import this as the `@metoo/shared` workspace dependency: the
+ * backend runs it on Bun, the Next.js frontend bundles it. Enum values and
+ * their labels live here so a status added on one side cannot silently mean
+ * something different on the other.
  */
 export * from './constants/roles.ts'
 export * from './types/user.ts'

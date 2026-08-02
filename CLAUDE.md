@@ -30,12 +30,12 @@ make up         # docker compose, both services
 
 ## Stack — fixed, do not substitute
 
-Bun · Elysia · Prisma v7 · PostgreSQL via Supabase · Supabase Storage ·
-Stripe (card + PromptPay) · plain HTML/CSS/JS with **no framework and no
-bundler** · Docker · Railway · Turborepo + Bun workspaces · ESLint + Prettier.
+**Backend:** Bun · Elysia · Prisma v7 · PostgreSQL via Supabase ·
+Supabase Storage · Stripe (card + PromptPay, not yet built).
 
-Frontend is vanilla by requirement. Do not introduce React, Vue, Tailwind, or a
-build step for it.
+**Frontend:** Next.js 16 (App Router) · React 19 · Tailwind v4 · shadcn/ui.
+
+**Shared:** Docker · Railway · Turborepo + Bun workspaces · ESLint + Prettier.
 
 ## Domain rules
 
@@ -82,6 +82,16 @@ record. Three things have since changed — follow these, not the brief:
   `SETTLED` is the financial step where the sale hits the wallet ledger.
 - **Unit tests only — no database in CI.** *Why:* keeps CI fast and simple. The
   consequence is architectural: see the `src/domain/` rule below.
+- **The frontend is Next.js, not vanilla HTML/CSS/JS.** *Why:* the designer's
+  files are Figma Make output — already React + Tailwind v4 + shadcn/ui.
+  Reimplementing them without a framework meant hand-porting hundreds of
+  pixel-specific Tailwind classes into stylesheets and still landing further
+  from the design. This reverses the original brief's "no framework, no
+  bundler" requirement, deliberately.
+- **Session tokens live in httpOnly cookies, not localStorage.** *Why:* Next
+  route handlers can hold them server-side, so no script in the page can read
+  a token. The browser never calls Elysia directly — it calls Next, which
+  attaches the Bearer header. The backend contract is unchanged.
 
 ## Conventions
 
@@ -126,8 +136,23 @@ record. Three things have since changed — follow these, not the brief:
 - **Prisma v7 requires a driver adapter** (`PrismaPg`) — there is no bundled
   query engine. `.env` is not auto-loaded by the CLI; config lives in
   `prisma.config.ts`.
-- **Only `apps/frontend/src/public/` is web-reachable.** Do not widen the static
-  root to `src/`, or server source becomes downloadable.
+- **Every buyer-facing API route requires an ONBOARDED retailer.** Catalog,
+  storefront, cart, orders, favourites, reviews and returns are all behind
+  `requireAccess({ roles: ['RETAILER'], approved: true })`. Nothing is public,
+  so the frontend has exactly one unauthenticated page (the landing) and needs
+  a `/pending` screen — a new signup starts at `NOT_CONTACTED` and would
+  otherwise hit a blank wall.
+- **The frontend access cookie's max-age is derived from the token's `exp`**
+  (`lib/token-lifetime.ts`), not hardcoded. The cookie expiring is what
+  triggers renewal in `proxy.ts`; if it ever outlived the token, every request
+  would 401 with nothing to renew from.
+- **Refresh tokens rotate on every use.** `proxy.ts` must persist the new one
+  onto the response or the user is signed out on their next request.
+- **`GET /orders/group/:checkoutGroupId` returns an envelope**
+  (`{ checkoutGroupId, orderCount, totalMinor, orders }`), not a bare array —
+  unlike `GET /orders`, which is an array.
+- **`GET /stores` is the brand's own preview** (`/brand/storefront`, BRAND
+  only). Retailers list brands via `GET /catalog/brands`.
 - **Bank account numbers are sensitive PII.** `BrandProfile.bankAccountNumber`
   and `WithdrawalRequest.bankAccountNumber` are admin-only: never return them on
   a non-admin route, never write them to logs.
@@ -138,9 +163,14 @@ record. Three things have since changed — follow these, not the brief:
 
 ```
 apps/backend/     Elysia API — config/, modules/, middleware/, lib/, domain/, prisma/
-apps/frontend/    Elysia static server — pages/, public/{scripts,styles}/
+apps/frontend/    Next.js — app/, components/, lib/, proxy.ts
 packages/shared/  types + constants shared by both apps
 ```
+
+The frontend is the **retailer (buyer) site**. The seller and admin dashboards
+are separate designs, and belong in `app/(seller)/` and `app/(admin)/` route
+groups alongside `app/(shop)/`, each with its own layout and role check. All
+three designs share one palette, so `app/globals.css` already covers them.
 
 Backend modules follow one pattern per domain folder — copy an existing module
 and register it in `src/index.ts` with `.use(...)`. Details in

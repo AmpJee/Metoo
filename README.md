@@ -68,13 +68,16 @@ through 6543 will fail with confusing lock errors.
 │   │   ├── Dockerfile
 │   │   └── railway.json
 │   │
-│   └── frontend/             # Elysia static server + vanilla pages
-│       ├── src/
-│       │   ├── pages/        # one .html per screen, served via routes
-│       │   ├── public/       # everything here is web-reachable
-│       │   │   ├── scripts/  # one .js per page, plus api-client.js
-│       │   │   └── styles/   # base tokens, components
-│       │   └── index.ts      # static server entry point
+│   └── frontend/             # Next.js 16 (App Router) — the retailer site
+│       ├── app/
+│       │   ├── (public)/…    # landing, login, register, pending
+│       │   ├── (shop)/       # every screen behind the ONBOARDED gate
+│       │   ├── api/auth/     # login | logout | register (cookie handling)
+│       │   ├── actions/      # server actions: cart, checkout, saved, follow
+│       │   └── globals.css   # design tokens (@theme)
+│       ├── components/       # ui/ primitives + product card, order card…
+│       ├── lib/              # api client, session, format, order-status
+│       ├── proxy.ts          # session renewal + route gating
 │       ├── Dockerfile
 │       └── railway.json
 │
@@ -92,11 +95,15 @@ through 6543 will fail with confusing lock errors.
 └── package.json
 ```
 
-Two structural rules worth knowing:
+Three structural rules worth knowing:
 
-- **`apps/frontend/src/public/` is the only web-reachable directory.** The
-  static plugin points at it specifically so that server source (`index.ts`)
-  is never downloadable. Do not widen it to `src/`.
+- **Everything a buyer can see requires an ONBOARDED retailer.** Every API
+  route behind `/catalog`, `/cart`, `/orders`, `/stores`, `/favourites` and
+  `/returns` is gated, so the landing page is the only unauthenticated screen
+  and `/pending` exists to explain the wait to a new signup.
+- **The browser never holds a token.** It talks only to Next, which keeps the
+  session in httpOnly cookies and forwards requests to Elysia with a Bearer
+  header. `API_URL` is therefore server-only, not `NEXT_PUBLIC_`.
 - **`apps/backend/src/generated/` is a build artifact.** Prisma v7 emits plain
   TypeScript into the source tree. It is gitignored; run `make db-generate`
   after any schema change.
@@ -115,40 +122,54 @@ root directory breaks the workspace install.
 Set these variables — the `${{...}}` syntax is Railway's cross-service
 reference, so no URL is ever hardcoded:
 
-| Service  | Variable         | Value                                        |
-| -------- | ---------------- | -------------------------------------------- |
-| backend  | `DATABASE_URL`   | Supabase pooler URL (6543)                   |
-| backend  | `DIRECT_URL`     | Supabase direct URL (5432)                   |
-| backend  | `CORS_ORIGIN`    | `https://${{frontend.RAILWAY_PUBLIC_DOMAIN}}` |
-| frontend | `PUBLIC_API_URL` | `https://${{backend.RAILWAY_PUBLIC_DOMAIN}}`  |
+| Service  | Variable                                  | Value                                         |
+| -------- | ----------------------------------------- | --------------------------------------------- |
+| backend  | `DATABASE_URL`                            | Supabase pooler URL (6543)                    |
+| backend  | `DIRECT_URL`                              | Supabase direct URL (5432)                    |
+| backend  | `JWT_ACCESS_SECRET` / `JWT_REFRESH_SECRET` | two different `openssl rand -base64 32`       |
+| backend  | `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` | from Supabase → Settings → API             |
+| backend  | `CORS_ORIGIN`                             | `https://${{frontend.RAILWAY_PUBLIC_DOMAIN}}` |
+| frontend | `API_URL`                                 | `https://${{backend.RAILWAY_PUBLIC_DOMAIN}}`  |
 
 Do **not** set `PORT` — Railway injects it and both apps already read it.
+
+`API_URL` replaces the old `PUBLIC_API_URL`: it is read by the Next server, not
+the browser, so it must **not** be prefixed `NEXT_PUBLIC_`. CORS no longer
+matters for normal traffic — the browser only ever talks to Next — but keep
+`CORS_ORIGIN` set for the `/openapi` console.
 
 Migrations run automatically: the backend's `preDeployCommand` runs
 `prisma migrate deploy` before the new container takes traffic.
 
 ## What to build next
 
-Done: the schema (19 models), auth (JWT + `requireAccess` role/approval
-guards), and the admin signup approval queue.
+**Backend** is largely done — 67 routes across 21 modules: auth, the admin
+pipeline, catalog, storefronts and follows, cart, per-brand checkout, the
+nine-state order lifecycle, the wallet ledger with admin-approved withdrawals,
+reviews, saved lists, returns with refunds, uploads and the feedback log.
 
-Still to do, in dependency order:
+**Frontend** covers the whole retailer site: landing, auth, pending approval,
+explore with category and search, product detail, brand storefronts, cart,
+checkout, My Purchase with status tabs, order tracking, saved lists and
+returns.
+
+Still to do, in rough dependency order:
 
 1. **Payments** — Stripe card + PromptPay collection and webhooks, a `Payment`
-   row per attempt, and `POST /orders/:id/retry-payment`. PromptPay confirms
-   asynchronously, so order state must come from the webhook, never from the
-   HTTP response to the payment call.
-2. **Fulfilment** — the 8-state order lifecycle, brand and admin transitions,
-   an `AuditLog` row per change, and `SETTLED` writing the wallet ledger.
-3. **Wallet** — balance as `SUM(amountMinor)`, withdrawal requests, and admin
-   approve/mark-paid with the balance re-checked inside the debit transaction.
-4. **Post-sale** — returns with refunds, and chat.
-5. **Uploads** — Supabase Storage signed uploads (public bucket for product
-   photos, private + signed URLs for ID/อย. documents). Product photos are a
-   plain URL field until then.
-6. **Pages** — one `.html` in `src/pages/` and one `.js` in
-   `src/public/scripts/` per screen, all API calls going through
-   `api-client.js`.
+   row per attempt, and a retry path. There is no payment module at all today:
+   `POST /checkout` creates orders and stops, and the checkout screen says so
+   rather than pretending to charge. PromptPay confirms asynchronously, so
+   order state must come from the webhook, never from the HTTP response.
+2. **Retailer profile** — `GET`/`PATCH /retailer/profile` so a shop can read
+   and edit its own delivery address. Checkout currently cannot show it;
+   orders still snapshot it correctly server-side.
+3. **Seller dashboard** — `app/(seller)/` route group against the existing
+   `/brand/*` routes (dashboard, products, orders, customers, wallet).
+4. **Admin dashboard** — `app/(admin)/` route group against `/admin/*`
+   (pipeline, orders, withdrawals, returns, feedback).
+5. **Chat, vouchers and coins** — in the designs, with no schema or routes yet.
+6. **Retailer uploads** — return-request photos need a retailer-facing signed
+   upload route; the existing one is brand-only.
 
 Conventions and the decisions that supersede the brief below are in
 [CLAUDE.md](CLAUDE.md); module patterns are in

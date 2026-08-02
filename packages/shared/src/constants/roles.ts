@@ -59,6 +59,18 @@ export const CATEGORIES = [
 ] as const
 
 /**
+ * How each category is written in the interface. Kept beside the enum for the
+ * same reason as ORDER_STATUS_LABELS: a new category cannot be added without
+ * deciding what a shopper calls it.
+ */
+export const CATEGORY_LABELS: Record<(typeof CATEGORIES)[number], string> = {
+  FOOD_BEVERAGE: 'Food & Beverage',
+  HEALTH_BEAUTY: 'Health & Beauty',
+  HOME_LIVING: 'Home & Living',
+  FASHION_ACCESSORIES: 'Fashion & Accessories',
+}
+
+/**
  * Order lifecycle.
  *
  * SETTLED is financial rather than logistical: it means the sale was credited
