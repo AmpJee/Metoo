@@ -60,6 +60,7 @@ These come from the product brief and are non-negotiable:
    | `FOOD_BEVERAGE` | 400 (4%) | 200 (2%) |
    | `HEALTH_BEAUTY` | 800 (8%) | 500 (5%) |
    | `HOME_LIVING` | 500 (5%) | 300 (3%) |
+   | `FASHION_ACCESSORIES` | 800 (8%) | 500 (5%) |
 
    The rate is **snapshotted onto the order at checkout** and never recomputed.
 6. **Brand approval requires documents** — SME or National ID **plus** an อย.
