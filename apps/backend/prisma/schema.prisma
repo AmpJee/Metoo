@@ -265,6 +265,9 @@ model RetailerProfile {
   province    String
   postalCode  String
   taxId       String?
+  /// Shop photo, shown wherever a retailer appears — chat, the seller's
+  /// Customers list, admin. The brand-side equivalent is `logoUrl`.
+  avatarUrl   String?
 
   // --- Sales pipeline, maintained by admin -------------------------------
   shopType           ShopType?

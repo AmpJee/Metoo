@@ -82,6 +82,48 @@ export const adminFeedbackModule = new Elysia({
   })
 
   .patch(
+    '/:id',
+    ({ params, body, auth }) =>
+      service.updateEntry({
+        adminId: auth.userId,
+        feedbackId: params.id,
+        adminNote: body.adminNote,
+        status: body.status,
+      }),
+    {
+      params: t.Object({ id: t.String({ format: 'uuid' }) }),
+      body: t.Object(
+        {
+          adminNote: t.Optional(
+            t.Union([t.String({ maxLength: 2000 }), t.Null()])
+          ),
+          // optionalEnum, NOT t.Optional(t.UnionEnum(...)). The latter emits
+          // `default: "OPEN"` and Elysia applies it to an absent property, so
+          // editing only the note silently reopened a resolved entry — and
+          // filled the body, defeating minProperties as well.
+          status: optionalEnum(FEEDBACK_STATUSES),
+        },
+        { minProperties: 1 }
+      ),
+      detail: {
+        summary: 'Edit a feedback entry',
+        description:
+          'For fixing a note or reopening something that came back. Separate ' +
+          'from /resolve, which is the one-way "dealt with" action — folding ' +
+          'them together would make re-resolving the only way to correct a ' +
+          'typo. Setting status back to OPEN clears resolvedBy and resolvedAt ' +
+          'rather than leaving a timestamp claiming someone closed a thing ' +
+          'that is open again. ' +
+          'The message itself is not editable: it is what the author wrote, ' +
+          'and an admin rewriting it would make this a log of admin opinion ' +
+          'rather than of feedback.',
+        tags: ['Admin · Feedback'],
+      },
+      response: { 200: feedback },
+    }
+  )
+
+  .patch(
     '/:id/resolve',
     ({ params, body, auth }) =>
       service.resolve({

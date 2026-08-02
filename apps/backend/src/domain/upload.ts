@@ -102,6 +102,47 @@ export function documentKey(params: {
   return `brands/${params.brandId}/documents/${params.documentType}/${unique}.${params.extension}`
 }
 
+/** Whose folder an avatar lives in. Brands and retailers both have one. */
+export type AvatarOwner = 'brands' | 'retailers'
+
+/**
+ * A profile picture — a brand's logo or a retailer's shop photo.
+ *
+ * Same shape as `photoKey`: owner-scoped folder so nobody can write outside
+ * their own, and a random suffix so replacing a picture does not overwrite the
+ * file a cached page is still serving.
+ */
+export function avatarKey(params: {
+  owner: AvatarOwner
+  ownerId: string
+  extension: string
+  unique?: string
+}): string {
+  const unique = params.unique ?? crypto.randomUUID()
+  return `${params.owner}/${params.ownerId}/avatar/${unique}.${params.extension}`
+}
+
+/**
+ * The same ownership check as `keyBelongsToBrand`, for either owner type.
+ *
+ * Kept as its own function rather than folded into that one: retailer ids and
+ * brand ids are both UUIDs, so a check that ignored the folder prefix would
+ * let a retailer confirm an upload into a brand's folder if the ids ever
+ * collided.
+ */
+export function keyBelongsToOwner(
+  key: string,
+  owner: AvatarOwner,
+  ownerId: string
+): boolean {
+  // A prefix check alone is not enough: "brands/b1/../b2/x.png" starts with
+  // "brands/b1/" and still writes into b2's folder. Reject any traversal
+  // segment outright rather than trying to normalise the path.
+  if (key.split('/').includes('..')) return false
+
+  return key.startsWith(`${owner}/${ownerId}/`)
+}
+
 /**
  * Does this key belong to this brand?
  *
@@ -110,5 +151,5 @@ export function documentKey(params: {
  * product.
  */
 export function keyBelongsToBrand(key: string, brandId: string): boolean {
-  return key.startsWith(`brands/${brandId}/`)
+  return keyBelongsToOwner(key, 'brands', brandId)
 }

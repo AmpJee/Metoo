@@ -25,6 +25,7 @@ const retailerSelect = {
   province: true,
   postalCode: true,
   taxId: true,
+  avatarUrl: true,
   updatedAt: true,
 }
 
