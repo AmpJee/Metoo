@@ -117,3 +117,57 @@ export async function resolve(params: {
     select: feedbackSelect,
   })
 }
+
+/**
+ * Edit an entry after the fact.
+ *
+ * Separate from `resolve` because they answer different needs: resolve is the
+ * one-way "this is dealt with", while this is "the note was wrong" or "this
+ * came back, reopen it". Folding them together would mean the only way to fix
+ * a typo in a note was to re-resolve something already resolved.
+ *
+ * The message itself is not editable. It is what the author actually wrote,
+ * and an admin rewriting it would make the log a record of admin opinion
+ * rather than of feedback.
+ */
+export async function updateEntry(params: {
+  adminId: string
+  feedbackId: string
+  adminNote?: string | null
+  status?: FeedbackStatus
+}) {
+  const existing = await prisma.feedback.findUnique({
+    where: { id: params.feedbackId },
+    select: { id: true, status: true },
+  })
+
+  if (!existing) {
+    throw new AppError(404, 'FEEDBACK_NOT_FOUND', 'No such feedback.')
+  }
+
+  const status = params.status ?? existing.status
+
+  return prisma.feedback.update({
+    where: { id: existing.id },
+    data: {
+      // Three states, not two: absent means leave it, null means clear it, a
+      // string means replace it. `null?.trim()` is undefined, so the obvious
+      // one-liner silently turned "clear this" into "leave it alone".
+      adminNote:
+        params.adminNote === undefined
+          ? undefined
+          : (params.adminNote?.trim() ?? null),
+      status,
+      // Reopening clears the resolution rather than leaving a stale timestamp
+      // claiming someone closed something that is open again.
+      resolvedBy: status === 'RESOLVED' ? params.adminId : null,
+      resolvedAt:
+        status === 'RESOLVED'
+          ? existing.status === 'RESOLVED'
+            ? undefined
+            : new Date()
+          : null,
+    },
+    select: feedbackSelect,
+  })
+}
