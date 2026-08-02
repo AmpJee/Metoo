@@ -22,3 +22,18 @@ export function optionalEnum<const T extends string>(
 ) {
   return t.Optional(t.UnionEnum(values, { default: undefined }))
 }
+
+/**
+ * Where to reach an account, and where to ship.
+ *
+ * Registration writes these and the profile screens edit them, so the bounds
+ * live here rather than in either module. If they were declared twice, one copy
+ * would eventually accept an address the other rejects, and which one you hit
+ * would depend on whether you were signing up or correcting a typo.
+ */
+export const CONTACT_FIELDS = {
+  phone: t.String({ minLength: 6, maxLength: 20 }),
+  addressLine: t.String({ minLength: 1, maxLength: 200 }),
+  province: t.String({ minLength: 1, maxLength: 100 }),
+  postalCode: t.String({ minLength: 4, maxLength: 10 }),
+} as const

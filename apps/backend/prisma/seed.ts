@@ -5,6 +5,11 @@
  * leaves the same rows rather than failing on a duplicate key. That matters
  * because `make db-seed` is the fastest way to get back to a known state.
  *
+ * "A known state" is why the profile upserts pass the same object to `update`
+ * as to `create`. With `update: {}` the script only ever *creates* a profile —
+ * re-running it after an edit leaves the edit in place, so the one command
+ * documented as the way back to a clean slate quietly is not.
+ *
  * The passwords here are deliberately weak and the emails deliberately fake.
  * This script is for local development and must never run against production.
  */
@@ -48,21 +53,34 @@ const brandUser = await prisma.user.upsert({
   },
 })
 
+const brandFields = {
+  name: 'Siam Craft Goods',
+  description: 'Small-batch Thai household and pantry goods.',
+  phone: '02-000-0000',
+  addressLine: '119 Charoen Krung Road',
+  province: 'Bangkok',
+  postalCode: '10500',
+  bankName: 'Kasikornbank',
+  bankAccountName: 'Siam Craft Goods Co., Ltd.',
+  bankAccountNumber: '000-0-00000-0',
+  // Spelled out rather than left to the column defaults. A field the seed does
+  // not name is a field a re-run cannot put back, so anything an admin screen
+  // can write has to appear here even when the intended value is empty.
+  fdaStatus: 'YES',
+  sizeBand: null,
+  socialHandle: null,
+  caseWeightKg: null,
+  caseDimensionsCm: null,
+  caseUnits: null,
+  existingRetailerCount: null,
+  referralSource: null,
+  adminNotes: null,
+} as const
+
 const brand = await prisma.brandProfile.upsert({
   where: { userId: brandUser.id },
-  update: {},
-  create: {
-    userId: brandUser.id,
-    name: 'Siam Craft Goods',
-    description: 'Small-batch Thai household and pantry goods.',
-    phone: '02-000-0000',
-    addressLine: '119 Charoen Krung Road',
-    province: 'Bangkok',
-    postalCode: '10500',
-    bankName: 'Kasikornbank',
-    bankAccountName: 'Siam Craft Goods Co., Ltd.',
-    bankAccountNumber: '000-0-00000-0',
-  },
+  update: brandFields,
+  create: { userId: brandUser.id, ...brandFields },
 })
 
 // --- retailer --------------------------------------------------------------
@@ -78,17 +96,32 @@ const retailerUser = await prisma.user.upsert({
   },
 })
 
+const retailerFields = {
+  shopName: 'Somchai Minimart',
+  phone: '02-111-1111',
+  addressLine: '42 Sukhumvit Soi 31',
+  province: 'Bangkok',
+  postalCode: '10110',
+  // Explicitly null, not omitted: a re-run has to clear one that was set, or
+  // it is not restoring the seeded state. Same for every pipeline column below
+  // — an admin screen can write them, so the seed has to be able to undo that.
+  taxId: null,
+  shopType: 'MINIMART',
+  zone: null,
+  socialHandle: null,
+  currentProducts: null,
+  monthlyCapacity: null,
+  preferredPayment: null,
+  paymentReliability: 'PENDING',
+  deliveryWindow: null,
+  referralSource: null,
+  adminNotes: null,
+} as const
+
 const retailer = await prisma.retailerProfile.upsert({
   where: { userId: retailerUser.id },
-  update: {},
-  create: {
-    userId: retailerUser.id,
-    shopName: 'Somchai Minimart',
-    phone: '02-111-1111',
-    addressLine: '42 Sukhumvit Soi 31',
-    province: 'Bangkok',
-    postalCode: '10110',
-  },
+  update: retailerFields,
+  create: { userId: retailerUser.id, ...retailerFields },
 })
 
 // An empty cart, so the checkout flow has something to attach to immediately.
@@ -111,25 +144,33 @@ const pendingUser = await prisma.user.upsert({
   },
 })
 
+const prospectFields = {
+  name: 'Chiang Mai Herbals',
+  description: 'Mid-pipeline — use this to exercise the admin board.',
+  phone: '053-000-000',
+  addressLine: '8 Nimmanhaemin Road',
+  province: 'Chiang Mai',
+  postalCode: '50200',
+  // Blocked on อย. — the exact case the design's notes describe in prose.
+  fdaStatus: 'PENDING',
+  sizeBand: 'SIZE_1_5',
+  socialHandle: '@cmherbals',
+  existingRetailerCount: 5,
+  referralSource: 'Instagram',
+  adminNotes: 'Waiting on อย. cert before we list the soaps.',
+  // A prospect has not given bank details yet — that is the point of it.
+  bankName: null,
+  bankAccountName: null,
+  bankAccountNumber: null,
+  caseWeightKg: null,
+  caseDimensionsCm: null,
+  caseUnits: null,
+} as const
+
 await prisma.brandProfile.upsert({
   where: { userId: pendingUser.id },
-  update: {},
-  create: {
-    userId: pendingUser.id,
-    name: 'Chiang Mai Herbals',
-    description: 'Mid-pipeline — use this to exercise the admin board.',
-    phone: '053-000-000',
-    addressLine: '8 Nimmanhaemin Road',
-    province: 'Chiang Mai',
-    postalCode: '50200',
-    // Blocked on อย. — the exact case the design's notes describe in prose.
-    fdaStatus: 'PENDING',
-    sizeBand: 'SIZE_1_5',
-    socialHandle: '@cmherbals',
-    existingRetailerCount: 5,
-    referralSource: 'Instagram',
-    adminNotes: 'Waiting on อย. cert before we list the soaps.',
-  },
+  update: prospectFields,
+  create: { userId: pendingUser.id, ...prospectFields },
 })
 
 // --- catalog ---------------------------------------------------------------

@@ -8,6 +8,7 @@
  */
 import { Elysia, t } from 'elysia'
 import { PIPELINE_STATUSES, ROLES } from '@metoo/shared'
+import { CONTACT_FIELDS } from '../../lib/schema.ts'
 import { requireAuth } from '../../middleware/auth.ts'
 import * as service from './service.ts'
 
@@ -33,12 +34,6 @@ const session = t.Object({
 })
 
 const password = t.String({ minLength: 8, maxLength: 128 })
-const contact = {
-  phone: t.String({ minLength: 6, maxLength: 20 }),
-  addressLine: t.String({ minLength: 1, maxLength: 200 }),
-  province: t.String({ minLength: 1, maxLength: 100 }),
-  postalCode: t.String({ minLength: 4, maxLength: 10 }),
-}
 
 // A discriminated union on `role`: a brand signup and a retailer signup need
 // genuinely different fields, and one merged object with everything optional
@@ -50,7 +45,7 @@ const registerBody = t.Union([
     password,
     name: t.String({ minLength: 1, maxLength: 120 }),
     description: t.Optional(t.String({ maxLength: 1000 })),
-    ...contact,
+    ...CONTACT_FIELDS,
   }),
   t.Object({
     role: t.Literal('RETAILER'),
@@ -58,7 +53,7 @@ const registerBody = t.Union([
     password,
     shopName: t.String({ minLength: 1, maxLength: 120 }),
     taxId: t.Optional(t.String({ maxLength: 20 })),
-    ...contact,
+    ...CONTACT_FIELDS,
   }),
 ])
 
@@ -74,9 +69,10 @@ export const authModule = new Elysia({ name: 'auth', prefix: '/auth' })
       detail: {
         summary: 'Register a brand or retailer',
         description:
-          'Creates the account and its profile, always with status PENDING. ' +
-          'An admin must approve it before protected routes become reachable. ' +
-          'Admins are not self-registerable.',
+          'Creates the account and its profile at pipeline status ' +
+          'NOT_CONTACTED. An admin walks it to ONBOARDED before trading ' +
+          'routes become reachable — until then login succeeds but those ' +
+          'routes return 403. Admins are not self-registerable.',
         tags: ['Auth'],
       },
       response: { 201: session },
