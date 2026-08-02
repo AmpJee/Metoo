@@ -159,6 +159,42 @@ export function bucketByDay(
 }
 
 /**
+ * Totals per calendar month, for the Year view.
+ *
+ * A year bucketed by day is 366 bars. The design's chart has room for a
+ * handful, so at that range the axis has to be months — twelve bars, keyed
+ * YYYY-MM, empty months included for the same reason empty days are.
+ */
+export function bucketByMonth(
+  orders: OrderFact[],
+  from: Date,
+  to = new Date()
+): Bucket[] {
+  const buckets = new Map<string, Bucket>()
+
+  const cursor = new Date(
+    Date.UTC(from.getUTCFullYear(), from.getUTCMonth(), 1)
+  )
+  const last = Date.UTC(to.getUTCFullYear(), to.getUTCMonth(), 1)
+
+  while (cursor.getTime() <= last) {
+    const key = cursor.toISOString().slice(0, 7)
+    buckets.set(key, { date: key, valueMinor: 0, count: 0 })
+    cursor.setUTCMonth(cursor.getUTCMonth() + 1)
+  }
+
+  for (const order of orders) {
+    const key = order.createdAt.toISOString().slice(0, 7)
+    const bucket = buckets.get(key)
+    if (!bucket) continue
+    bucket.valueMinor += order.subtotalMinor
+    bucket.count += 1
+  }
+
+  return [...buckets.values()]
+}
+
+/**
  * Mean days from signup to a retailer's first order.
  *
  * Retailers who have not ordered yet are excluded — they have no elapsed time
