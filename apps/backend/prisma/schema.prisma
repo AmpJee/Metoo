@@ -229,6 +229,14 @@ model BrandProfile {
   // Everything below is outreach data the console shows and the brand never
   // edits. adminNotes in particular is internal and must not leak to a
   // non-admin route.
+  ///
+  /// The Sellers table shows ONE category per brand, which is how the team
+  /// thinks of a brand ("a Food & Beverage brand") even when its catalog
+  /// crosses categories. Distinct from Product.category, which decides
+  /// commission and drives browse filtering — this one is for the console.
+  /// Nullable: brands registered before this column existed have none, and a
+  /// signup form does not ask for it.
+  category              Category?
   fdaStatus             FdaStatus @default(NO)
   sizeBand              SizeBand?
   socialHandle          String?

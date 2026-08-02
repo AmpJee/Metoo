@@ -7,6 +7,7 @@
  */
 import { Elysia, t } from 'elysia'
 import {
+  CATEGORIES,
   FDA_STATUSES,
   PAYMENT_PREFERENCES,
   PAYMENT_RELIABILITIES,
@@ -25,6 +26,8 @@ const nullable = <T extends ReturnType<typeof t.String>>(schema: T) =>
 const brandPipeline = t.Object({
   id: t.String(),
   name: t.String(),
+  /** The Sellers table's Category column. Null on brands predating it. */
+  category: t.Union([t.UnionEnum(CATEGORIES), t.Null()]),
   phone: t.String(),
   province: t.String(),
   fdaStatus: t.UnionEnum(FDA_STATUSES),
@@ -74,7 +77,11 @@ export const adminModule = new Elysia({ name: 'admin', prefix: '/admin' })
   .get(
     '/pipeline',
     ({ query }) =>
-      service.listPipeline({ status: query.status, role: query.role }),
+      service.listPipeline({
+        status: query.status,
+        role: query.role,
+        q: query.q,
+      }),
     {
       query: t.Object({
         // optionalEnum, not t.Optional(t.UnionEnum(...)) — the latter would
@@ -82,12 +89,17 @@ export const adminModule = new Elysia({ name: 'admin', prefix: '/admin' })
         // everyone else. See lib/schema.ts.
         status: optionalEnum(PIPELINE_STATUSES),
         role: optionalEnum(['BRAND', 'RETAILER'] as const),
+        // The console's single search box: name, location, referral, handle.
+        q: t.Optional(t.String({ maxLength: 100 })),
       }),
       detail: {
         summary: 'List brands and retailers in the pipeline',
         description:
           'Brands and retailers only; admin accounts are never prospected. ' +
-          'Filter by status for a single column of the board.',
+          'Filter by status for a single column of the board. `q` is the ' +
+          'console search box — it matches brand name, shop name, province, ' +
+          'zone, referral source, social handle and email, case-insensitively, ' +
+          'so one box works on either tab.',
         tags: ['Admin'],
       },
       response: { 200: t.Array(applicant) },
