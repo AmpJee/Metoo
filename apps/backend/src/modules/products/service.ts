@@ -11,6 +11,8 @@ import { prisma } from '../../config/prisma.ts'
 import { checkBarcode } from '../../domain/barcode.ts'
 import { MAX_PRESETS, checkPackPresets } from '../../domain/pack-presets.ts'
 import { AppError } from '../../middleware/error.ts'
+import type { StagedImage } from '../product-images/service.ts'
+import { attachStagedImages } from '../product-images/service.ts'
 
 export { brandIdForUser } from '../../lib/profile.ts'
 
@@ -30,7 +32,6 @@ export interface ProductInput {
   packWeightGrams?: number | null
   ingredients?: string | null
   shelfLifeDays?: number | null
-  galleryUrls?: string[]
   packPresets?: number[]
 }
 
@@ -119,13 +120,44 @@ export async function getForBrand(brandId: string, productId: string) {
   return product
 }
 
-export async function create(brandId: string, input: ProductInput) {
+/**
+ * Create a product, optionally with photos already uploaded.
+ *
+ * The Add Product form uploads while the product has no id, so it sends back
+ * the staged storage keys here. Product and images are written in one
+ * transaction: a bad key rolls the whole thing back, and the brand fixes the
+ * form rather than finding a half-built product in their catalog.
+ */
+export async function create(
+  brandId: string,
+  input: ProductInput,
+  images: StagedImage[] = []
+) {
   assertBarcode(input.barcode)
   // Mirrors Prisma's @default(1) for the omitted case.
   assertPackPresets(input.packPresets, input.minPacks ?? 1)
 
   try {
-    return await prisma.product.create({ data: { ...input, brandId } })
+    return await prisma.$transaction(async (tx) => {
+      const product = await tx.product.create({ data: { ...input, brandId } })
+
+      const cover = await attachStagedImages(tx, {
+        brandId,
+        productId: product.id,
+        images,
+      })
+
+      // photoUrl is the denormalised cover; an explicit photoUrl in the body
+      // still wins, so a brand can point at an external image if it wants one.
+      if (cover && !input.photoUrl) {
+        return tx.product.update({
+          where: { id: product.id },
+          data: { photoUrl: cover },
+        })
+      }
+
+      return product
+    })
   } catch (error) {
     if (isDuplicateSku(error)) {
       throw new AppError(

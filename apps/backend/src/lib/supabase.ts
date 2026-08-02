@@ -136,3 +136,24 @@ export async function objectExists(
 
 export const PUBLIC_BUCKET = env.SUPABASE_PUBLIC_BUCKET
 export const PRIVATE_BUCKET = env.SUPABASE_PRIVATE_BUCKET
+
+/**
+ * Delete an object.
+ *
+ * Used when a product image row is removed: the public bucket would otherwise
+ * keep serving a "deleted" photo at its URL indefinitely.
+ *
+ * Supabase answers 200 for a key that does not exist, so this is safe to call
+ * twice — which matters, because it runs after the database transaction has
+ * already committed.
+ */
+export async function removeObject(
+  bucket: string,
+  storageKey: string
+): Promise<void> {
+  const { error } = await supabase.storage.from(bucket).remove([storageKey])
+
+  if (error) {
+    throw new Error(`Could not delete ${storageKey}: ${error.message}`)
+  }
+}

@@ -47,8 +47,15 @@ const catalogProduct = t.Object({
 const catalogProductDetail = t.Composite([
   catalogProduct,
   t.Object({
-    /** Extra images for the thumbnail strip. The cover is `photoUrl`. */
-    galleryUrls: t.Array(t.String()),
+    /** Every photo, in display order. Position 0 is the cover (`photoUrl`). */
+    images: t.Array(
+      t.Object({
+        id: t.String(),
+        url: t.String(),
+        position: t.Integer(),
+        altText: t.Union([t.String(), t.Null()]),
+      })
+    ),
     /** The "Amount" quick-pick buttons, in display order. */
     packPresets: t.Array(t.Integer()),
     sku: t.Union([t.String(), t.Null()]),

@@ -91,6 +91,24 @@ export function photoKey(params: {
   return `brands/${params.brandId}/products/${params.productId}/${unique}.${params.extension}`
 }
 
+/**
+ * A photo uploaded before its product exists.
+ *
+ * The Add Product form picks images while the product still has no id, so the
+ * key cannot contain one. Brand-scoped is what matters for safety — the same
+ * `keyBelongsToBrand` check applies — and the object simply stays under
+ * `staging/` after the product is created rather than being copied, since
+ * moving it would change a URL that is already recorded.
+ */
+export function stagedPhotoKey(params: {
+  brandId: string
+  extension: string
+  unique?: string
+}): string {
+  const unique = params.unique ?? crypto.randomUUID()
+  return `brands/${params.brandId}/staging/${unique}.${params.extension}`
+}
+
 /** Verification documents, in the private bucket, likewise brand-scoped. */
 export function documentKey(params: {
   brandId: string
