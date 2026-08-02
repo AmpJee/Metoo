@@ -344,8 +344,30 @@ model Product {
   /// Stock on hand, in packs.
   stockPacks        Int?
   isActive          Boolean  @default(true)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+
+  // --- identification and spec ---------------------------------------------
+  /// The brand's own stock code. Unique per brand, not globally: two brands
+  /// picking "SOAP-01" is normal and not a conflict.
+  sku             String?
+  /// GTIN-8/12/13/14, digits only. Validated by its check digit on write, so
+  /// a transposed digit is caught here and not at the retailer's till.
+  /// Deliberately NOT unique: a GTIN is globally unique in principle, but
+  /// enforcing that would let one brand's typo permanently block the brand
+  /// that actually owns the code.
+  barcode         String?
+  /// Shipping weight of ONE PACK, in grams. Named for the pack because packs
+  /// are the unit everything else here counts in, and because delivery cost
+  /// is charged per pack.
+  packWeightGrams Int?
+  /// Free text. Thai FDA (อย.) rules make this expected on food and cosmetics,
+  /// and a minimart is asked about allergens by its own customers.
+  ingredients     String?
+  /// Days from manufacture. A minimart sizes its order around this — a
+  /// 30-day product and a 2-year product are not ordered the same way.
+  shelfLifeDays   Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   brand      BrandProfile @relation(fields: [brandId], references: [id], onDelete: Cascade)
   cartItems  CartItem[]
@@ -353,8 +375,11 @@ model Product {
   favourites Favourite[]
   reviews    Review[]
 
+  @@unique([brandId, sku])
   @@index([category, isActive])
   @@index([brandId, isActive])
+  /// Retailers look products up by scanning, so this is a lookup path.
+  @@index([barcode])
   @@map("products")
 }
 
