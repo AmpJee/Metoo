@@ -1,4 +1,5 @@
 import { Elysia, t } from 'elysia'
+import { CATEGORIES } from '@metoo/shared'
 import { optionalEnum } from '../../lib/schema.ts'
 import { requireAccess } from '../../middleware/auth.ts'
 import * as service from './service.ts'
@@ -20,7 +21,10 @@ export const adminSummaryModule = new Elysia({
         'seller and retailer, plus how long a signup takes to become an ' +
         'order. GMV counts confirmed orders onward — a PENDING order is a ' +
         'request, not a sale. Contribution margin is commission minus ' +
-        'logistics; there is no payment gateway yet, so that term is zero.',
+        'logistics minus gateway fees. Payments are collected manually, so ' +
+        'gatewayFeesMinor is always 0 today. brandsByCategory counts onboarded ' +
+        'brands that have an active product in each category, derived from ' +
+        'their products — a brand selling across two appears in both.',
       tags: ['Admin · Summary'],
     },
     response: {
@@ -47,6 +51,20 @@ export const adminSummaryModule = new Elysia({
         averageFulfilmentHours: t.Union([t.Integer(), t.Null()]),
         /** Null until a retailer has placed a first order. */
         averageDaysToFirstOrder: t.Union([t.Integer(), t.Null()]),
+        /**
+         * Always 0 — payments are collected manually, so nothing takes a cut.
+         * A field rather than an omission so the design's "Omise fees" line
+         * has something to bind to, and starts reporting a real number the
+         * day a gateway exists.
+         */
+        gatewayFeesMinor: t.Integer(),
+        /** Every category, including zeroes — see the note in service.ts. */
+        brandsByCategory: t.Array(
+          t.Object({
+            category: t.UnionEnum(CATEGORIES),
+            brandCount: t.Integer(),
+          })
+        ),
         gmvByBrand: t.Array(
           t.Object({
             brandId: t.String(),
