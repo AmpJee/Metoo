@@ -19,7 +19,6 @@ const productResponse = t.Object({
   name: t.String(),
   description: t.Union([t.String(), t.Null()]),
   photoUrl: t.Union([t.String(), t.Null()]),
-  galleryUrls: t.Array(t.String()),
   pricePerPackMinor: t.Integer(),
   minPacks: t.Integer(),
   unitsPerPack: t.Integer(),
@@ -42,11 +41,6 @@ const productBody = t.Object({
   name: t.String({ minLength: 1, maxLength: 200 }),
   description: t.Optional(t.String({ maxLength: 2000 })),
   photoUrl: t.Optional(t.String({ format: 'uri', maxLength: 2000 })),
-  // The thumbnail strip, in display order. The cover lives in photoUrl and is
-  // not repeated here.
-  galleryUrls: t.Optional(
-    t.Array(t.String({ format: 'uri', maxLength: 2000 }), { maxItems: 8 })
-  ),
   pricePerPackMinor: t.Integer({ minimum: 1 }),
   // Optional with NO schema `default`. Elysia applies a TypeBox default to an
   // absent property, and t.Partial keeps defaults — so `default: 1` here meant

@@ -30,7 +30,6 @@ export interface ProductInput {
   packWeightGrams?: number | null
   ingredients?: string | null
   shelfLifeDays?: number | null
-  galleryUrls?: string[]
   packPresets?: number[]
 }
 

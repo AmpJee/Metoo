@@ -331,12 +331,13 @@ model Product {
   brandId           String
   name              String
   description       String?
-  /// The cover image — the one every card, cart line and order row renders.
+  /// The cover, denormalised from `images[position 0]`.
+  ///
+  /// Kept as a column because eight surfaces — cards, cart lines, order rows,
+  /// favourites — need one image and nothing else, and a join for each of them
+  /// would be a lot of work to render a thumbnail. Every write that changes
+  /// the image list rewrites this in the same transaction, so it cannot drift.
   photoUrl          String?
-  /// Extra images for the product page's thumbnail strip, in display order.
-  /// Separate from `photoUrl` so a list query stays one column wide: eight
-  /// surfaces read the cover, and only the detail page needs the rest.
-  galleryUrls       String[] @default([])
   /// Price of ONE PACK, in satang.
   pricePerPackMinor Int
   /// Fewest packs a retailer may order. Enforced when writing a cart item, not
@@ -380,6 +381,7 @@ model Product {
   updatedAt DateTime @updatedAt
 
   brand      BrandProfile @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  images     ProductImage[]
   cartItems  CartItem[]
   orderItems OrderItem[]
   favourites Favourite[]
@@ -391,6 +393,35 @@ model Product {
   /// Retailers look products up by scanning, so this is a lookup path.
   @@index([barcode])
   @@map("products")
+}
+
+/// Every photo of a product, in display order.
+///
+/// A table rather than a string array so an image can be deleted, reordered
+/// and referred to by id — none of which an array supports without rewriting
+/// the whole column and hoping two admins never do it at once. `storageKey` is
+/// kept alongside the URL so deleting the row can also delete the object; a
+/// public bucket would otherwise keep serving a "deleted" photo forever.
+model ProductImage {
+  id         String   @id @default(uuid())
+  productId  String
+  /// Public URL, derived from storageKey at confirm time.
+  url        String
+  /// Object path in the public bucket, for deletion.
+  storageKey String
+  /// 0 is the cover. Contiguous — removing one closes the gap.
+  position   Int      @default(0)
+  /// Alt text. Nullable because a brand uploading five photos will not write
+  /// five descriptions, and an empty string would be worse for a screen reader
+  /// than no attribute at all.
+  altText    String?
+  createdAt  DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, position])
+  @@index([productId])
+  @@map("product_images")
 }
 
 /// The two save actions the marketplace shows on every product card.
