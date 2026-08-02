@@ -24,6 +24,11 @@ const productResponse = t.Object({
   category: categorySchema,
   stockPacks: t.Union([t.Integer(), t.Null()]),
   isActive: t.Boolean(),
+  sku: t.Union([t.String(), t.Null()]),
+  barcode: t.Union([t.String(), t.Null()]),
+  packWeightGrams: t.Union([t.Integer(), t.Null()]),
+  ingredients: t.Union([t.String(), t.Null()]),
+  shelfLifeDays: t.Union([t.Integer(), t.Null()]),
   createdAt: t.Date(),
   updatedAt: t.Date(),
 })
@@ -40,6 +45,28 @@ const productBody = t.Object({
   category: categorySchema,
   stockPacks: t.Optional(t.Integer({ minimum: 0 })),
   isActive: t.Optional(t.Boolean()),
+
+  // Nullable, not merely optional: a brand has to be able to clear one of
+  // these, and an omitted key on a PATCH means "leave it alone".
+  sku: t.Optional(
+    t.Union([t.String({ minLength: 1, maxLength: 40 }), t.Null()])
+  ),
+  // Length and digits only — the check digit is arithmetic over the other
+  // digits and no regex can express it, so the domain layer does that part.
+  barcode: t.Optional(
+    t.Union([t.String({ pattern: '^\\d{8,14}$' }), t.Null()])
+  ),
+  // 50 kg a pack is already implausible for something a courier carries; the
+  // ceiling is there to catch a kg value typed into a grams field.
+  packWeightGrams: t.Optional(
+    t.Union([t.Integer({ minimum: 1, maximum: 50000 }), t.Null()])
+  ),
+  ingredients: t.Optional(t.Union([t.String({ maxLength: 2000 }), t.Null()])),
+  // Ten years. Longer than any อย.-registered shelf life and short enough to
+  // catch a date pasted in where a day count belongs.
+  shelfLifeDays: t.Optional(
+    t.Union([t.Integer({ minimum: 1, maximum: 3650 }), t.Null()])
+  ),
 })
 
 export const productsModule = new Elysia({
@@ -75,7 +102,11 @@ export const productsModule = new Elysia({
         description:
           'photoUrl is a plain image URL for now; a Supabase upload route ' +
           'replaces it later. minPacks and unitsPerPack are the wholesale terms ' +
-          'enforced when a retailer adds this to a cart.',
+          'enforced when a retailer adds this to a cart. ' +
+          'sku must be unique within your own catalog (409 otherwise) but may ' +
+          'collide with another brand’s. barcode is checked against its GTIN ' +
+          'check digit, so a mistyped or transposed digit is rejected here ' +
+          'rather than at the retailer’s till.',
         tags: ['Brand · Products'],
       },
       response: { 201: productResponse },

@@ -8,6 +8,7 @@
  */
 import type { Category, Prisma } from '../../generated/prisma/client.ts'
 import { prisma } from '../../config/prisma.ts'
+import { checkBarcode } from '../../domain/barcode.ts'
 import { AppError } from '../../middleware/error.ts'
 
 export { brandIdForUser } from '../../lib/profile.ts'
@@ -22,6 +23,45 @@ export interface ProductInput {
   category: Category
   stockPacks?: number
   isActive?: boolean
+  sku?: string | null
+  barcode?: string | null
+  packWeightGrams?: number | null
+  ingredients?: string | null
+  shelfLifeDays?: number | null
+}
+
+const BARCODE_MESSAGES: Record<string, string> = {
+  BARCODE_NOT_NUMERIC: 'A barcode is digits only.',
+  BARCODE_BAD_LENGTH: 'A barcode must be 8, 12, 13 or 14 digits.',
+  BARCODE_BAD_CHECK_DIGIT:
+    'That barcode’s check digit does not match — it is usually a mistyped or swapped digit.',
+}
+
+/**
+ * The check digit runs here rather than as a TypeBox pattern because no regex
+ * can express it: it is arithmetic over the other digits.
+ */
+function assertBarcode(barcode: string | null | undefined) {
+  if (!barcode) return
+
+  const result = checkBarcode(barcode)
+  if (!result.ok) {
+    throw new AppError(422, result.code, BARCODE_MESSAGES[result.code]!)
+  }
+}
+
+/**
+ * Prisma reports a duplicate SKU as P2002 on (brandId, sku), which would
+ * otherwise surface as an unexplained 500. The brand chose this code, so it is
+ * the one party who can be told exactly what collided.
+ */
+function isDuplicateSku(error: unknown) {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    error.code === 'P2002'
+  )
 }
 
 export function listForBrand(brandId: string) {
@@ -44,8 +84,21 @@ export async function getForBrand(brandId: string, productId: string) {
   return product
 }
 
-export function create(brandId: string, input: ProductInput) {
-  return prisma.product.create({ data: { ...input, brandId } })
+export async function create(brandId: string, input: ProductInput) {
+  assertBarcode(input.barcode)
+
+  try {
+    return await prisma.product.create({ data: { ...input, brandId } })
+  } catch (error) {
+    if (isDuplicateSku(error)) {
+      throw new AppError(
+        409,
+        'SKU_ALREADY_USED',
+        `You already have a product with the SKU “${input.sku}”.`
+      )
+    }
+    throw error
+  }
 }
 
 export async function update(
@@ -56,11 +109,23 @@ export async function update(
   // Ownership check first: updateMany with a brandId filter would silently
   // affect zero rows and report success on someone else's id.
   await getForBrand(brandId, productId)
+  assertBarcode(input.barcode)
 
-  return prisma.product.update({
-    where: { id: productId },
-    data: input as Prisma.ProductUpdateInput,
-  })
+  try {
+    return await prisma.product.update({
+      where: { id: productId },
+      data: input as Prisma.ProductUpdateInput,
+    })
+  } catch (error) {
+    if (isDuplicateSku(error)) {
+      throw new AppError(
+        409,
+        'SKU_ALREADY_USED',
+        `You already have a product with the SKU “${input.sku}”.`
+      )
+    }
+    throw error
+  }
 }
 
 /**
