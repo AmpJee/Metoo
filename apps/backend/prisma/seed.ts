@@ -185,6 +185,17 @@ const products = [
     minPacks: 12,
     unitsPerPack: 12,
     stockPacks: 480,
+    description:
+      'Thin jasmine rice crackers, lightly salted. Shelf-stable and steady on a counter display.',
+    sku: 'JRC-090',
+    // Real GTINs — the check digit is verified on write, so a made-up number
+    // here would make the seed fail its own validation.
+    barcode: '8850999320014',
+    packWeightGrams: 1200,
+    ingredients: 'Jasmine rice, palm oil, salt, cane sugar',
+    shelfLifeDays: 270,
+    // Every preset is >= minPacks (12), which the domain check enforces.
+    packPresets: [12, 24, 48, 96],
   },
   {
     name: 'Coconut Soap Bar 100g',
@@ -193,6 +204,14 @@ const products = [
     minPacks: 24,
     unitsPerPack: 6,
     stockPacks: 300,
+    description:
+      'Cold-pressed coconut oil soap, unscented. Sells well next to the till.',
+    sku: 'CSB-100',
+    barcode: '8851234567898',
+    packWeightGrams: 700,
+    ingredients: 'Coconut oil, water, sodium hydroxide, glycerin, coconut milk',
+    shelfLifeDays: 1095,
+    packPresets: [24, 48, 72, 120],
   },
   {
     name: 'Woven Rattan Basket',
@@ -201,6 +220,16 @@ const products = [
     minPacks: 6,
     unitsPerPack: 2,
     stockPacks: 60,
+    description:
+      'Hand-woven rattan, two sizes nested. No two are identical, which is the point.',
+    sku: 'WRB-001',
+    // Deliberately empty: a handmade item is ordered on purpose, not by
+    // tapping a shortcut. The frontend needs this case to build the
+    // stepper-only layout against.
+    packPresets: [],
+    // No barcode and no shelf life either: a non-food handmade good genuinely
+    // has neither, which keeps nulls in the seed for the frontend to render.
+    packWeightGrams: 1800,
   },
   {
     // Min 6 packs at 5 units/pack: the exact shape that the old case-size
@@ -211,6 +240,12 @@ const products = [
     minPacks: 6,
     unitsPerPack: 5,
     stockPacks: 96,
+    description:
+      'Vegetable-tanned leather, four card slots. Ages rather than wears out.',
+    sku: 'SCH-004',
+    barcode: '036000291452',
+    packWeightGrams: 450,
+    packPresets: [6, 12, 24],
   },
 ]
 
