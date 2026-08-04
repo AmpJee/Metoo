@@ -190,6 +190,12 @@ export const adminModule = new Elysia({ name: 'admin', prefix: '/admin' })
               ),
               province: t.Optional(t.String({ minLength: 1, maxLength: 100 })),
               postalCode: t.Optional(t.String({ minLength: 4, maxLength: 10 })),
+              // Nullable, not merely optional: the signup form never asks for
+              // a category, so admin is the only party who can set one — and
+              // has to be able to take a wrong one back off.
+              category: t.Optional(
+                t.Union([t.UnionEnum(CATEGORIES), t.Null()])
+              ),
               fdaStatus: t.Optional(t.UnionEnum(FDA_STATUSES)),
               sizeBand: t.Optional(t.UnionEnum(SIZE_BANDS)),
               socialHandle: t.Optional(t.String({ maxLength: 100 })),
@@ -243,9 +249,12 @@ export const adminModule = new Elysia({ name: 'admin', prefix: '/admin' })
         description:
           'Two kinds of field in one call. The core profile — name, phone, ' +
           'address — which the account can also edit itself; and the internal ' +
-          'sales columns only the console owns: อย. status, case spec, ' +
-          'referral source, delivery window, notes. adminNotes is never shown ' +
-          'to the account holder. ' +
+          'sales columns only the console owns: category, อย. status, case ' +
+          'spec, referral source, delivery window, notes. adminNotes is never ' +
+          'shown to the account holder. ' +
+          'category is the Sellers table column — one per brand, distinct ' +
+          'from Product.category, which decides commission. No signup form ' +
+          'asks for it, so this route is the only way it is ever set. ' +
           'Admin can edit the core fields because onboarding happens over the ' +
           'phone: someone is reading details back and correcting a mistyped ' +
           'address as they go, often before that account has ever signed in. ' +
