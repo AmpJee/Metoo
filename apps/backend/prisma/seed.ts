@@ -515,6 +515,122 @@ for (const row of pipelineBrands) {
   })
 }
 
+// --- real brands from the marketplace prototype -----------------------------
+//
+// These are actual Thai brands the platform is being built for, taken from the
+// marketplace design and their own packaging. Details — net weight, protein,
+// fragrance notes — are read off the products themselves rather than invented,
+// so a demo screen shows something a founder would recognise.
+//
+// No photos: the images exist as artwork, not as files in this repo. Upload
+// them through POST /brand/product-images/upload-url once they are to hand.
+
+const realBrands = [
+  {
+    email: 'enerphere@metoo.test',
+    name: 'EnerPhère',
+    description:
+      'ขนมโปรตีนบอลเพื่อสุขภาพ — date-sweetened protein balls, gluten free.',
+    phone: '02-118-4420',
+    addressLine: '52 Rama IX Road',
+    province: 'Bangkok',
+    postalCode: '10310',
+    fdaStatus: 'YES' as const,
+    sizeBand: 'SIZE_1_5' as const,
+    socialHandle: '@enerphere',
+    caseWeightKg: 3.0,
+    caseDimensionsCm: '30x24x16 cm',
+    caseUnits: 24,
+    existingRetailerCount: 9,
+    referralSource: 'Instagram',
+    adminNotes: 'Gym and health-shop channel. Strong on TikTok.',
+  },
+  {
+    email: 'lamune@metoo.test',
+    name: 'Lamune.',
+    description:
+      'Small-batch eau de parfum, 30 ml. Minimal packaging, natural notes.',
+    phone: '02-260-8891',
+    addressLine: '18 Sukhumvit Soi 26',
+    province: 'Bangkok',
+    postalCode: '10110',
+    fdaStatus: 'YES' as const,
+    sizeBand: 'SIZE_1_5' as const,
+    socialHandle: '@lamune.parfum',
+    caseWeightKg: 4.2,
+    caseDimensionsCm: '32x24x14 cm',
+    caseUnits: 12,
+    existingRetailerCount: 6,
+    referralSource: 'Trade fair',
+    adminNotes: 'Concept stores and hotel retail. High margin, low volume.',
+  },
+  {
+    email: 'sentira@metoo.test',
+    name: 'SENTIRA',
+    description: 'Embossed leather small goods — card holders and wallets.',
+    phone: '02-045-3312',
+    addressLine: '7 Charoen Nakhon Road',
+    province: 'Bangkok',
+    postalCode: '10600',
+    // Leather goods are outside อย. scope entirely.
+    fdaStatus: 'NO' as const,
+    sizeBand: 'SIZE_6_20' as const,
+    socialHandle: '@sentira.th',
+    caseWeightKg: 2.4,
+    caseDimensionsCm: '28x20x12 cm',
+    caseUnits: 20,
+    existingRetailerCount: 17,
+    referralSource: 'Word of mouth',
+    adminNotes: 'Gift retail. Asks for seasonal colourways.',
+  },
+  {
+    email: 'yajaa@metoo.test',
+    name: 'ย่าจ๋า (Yajaa)',
+    description:
+      'น้ำพริกเห็ดนางฟ้ากรอบ — crispy oyster-mushroom chilli paste, home recipe.',
+    phone: '081-663-2094',
+    addressLine: '96 Mueang District',
+    province: 'Nakhon Ratchasima',
+    postalCode: '30000',
+    fdaStatus: 'YES' as const,
+    sizeBand: 'SIZE_1_5' as const,
+    socialHandle: '@yajaa.official',
+    caseWeightKg: 6.4,
+    caseDimensionsCm: '34x26x20 cm',
+    caseUnits: 24,
+    existingRetailerCount: 12,
+    referralSource: 'OTOP fair',
+    adminNotes: 'อย. certified. Sells hard as a souvenir line.',
+  },
+]
+
+for (const row of realBrands) {
+  const { email, ...profile } = row
+
+  const user = await prisma.user.upsert({
+    where: { email },
+    update: { passwordHash, role: 'BRAND', status: 'ONBOARDED' },
+    create: { email, passwordHash, role: 'BRAND', status: 'ONBOARDED' },
+  })
+
+  await prisma.brandProfile.upsert({
+    where: { userId: user.id },
+    update: {
+      ...profile,
+      bankName: null,
+      bankAccountName: null,
+      bankAccountNumber: null,
+    },
+    create: {
+      userId: user.id,
+      ...profile,
+      bankName: null,
+      bankAccountName: null,
+      bankAccountNumber: null,
+    },
+  })
+}
+
 // --- catalog ---------------------------------------------------------------
 
 // One product per category so commission tiering can be exercised end to end.

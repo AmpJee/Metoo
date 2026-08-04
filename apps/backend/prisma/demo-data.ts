@@ -69,8 +69,71 @@ const CATALOG: Record<
     minPacks: number
     unitsPerPack: number
     stockPacks: number
+    description?: string
+    ingredients?: string
+    packWeightGrams?: number
+    shelfLifeDays?: number
   }>
 > = {
+  // --- real products, details read off their own packaging -----------------
+  EnerPhère: [
+    {
+      name: 'Protein Ball — Cocoa 125g',
+      category: 'FOOD_BEVERAGE',
+      pricePerPackMinor: 19000,
+      minPacks: 12,
+      unitsPerPack: 6,
+      stockPacks: 180,
+      description:
+        'ธัญพืชผสมอินทผลัมและโปรตีนถั่วเหลือง — 35 g protein a box, sweetened only by dates, gluten free. Slow-release energy, keeps you full.',
+      ingredients: 'Cereal grains, dates, soy protein, cocoa, sesame',
+      packWeightGrams: 750,
+      shelfLifeDays: 270,
+    },
+  ],
+  'Lamune.': [
+    {
+      name: 'Morning Brief Eau de Parfum 30ml',
+      category: 'HEALTH_BEAUTY',
+      pricePerPackMinor: 89000,
+      minPacks: 6,
+      unitsPerPack: 1,
+      stockPacks: 48,
+      description:
+        'Top notes white tea and sea water; heart of iris and fern; base of maté and cedar wood. 30 ml, concrete-finish box.',
+      packWeightGrams: 320,
+      shelfLifeDays: 1095,
+    },
+  ],
+  SENTIRA: [
+    {
+      name: 'Embossed Card Holder',
+      category: 'FASHION_ACCESSORIES',
+      pricePerPackMinor: 69000,
+      minPacks: 6,
+      unitsPerPack: 1,
+      stockPacks: 72,
+      description:
+        'Burgundy leather with an embossed lily, brass zip, four card slots. Ages rather than wears out.',
+      packWeightGrams: 120,
+    },
+  ],
+  'ย่าจ๋า (Yajaa)': [
+    {
+      name: 'น้ำพริกเห็ดนางฟ้ากรอบ 120g',
+      category: 'FOOD_BEVERAGE',
+      pricePerPackMinor: 12000,
+      minPacks: 12,
+      unitsPerPack: 12,
+      stockPacks: 240,
+      description:
+        'น้ำพริกเห็ดนางฟ้ากรอบ ย่าจ๋า — crispy oyster-mushroom chilli paste, อย. certified. อร่อยกลมกล่อมในทุกคำ.',
+      ingredients:
+        'Oyster mushroom, dried chilli, shallot, garlic, palm sugar, fish sauce, salt',
+      packWeightGrams: 1600,
+      shelfLifeDays: 365,
+    },
+  ],
   'Baan Rai Coffee': [
     {
       name: 'Drip Bag Box 10s',
