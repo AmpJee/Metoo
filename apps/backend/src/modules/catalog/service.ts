@@ -37,6 +37,27 @@ const catalogSelect = {
   brand: { select: { id: true, name: true, logoUrl: true, province: true } },
 } satisfies Prisma.ProductSelect
 
+/**
+ * The spec, on the detail screen only.
+ *
+ * Kept out of `catalogSelect` on purpose: browse returns 24 rows a page and
+ * `ingredients` alone is up to 2 KB, so folding these into the list would cost
+ * ~50 KB a scroll for fields no product card renders.
+ */
+const catalogDetailSelect = {
+  ...catalogSelect,
+  images: {
+    orderBy: { position: 'asc' },
+    select: { id: true, url: true, position: true, altText: true },
+  },
+  packPresets: true,
+  sku: true,
+  barcode: true,
+  packWeightGrams: true,
+  ingredients: true,
+  shelfLifeDays: true,
+} satisfies Prisma.ProductSelect
+
 export interface BrowseFilter {
   category?: Category
   brandId?: string
@@ -91,7 +112,7 @@ export async function browse(filter: BrowseFilter) {
 export async function getVisible(productId: string) {
   const product = await prisma.product.findFirst({
     where: { id: productId, ...VISIBLE },
-    select: catalogSelect,
+    select: catalogDetailSelect,
   })
 
   if (!product) {

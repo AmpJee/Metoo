@@ -91,6 +91,24 @@ export function photoKey(params: {
   return `brands/${params.brandId}/products/${params.productId}/${unique}.${params.extension}`
 }
 
+/**
+ * A photo uploaded before its product exists.
+ *
+ * The Add Product form picks images while the product still has no id, so the
+ * key cannot contain one. Brand-scoped is what matters for safety — the same
+ * `keyBelongsToBrand` check applies — and the object simply stays under
+ * `staging/` after the product is created rather than being copied, since
+ * moving it would change a URL that is already recorded.
+ */
+export function stagedPhotoKey(params: {
+  brandId: string
+  extension: string
+  unique?: string
+}): string {
+  const unique = params.unique ?? crypto.randomUUID()
+  return `brands/${params.brandId}/staging/${unique}.${params.extension}`
+}
+
 /** Verification documents, in the private bucket, likewise brand-scoped. */
 export function documentKey(params: {
   brandId: string
@@ -102,6 +120,47 @@ export function documentKey(params: {
   return `brands/${params.brandId}/documents/${params.documentType}/${unique}.${params.extension}`
 }
 
+/** Whose folder an avatar lives in. Brands and retailers both have one. */
+export type AvatarOwner = 'brands' | 'retailers'
+
+/**
+ * A profile picture — a brand's logo or a retailer's shop photo.
+ *
+ * Same shape as `photoKey`: owner-scoped folder so nobody can write outside
+ * their own, and a random suffix so replacing a picture does not overwrite the
+ * file a cached page is still serving.
+ */
+export function avatarKey(params: {
+  owner: AvatarOwner
+  ownerId: string
+  extension: string
+  unique?: string
+}): string {
+  const unique = params.unique ?? crypto.randomUUID()
+  return `${params.owner}/${params.ownerId}/avatar/${unique}.${params.extension}`
+}
+
+/**
+ * The same ownership check as `keyBelongsToBrand`, for either owner type.
+ *
+ * Kept as its own function rather than folded into that one: retailer ids and
+ * brand ids are both UUIDs, so a check that ignored the folder prefix would
+ * let a retailer confirm an upload into a brand's folder if the ids ever
+ * collided.
+ */
+export function keyBelongsToOwner(
+  key: string,
+  owner: AvatarOwner,
+  ownerId: string
+): boolean {
+  // A prefix check alone is not enough: "brands/b1/../b2/x.png" starts with
+  // "brands/b1/" and still writes into b2's folder. Reject any traversal
+  // segment outright rather than trying to normalise the path.
+  if (key.split('/').includes('..')) return false
+
+  return key.startsWith(`${owner}/${ownerId}/`)
+}
+
 /**
  * Does this key belong to this brand?
  *
@@ -110,5 +169,5 @@ export function documentKey(params: {
  * product.
  */
 export function keyBelongsToBrand(key: string, brandId: string): boolean {
-  return key.startsWith(`brands/${brandId}/`)
+  return keyBelongsToOwner(key, 'brands', brandId)
 }

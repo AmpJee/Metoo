@@ -7,6 +7,7 @@
  * half-fails.
  */
 import { prisma } from '../../config/prisma.ts'
+import { accountLast4 } from '../../domain/bank.ts'
 import { MIN_WITHDRAWAL_MINOR, checkWithdrawal } from '../../domain/ledger.ts'
 import { AppError } from '../../middleware/error.ts'
 
@@ -48,7 +49,7 @@ export async function summary(brandId: string) {
     // Last four digits only. The full number is admin-only PII and has no
     // business on the brand's own wallet screen either — the design shows
     // "SCB •••• 4821".
-    bankAccountLast4: bank?.bankAccountNumber?.slice(-4) ?? null,
+    bankAccountLast4: accountLast4(bank?.bankAccountNumber),
   }
 }
 

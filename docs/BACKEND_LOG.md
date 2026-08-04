@@ -52,10 +52,12 @@ protection.
 
 ## Current state
 
-- **79 routes**, **21 modules**, **22 models**, **11 migrations**
-- **135 domain unit tests**, no database in CI
-- Merged through **PR #19**; `develop` green, `feature/social-and-storefront`
-  pushed and awaiting a PR
+- Merged through **PR #31**; `develop` green
+- **~100 routes**, **23 models**, **186 domain unit tests**, no database in CI
+- **One backend branch left unmerged: `feature/admin-table-parity`.**
+  Everything else from the 3 Aug backlog is in.
+- **The pitch is Mon 10 Aug 2026.** Deploying to Railway is still the critical
+  path and had not started as of 4 Aug.
 
 **What works end to end:** a brand registers → admin walks it through the sales
 pipeline to ONBOARDED → brand lists products → retailer browses, fills a cart
@@ -104,53 +106,83 @@ separately, not just the branch tip.
 | #18 | `feature/commission` | Fashion & Accessories rate set to 800/500 |
 | #19 | `fix/commission-tests` | Repaired the tests PR #18 left failing |
 
+### History, continued
+
+| PR | Branch | What it delivered |
+| --- | --- | --- |
+| #20 | `feature/social-and-storefront` | Save-for-later, follows, storefront, Customers, Feedback Log |
+| #21 | `docs/log-update` | This file |
+| #22 | `feature/client-site-page` | The retailer shop frontend |
+| #23 | `feature/account-profile` | Retailer/brand profile self-edit, bank details |
+| #24 | `feature/product-spec` | sku, barcode, weight, ingredients, shelf life, presets |
+| #25 | `feature/chat` | Retailer ↔ brand chat |
+
 ### In flight
 
-`feature/social-and-storefront` — **complete and pushed**, four commits, no PR
-opened yet. All five screen items are done:
-
-| Commit | What |
+| Branch | State |
 | --- | --- |
-| `d02cf04` | Save for later — `SavedItemKind` on the existing `Favourite` model |
-| `7b66039` | Brand follows and the public storefront |
-| `d06da56` | Seller Customers list |
-| `069c848` | Admin Feedback Log |
+| `feature/admin-table-parity` | **The only unmerged backend branch.** 2 commits, green |
+| `feature/admin-and-seller-side-page-` | Not mine — the seller and admin frontends, 7 admin and 9 seller pages |
+| `frontend`, `feature/client-site-page` | Teammates' |
 
-Four decisions on that branch worth not re-litigating:
+PRs #26–#31 merged the rest: commission docs, account management, product
+images, create-with-images, dashboard parity, split login, pipeline seed data.
 
-**Save for later is a discriminator, not a second model.** The design shows two
-distinct actions, but they are the same shape — a retailer, a product, a date.
-`SavedItemKind` on `Favourite` with `@@unique([retailerId, productId, kind])`
-means a product can sit in both lists at once, which is what the screens do,
-and unfavouriting cannot disturb the saved list.
+### Migration hazard
 
-**A customer is not a row you create.** The Customers screen is a `groupBy`
-over orders, so nothing has to be kept in sync. It counts `EARNS_REVENUE`
-statuses only — an unaccepted request or a cancelled order does not make
-someone a customer — and reuses that constant rather than restating it, so the
-Customers screen and the dashboard cannot disagree about what a sale is.
-Sorted by spend, because the question is who matters, not who is newest.
+`prisma migrate diff --from-config-datasource` compares against the LIVE
+database. Generating a migration from a branch that lacks another branch's
+schema produces SQL that DROPS it. It fired twice on 3 Aug — once wanting to
+drop `retailer_profiles.avatarUrl`, once wanting to drop the whole
+`product_images` table and re-add `galleryUrls`. Both caught by reading the SQL
+before applying, edited by hand, reason recorded in the migration file.
+**Read every generated migration for unexpected `DROP` lines.**
 
-**One storefront query serves two callers.** `/stores/:brandId` (retailer) and
-`/brand/storefront` (the seller's own preview) return the same shape;
-`following` is `null` for a viewer who is not a retailer, rather than `false`.
-The seller previewing their page sees exactly what a retailer sees.
+### Why a new order "does not appear" on a brand dashboard
 
-**Feedback uses `requireAuth`, not `requireAccess`.** Anyone signed in can
-write, including accounts still in the pipeline — someone stuck waiting on an
-อย. review is precisely who most needs a way to say so, and gating the
-complaint channel on the thing being complained about is how you stop hearing
-about it. There is no category or subject field for the same reason. The author
-label is snapshotted at write time and `authorId` is `SET NULL` on delete, so
-the log survives the account closing.
+Asked on 4 Aug and investigated by placing a real order. **The backend is
+correct.** Two things cause the confusion:
 
-Verified live end to end: a product held in both save lists simultaneously
-(`{favourite: true, savedForLater: true}`) and unfavouriting leaving
-save-for-later intact; three POSTs to `/follow` yielding `followerCount: 1`;
-the Customers figures cross-checked against raw SQL (402,000 / 54,000 satang,
-with a cancelled ฿8,940 order correctly excluded); and a not-yet-onboarded
-brand submitting feedback, an admin resolving it, the author reading the reply,
-and a second resolve returning 422.
+1. **An order belongs to the brand that owns the product.** The seed now has
+   eight brands with catalogs, so ordering an EnerPhère product and then looking
+   at Siam Craft Goods' dashboard shows nothing. Verified both ways: the order
+   appeared on EnerPhère's dashboard and not on Siam Craft's.
+2. **A PENDING order does not move the Revenue or Orders tiles.** Those read
+   `EARNS_REVENUE` (CONFIRMED onward) through `loadOrderFacts` — a request is
+   not a sale. It *does* immediately increment `store.newOrders`, sit top of
+   `recentOrders`, and appear in `/brand/orders` and `/brand/orders/counts`.
+
+Measured on a real checkout: newOrders 1→2, the new order first in
+recentOrders, `/brand/orders` 12→13, counts.PENDING 1→2, while orderCount and
+revenueMinor correctly did not move.
+
+If a *confirmed* order is genuinely missing, check the frontend cache before
+the API — Next caches server components aggressively.
+
+### Demo data
+
+`make db-seed` then `make db-demo`.
+
+The seed creates the fixed accounts plus a full pipeline board — 10 retailers
+and 9 brands using the names from the Figma prototypes, every column populated,
+every filter tab non-empty. `db-demo` adds 90 orders over four months with
+reviews, follows and wallet rows.
+
+`db-demo` is idempotent by tagging: its orders are numbered `MT-DEMO-nnnn` and
+a re-run deletes exactly those. Hand-placed test orders keep the normal
+`MT-YYMMDD-` format and survive. A fixed-seed PRNG keeps the numbers identical
+between runs, so a figure quoted in a rehearsal is the figure on the day.
+
+Two traps it exists to avoid, both found by reading the output rather than
+trusting it:
+
+- a hand-made test product priced at **฿900,000 a pack** put one brand at ฿29M
+  GMV against ฿300k for everyone else. Order generation now skips anything
+  above ฿10,000 a pack.
+- **"average signup → first order" came out at −108 days**, because orders are
+  backdated but seeded accounts are created today. Signup dates are moved ahead
+  of each account's first order on BOTH the user and the profile row — the
+  admin table reads one and that metric reads the other.
 
 ---
 
@@ -297,30 +329,58 @@ Test data is cleared and the seed restored afterwards.
 
 ## What is left
 
-Purely design surface — nothing functional is missing:
+The backend is functionally complete. Everything below is either someone else's
+job or a decision nobody has made yet.
 
-| Item | Notes |
-| --- | --- |
-| ~~Save for later~~ | Done on `feature/social-and-storefront`, unmerged |
-| ~~Follows~~ | Same branch |
-| ~~Public storefront~~ | Same branch |
-| ~~Customers list~~ | Same branch |
-| ~~Feedback Log~~ | Same branch |
-| Chat | Threads and messages; polling, no websockets — the only one left |
-
-Two things worth doing before more features, now that the backend is
-functionally complete:
+### Blocking, and not mine to do
 
 **Deploy to Railway.** Both `railway.json` files exist and CI builds both
-images, but nothing has ever run outside a laptop. The frontend team is
-pointing at `localhost:3000`. Deploy problems are far cheaper to find now than
-the night before a demo.
+images, but nothing has ever run outside a laptop. This is the critical path to
+the 10 Aug pitch and needs the account owner: create the project, set the
+thirteen backend env vars, then the migrations and a full live pass can run.
+Two traps — `DATABASE_URL` is the pooled 6543 and `DIRECT_URL` the direct 5432,
+and `CORS_ORIGIN` must be the deployed frontend origin.
 
-**Richer seed data.** The seed has 4 products and 4 accounts. The dashboards
-compute repeat rate, GMV-by-brand and fulfilment time, all of which look empty
-or nonsensical at that size. A demo wants several brands, dozens of orders
-across every state, and some reviews.
+**Merge the seven branches.** See "In flight". The migration hazard above
+disappears once they land.
 
-Also outstanding: `gh` is not authenticated on the dev machine, so PRs are
-opened by hand; and the frontend (owned by teammates) builds against
-`/openapi`, which is the contract.
+### Small backend items, none blocking
+
+| Item | Note |
+| --- | --- |
+| Barcode search | The index exists; `?q=` does not search it |
+| Retailer verification documents | `VerificationDocument.retailerId` exists, no route uses it — dead schema or a missing feature |
+| Retailer cancelling own order | Today only BRAND and ADMIN can |
+
+### Decisions nobody has made
+
+These appear in the Figma prototypes with no backend behind them. Designing or
+building more of them before a decision is wasted work.
+
+1. **Contracts** — `CT-SEN-2026`, units fulfilled, "Nett 30 payment terms"
+2. **Product variations** — colour variants throughout the marketplace
+3. **MeCoins** — a loyalty currency in the cart
+4. **Voucher codes** — shop vouchers in the cart
+5. **Multiple delivery addresses** — Home/Work labels and a default; the
+   backend stores exactly one
+6. **Feedback types** — the admin log shows Compliment / Complaint / Decline /
+   Churn; `Feedback` has no type field. Deliberate at the time, and the design
+   disagrees
+7. **Brand category, one or many** — `feature/admin-table-parity` adds a single
+   `BrandProfile.category` because the Sellers table shows one per brand, while
+   the summary chart derives categories from products. If one-per-brand is
+   right the derivation should go
+
+### Frontend, owned by teammates
+
+`feature/admin-and-seller-side-page-` has the seller and admin apps. Two
+environment problems will bite anyone starting it:
+
+- `recharts` is in `package.json` but was not installed — `bun install` fixes
+  the 500s on every admin page
+- `next dev` panics with *"Invalid distDirRoot"* because
+  `outputFileTracingRoot` in `next.config.ts` points above the project, which
+  Turbopack refuses in dev. Setting it only for production builds fixes it
+
+Also outstanding: `gh` is not authenticated on this machine, so PRs are opened
+by hand.

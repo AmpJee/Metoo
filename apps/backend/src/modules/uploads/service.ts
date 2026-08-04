@@ -14,11 +14,14 @@
  * closed mid-transfer.
  */
 import { prisma } from '../../config/prisma.ts'
+import type { AvatarOwner } from '../../domain/upload.ts'
 import {
+  avatarKey,
   checkDocument,
   checkPhoto,
   documentKey,
   keyBelongsToBrand,
+  keyBelongsToOwner,
   photoKey,
 } from '../../domain/upload.ts'
 import {
@@ -203,4 +206,81 @@ export function listOwnDocuments(brandId: string) {
     },
     orderBy: { createdAt: 'desc' },
   })
+}
+
+// --- profile pictures --------------------------------------------------------
+
+/**
+ * A brand's logo and a retailer's shop photo are the same operation on two
+ * tables, so one pair of functions serves both. `owner` decides the folder and
+ * the row, and it comes from the route's guard — never from the request body.
+ */
+export async function requestAvatarUpload(params: {
+  owner: AvatarOwner
+  ownerId: string
+  contentType: string
+  sizeBytes: number
+}) {
+  const check = checkPhoto(params.contentType, params.sizeBytes)
+
+  if (!check.ok) {
+    throw new AppError(422, check.code, check.message)
+  }
+
+  const key = avatarKey({
+    owner: params.owner,
+    ownerId: params.ownerId,
+    extension: check.extension,
+  })
+
+  return createPhotoUploadUrl(key)
+}
+
+export async function confirmAvatarUpload(params: {
+  owner: AvatarOwner
+  ownerId: string
+  storageKey: string
+}) {
+  const { owner, ownerId, storageKey } = params
+
+  if (!keyBelongsToOwner(storageKey, owner, ownerId)) {
+    throw new AppError(
+      403,
+      'KEY_NOT_YOURS',
+      'That upload does not belong to this account.'
+    )
+  }
+
+  // Same reason as the product photo: never record a picture that is not
+  // actually in the bucket, or the page renders a broken image.
+  if (!(await objectExists(PUBLIC_BUCKET, storageKey))) {
+    throw new AppError(
+      422,
+      'UPLOAD_NOT_FOUND',
+      'No file was found at that key. Upload it before confirming.'
+    )
+  }
+
+  const url = publicPhotoUrl(storageKey)
+
+  if (owner === 'brands') {
+    return prisma.brandProfile.update({
+      where: { id: ownerId },
+      data: { logoUrl: url },
+      select: { id: true, name: true, logoUrl: true },
+    })
+  }
+
+  const retailer = await prisma.retailerProfile.update({
+    where: { id: ownerId },
+    data: { avatarUrl: url },
+    select: { id: true, shopName: true, avatarUrl: true },
+  })
+
+  // Same shape both ways, so one frontend component can render either.
+  return {
+    id: retailer.id,
+    name: retailer.shopName,
+    logoUrl: retailer.avatarUrl,
+  }
 }

@@ -8,7 +8,7 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 .PHONY: help env install dev dev-backend dev-frontend \
-        db-generate db-migrate db-deploy db-seed db-studio db-reset \
+        db-generate db-migrate db-deploy db-seed db-demo db-studio db-reset \
         lint format format-check typecheck check \
         up down build logs ps restart sh-backend sh-frontend clean
 
@@ -60,6 +60,9 @@ db-deploy: ## Apply pending migrations without generating new ones (production)
 
 db-seed: ## Insert the sample rows
 	cd $(BACKEND) && bun run db:seed
+
+db-demo: ## Add realistic trading history for demos (needs db-seed first)
+	cd $(BACKEND) && bun run db:demo
 
 db-studio: ## Browse the database in Prisma Studio
 	cd $(BACKEND) && bun run db:studio

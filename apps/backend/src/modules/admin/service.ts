@@ -15,6 +15,7 @@
  */
 import { TRADING_STATUS } from '@metoo/shared'
 import type {
+  Category,
   FdaStatus,
   PaymentPreference,
   PaymentReliability,
@@ -42,6 +43,7 @@ const applicantSelect = {
     select: {
       id: true,
       name: true,
+      category: true,
       phone: true,
       province: true,
       fdaStatus: true,
@@ -100,12 +102,37 @@ function serialise<
 export async function listPipeline(filter: {
   status?: PipelineStatus
   role?: Role
+  q?: string
 }) {
+  // The console's one search box covers what an admin actually remembers about
+  // an account: its name, where it is, and who referred it. Matching across
+  // both profile types in one OR keeps a single box working on either tab.
+  const q = filter.q?.trim()
+  const like = q ? { contains: q, mode: 'insensitive' as const } : undefined
+
+  const search = like
+    ? {
+        OR: [
+          { email: like },
+          { brand: { is: { name: like } } },
+          { brand: { is: { province: like } } },
+          { brand: { is: { referralSource: like } } },
+          { brand: { is: { socialHandle: like } } },
+          { retailer: { is: { shopName: like } } },
+          { retailer: { is: { province: like } } },
+          { retailer: { is: { zone: like } } },
+          { retailer: { is: { referralSource: like } } },
+          { retailer: { is: { socialHandle: like } } },
+        ],
+      }
+    : {}
+
   const users = await prisma.user.findMany({
     where: {
       // Admins are not in the pipeline — they are seeded, never prospected.
       role: filter.role ?? { in: ['BRAND', 'RETAILER'] },
       status: filter.status,
+      ...search,
     },
     select: applicantSelect,
     orderBy: { createdAt: 'asc' },
@@ -227,7 +254,36 @@ export async function setPipelineStatus(params: {
   return serialise(updated)
 }
 
-export interface BrandPipelineInput {
+/**
+ * The core identity fields, editable by an admin as well as by the account.
+ *
+ * Onboarding happens over the phone: an admin is reading details back to
+ * someone and correcting a mistyped address as they go, and often before that
+ * account has ever signed in. Bank details are deliberately NOT here — an
+ * admin can already read them to make a payout, and letting the console
+ * rewrite where money lands is a different kind of risk from fixing a typo.
+ */
+export interface CoreBrandInput {
+  name?: string
+  description?: string | null
+  phone?: string
+  addressLine?: string
+  province?: string
+  postalCode?: string
+}
+
+export interface CoreRetailerInput {
+  shopName?: string
+  phone?: string
+  addressLine?: string
+  province?: string
+  postalCode?: string
+  taxId?: string | null
+}
+
+export interface BrandPipelineInput extends CoreBrandInput {
+  /** The Sellers table's one-category-per-brand column. */
+  category?: Category | null
   fdaStatus?: FdaStatus
   sizeBand?: SizeBand
   socialHandle?: string
@@ -239,7 +295,7 @@ export interface BrandPipelineInput {
   adminNotes?: string
 }
 
-export interface RetailerPipelineInput {
+export interface RetailerPipelineInput extends CoreRetailerInput {
   shopType?: ShopType
   zone?: string
   socialHandle?: string

@@ -38,6 +38,34 @@ const catalogProduct = t.Object({
   rating,
 })
 
+/**
+ * Detail carries the spec; the browse list does not.
+ *
+ * `ingredients` runs to 2 KB and no product card shows it, so putting these on
+ * a 24-row page would cost ~50 KB a scroll to render nothing.
+ */
+const catalogProductDetail = t.Composite([
+  catalogProduct,
+  t.Object({
+    /** Every photo, in display order. Position 0 is the cover (`photoUrl`). */
+    images: t.Array(
+      t.Object({
+        id: t.String(),
+        url: t.String(),
+        position: t.Integer(),
+        altText: t.Union([t.String(), t.Null()]),
+      })
+    ),
+    /** The "Amount" quick-pick buttons, in display order. */
+    packPresets: t.Array(t.Integer()),
+    sku: t.Union([t.String(), t.Null()]),
+    barcode: t.Union([t.String(), t.Null()]),
+    packWeightGrams: t.Union([t.Integer(), t.Null()]),
+    ingredients: t.Union([t.String(), t.Null()]),
+    shelfLifeDays: t.Union([t.Integer(), t.Null()]),
+  }),
+])
+
 export const catalogModule = new Elysia({
   name: 'catalog',
   prefix: '/catalog',
@@ -99,8 +127,10 @@ export const catalogModule = new Elysia({
       summary: 'Product detail',
       description:
         'Returns 404 for an inactive product or one whose brand is not ' +
-        'approved, identically to a product that does not exist.',
+        'approved, identically to a product that does not exist. Carries the ' +
+        'spec — barcode, pack weight, ingredients, shelf life — which the ' +
+        'browse list deliberately omits to keep a page of 24 small.',
       tags: ['Catalog'],
     },
-    response: { 200: catalogProduct },
+    response: { 200: catalogProductDetail },
   })

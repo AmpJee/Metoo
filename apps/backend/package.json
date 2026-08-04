@@ -9,6 +9,7 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
+    "db:demo": "bun run prisma/demo-data.ts",
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
     "db:reset": "prisma migrate reset",
