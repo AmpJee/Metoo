@@ -15,6 +15,7 @@
  */
 import { TRADING_STATUS } from '@metoo/shared'
 import type {
+  Category,
   FdaStatus,
   PaymentPreference,
   PaymentReliability,
@@ -42,6 +43,7 @@ const applicantSelect = {
     select: {
       id: true,
       name: true,
+      category: true,
       phone: true,
       province: true,
       fdaStatus: true,
@@ -100,12 +102,37 @@ function serialise<
 export async function listPipeline(filter: {
   status?: PipelineStatus
   role?: Role
+  q?: string
 }) {
+  // The console's one search box covers what an admin actually remembers about
+  // an account: its name, where it is, and who referred it. Matching across
+  // both profile types in one OR keeps a single box working on either tab.
+  const q = filter.q?.trim()
+  const like = q ? { contains: q, mode: 'insensitive' as const } : undefined
+
+  const search = like
+    ? {
+        OR: [
+          { email: like },
+          { brand: { is: { name: like } } },
+          { brand: { is: { province: like } } },
+          { brand: { is: { referralSource: like } } },
+          { brand: { is: { socialHandle: like } } },
+          { retailer: { is: { shopName: like } } },
+          { retailer: { is: { province: like } } },
+          { retailer: { is: { zone: like } } },
+          { retailer: { is: { referralSource: like } } },
+          { retailer: { is: { socialHandle: like } } },
+        ],
+      }
+    : {}
+
   const users = await prisma.user.findMany({
     where: {
       // Admins are not in the pipeline — they are seeded, never prospected.
       role: filter.role ?? { in: ['BRAND', 'RETAILER'] },
       status: filter.status,
+      ...search,
     },
     select: applicantSelect,
     orderBy: { createdAt: 'asc' },
@@ -255,6 +282,8 @@ export interface CoreRetailerInput {
 }
 
 export interface BrandPipelineInput extends CoreBrandInput {
+  /** The Sellers table's one-category-per-brand column. */
+  category?: Category | null
   fdaStatus?: FdaStatus
   sizeBand?: SizeBand
   socialHandle?: string

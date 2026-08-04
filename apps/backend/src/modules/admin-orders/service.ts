@@ -11,10 +11,13 @@
  */
 import type { OrderStatus, Prisma } from '../../generated/prisma/client.ts'
 import { prisma } from '../../config/prisma.ts'
+import { EARNS_REVENUE } from '../../domain/order-state.ts'
 import { AppError } from '../../middleware/error.ts'
 
 const adminOrderSelect = {
   id: true,
+  // Scalar as well as the relation: the derived columns key on it in memory.
+  retailerId: true,
   orderNumber: true,
   status: true,
   subtotalMinor: true,
@@ -35,20 +38,118 @@ const adminOrderSelect = {
   },
 } satisfies Prisma.OrderSelect
 
+/**
+ * The three derived columns the Orders table shows: "Signup→1st order",
+ * "Fulfillment" and "Repeat?".
+ *
+ * Computed here rather than in the frontend because two of them need the
+ * retailer's whole order history, not just the row being rendered. One extra
+ * query for the page, then everything is in memory — a per-row lookup would be
+ * an N+1 on the busiest admin screen.
+ */
+async function decorate<
+  T extends {
+    id: string
+    retailerId: string
+    createdAt: Date
+    deliveredAt: Date | null
+  },
+>(orders: T[]) {
+  if (orders.length === 0) return []
+
+  const retailerIds = [...new Set(orders.map((o) => o.retailerId))]
+
+  const [retailers, history] = await Promise.all([
+    prisma.retailerProfile.findMany({
+      where: { id: { in: retailerIds } },
+      select: { id: true, user: { select: { createdAt: true } } },
+    }),
+    // Every counted order for these retailers, oldest first, so "is this their
+    // first?" and "when was their first?" are both answerable in memory.
+    prisma.order.findMany({
+      where: {
+        retailerId: { in: retailerIds },
+        status: { in: [...EARNS_REVENUE] },
+      },
+      select: { id: true, retailerId: true, createdAt: true },
+      orderBy: { createdAt: 'asc' },
+    }),
+  ])
+
+  const signupAt = new Map(retailers.map((r) => [r.id, r.user.createdAt]))
+  const firstOrder = new Map<string, { id: string; createdAt: Date }>()
+  for (const order of history) {
+    if (!firstOrder.has(order.retailerId))
+      firstOrder.set(order.retailerId, order)
+  }
+
+  const HOUR = 1000 * 60 * 60
+
+  return orders.map((order) => {
+    const first = firstOrder.get(order.retailerId)
+    const isFirst = first?.id === order.id
+    const signup = signupAt.get(order.retailerId)
+
+    return {
+      ...order,
+      /**
+       * Only on a retailer's first order — the design shows "—" on the rest,
+       * because the number is about acquisition, not about this order.
+       */
+      signupToFirstOrderDays:
+        isFirst && signup
+          ? Math.max(
+              0,
+              Math.round(
+                (order.createdAt.getTime() - signup.getTime()) / (HOUR * 24)
+              )
+            )
+          : null,
+      /** Null until delivered; an undelivered order has no duration yet. */
+      fulfilmentHours: order.deliveredAt
+        ? Math.max(
+            0,
+            Math.round(
+              (order.deliveredAt.getTime() - order.createdAt.getTime()) / HOUR
+            )
+          )
+        : null,
+      /** False on a retailer's first counted order, true on every one after. */
+      isRepeat: Boolean(first) && !isFirst,
+    }
+  })
+}
+
 export async function listAll(filter: {
   status?: OrderStatus
   brandId?: string
   retailerId?: string
+  q?: string
 }) {
-  return prisma.order.findMany({
+  const q = filter.q?.trim()
+  const like = q ? { contains: q, mode: 'insensitive' as const } : undefined
+
+  const orders = await prisma.order.findMany({
     where: {
       status: filter.status,
       brandId: filter.brandId,
       retailerId: filter.retailerId,
+      // The console's search box: order number, brand or shop.
+      ...(like
+        ? {
+            OR: [
+              { orderNumber: like },
+              { brand: { is: { name: like } } },
+              { retailer: { is: { shopName: like } } },
+            ],
+          }
+        : {}),
     },
     select: adminOrderSelect,
     orderBy: { createdAt: 'desc' },
   })
+
+  return decorate(orders)
 }
 
 export async function getById(orderId: string) {
@@ -61,7 +162,7 @@ export async function getById(orderId: string) {
     throw new AppError(404, 'ORDER_NOT_FOUND', 'No such order.')
   }
 
-  return order
+  return (await decorate([order]))[0]!
 }
 
 /**
@@ -93,6 +194,10 @@ export async function setDeliveryCost(params: {
       select: adminOrderSelect,
     })
 
+    // Decorated like every other read of this shape, so the response the table
+    // re-renders from has the same columns the list gave it.
+    const [decorated] = await decorate([row])
+
     await tx.auditLog.create({
       data: {
         actorId: adminId,
@@ -106,6 +211,6 @@ export async function setDeliveryCost(params: {
       },
     })
 
-    return row
+    return decorated!
   })
 }

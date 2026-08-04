@@ -35,6 +35,13 @@ const adminOrder = t.Object({
       lineTotalMinor: t.Integer(),
     })
   ),
+  /** Only on a retailer's first order; null on the rest, shown as "—". */
+  signupToFirstOrderDays: t.Union([t.Integer(), t.Null()]),
+  /** Null until delivered — an undelivered order has no duration yet. */
+  fulfilmentHours: t.Union([t.Integer(), t.Null()]),
+  /** False on a retailer's first counted order, true after. */
+  isRepeat: t.Boolean(),
+  retailerId: t.String(),
 })
 
 export const adminOrdersModule = new Elysia({
@@ -50,12 +57,15 @@ export const adminOrdersModule = new Elysia({
         status: query.status,
         brandId: query.brandId,
         retailerId: query.retailerId,
+        q: query.q,
       }),
     {
       query: t.Object({
         status: optionalEnum(ORDER_STATUSES),
         brandId: t.Optional(t.String({ format: 'uuid' })),
         retailerId: t.Optional(t.String({ format: 'uuid' })),
+        /** The console search box: order number, brand or shop. */
+        q: t.Optional(t.String({ maxLength: 100 })),
       }),
       detail: {
         summary: 'Every order on the platform',

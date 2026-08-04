@@ -7,6 +7,7 @@
  */
 import { Elysia, t } from 'elysia'
 import {
+  CATEGORIES,
   FDA_STATUSES,
   PAYMENT_PREFERENCES,
   PAYMENT_RELIABILITIES,
@@ -25,6 +26,8 @@ const nullable = <T extends ReturnType<typeof t.String>>(schema: T) =>
 const brandPipeline = t.Object({
   id: t.String(),
   name: t.String(),
+  /** The Sellers table's Category column. Null on brands predating it. */
+  category: t.Union([t.UnionEnum(CATEGORIES), t.Null()]),
   phone: t.String(),
   province: t.String(),
   fdaStatus: t.UnionEnum(FDA_STATUSES),
@@ -74,7 +77,11 @@ export const adminModule = new Elysia({ name: 'admin', prefix: '/admin' })
   .get(
     '/pipeline',
     ({ query }) =>
-      service.listPipeline({ status: query.status, role: query.role }),
+      service.listPipeline({
+        status: query.status,
+        role: query.role,
+        q: query.q,
+      }),
     {
       query: t.Object({
         // optionalEnum, not t.Optional(t.UnionEnum(...)) — the latter would
@@ -82,12 +89,17 @@ export const adminModule = new Elysia({ name: 'admin', prefix: '/admin' })
         // everyone else. See lib/schema.ts.
         status: optionalEnum(PIPELINE_STATUSES),
         role: optionalEnum(['BRAND', 'RETAILER'] as const),
+        // The console's single search box: name, location, referral, handle.
+        q: t.Optional(t.String({ maxLength: 100 })),
       }),
       detail: {
         summary: 'List brands and retailers in the pipeline',
         description:
           'Brands and retailers only; admin accounts are never prospected. ' +
-          'Filter by status for a single column of the board.',
+          'Filter by status for a single column of the board. `q` is the ' +
+          'console search box — it matches brand name, shop name, province, ' +
+          'zone, referral source, social handle and email, case-insensitively, ' +
+          'so one box works on either tab.',
         tags: ['Admin'],
       },
       response: { 200: t.Array(applicant) },
@@ -178,6 +190,12 @@ export const adminModule = new Elysia({ name: 'admin', prefix: '/admin' })
               ),
               province: t.Optional(t.String({ minLength: 1, maxLength: 100 })),
               postalCode: t.Optional(t.String({ minLength: 4, maxLength: 10 })),
+              // Nullable, not merely optional: the signup form never asks for
+              // a category, so admin is the only party who can set one — and
+              // has to be able to take a wrong one back off.
+              category: t.Optional(
+                t.Union([t.UnionEnum(CATEGORIES), t.Null()])
+              ),
               fdaStatus: t.Optional(t.UnionEnum(FDA_STATUSES)),
               sizeBand: t.Optional(t.UnionEnum(SIZE_BANDS)),
               socialHandle: t.Optional(t.String({ maxLength: 100 })),
@@ -231,9 +249,12 @@ export const adminModule = new Elysia({ name: 'admin', prefix: '/admin' })
         description:
           'Two kinds of field in one call. The core profile — name, phone, ' +
           'address — which the account can also edit itself; and the internal ' +
-          'sales columns only the console owns: อย. status, case spec, ' +
-          'referral source, delivery window, notes. adminNotes is never shown ' +
-          'to the account holder. ' +
+          'sales columns only the console owns: category, อย. status, case ' +
+          'spec, referral source, delivery window, notes. adminNotes is never ' +
+          'shown to the account holder. ' +
+          'category is the Sellers table column — one per brand, distinct ' +
+          'from Product.category, which decides commission. No signup form ' +
+          'asks for it, so this route is the only way it is ever set. ' +
           'Admin can edit the core fields because onboarding happens over the ' +
           'phone: someone is reading details back and correcting a mistyped ' +
           'address as they go, often before that account has ever signed in. ' +
