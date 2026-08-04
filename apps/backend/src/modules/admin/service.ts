@@ -254,7 +254,34 @@ export async function setPipelineStatus(params: {
   return serialise(updated)
 }
 
-export interface BrandPipelineInput {
+/**
+ * The core identity fields, editable by an admin as well as by the account.
+ *
+ * Onboarding happens over the phone: an admin is reading details back to
+ * someone and correcting a mistyped address as they go, and often before that
+ * account has ever signed in. Bank details are deliberately NOT here — an
+ * admin can already read them to make a payout, and letting the console
+ * rewrite where money lands is a different kind of risk from fixing a typo.
+ */
+export interface CoreBrandInput {
+  name?: string
+  description?: string | null
+  phone?: string
+  addressLine?: string
+  province?: string
+  postalCode?: string
+}
+
+export interface CoreRetailerInput {
+  shopName?: string
+  phone?: string
+  addressLine?: string
+  province?: string
+  postalCode?: string
+  taxId?: string | null
+}
+
+export interface BrandPipelineInput extends CoreBrandInput {
   /** The Sellers table's one-category-per-brand column. */
   category?: Category | null
   fdaStatus?: FdaStatus
@@ -268,7 +295,7 @@ export interface BrandPipelineInput {
   adminNotes?: string
 }
 
-export interface RetailerPipelineInput {
+export interface RetailerPipelineInput extends CoreRetailerInput {
   shopType?: ShopType
   zone?: string
   socialHandle?: string

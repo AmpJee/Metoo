@@ -21,7 +21,7 @@ const signedUpload = t.Object({
  */
 export const uploadsModule = new Elysia({
   name: 'uploads',
-  prefix: '/brand/products/:productId/photo',
+  prefix: '/brand/products/:id/photo',
 })
   .use(requireAccess({ roles: ['BRAND'], approved: true }))
 
@@ -30,12 +30,12 @@ export const uploadsModule = new Elysia({
     async ({ auth, params, body }) =>
       service.requestPhotoUpload({
         brandId: await brandIdForUser(auth.userId),
-        productId: params.productId,
+        productId: params.id,
         contentType: body.contentType,
         sizeBytes: body.sizeBytes,
       }),
     {
-      params: t.Object({ productId: t.String({ format: 'uuid' }) }),
+      params: t.Object({ id: t.String({ format: 'uuid' }) }),
       body: t.Object({
         contentType: t.String({ maxLength: 100 }),
         sizeBytes: t.Integer({ minimum: 1, maximum: MAX_PHOTO_BYTES }),
@@ -57,11 +57,11 @@ export const uploadsModule = new Elysia({
     async ({ auth, params, body }) =>
       service.confirmPhotoUpload({
         brandId: await brandIdForUser(auth.userId),
-        productId: params.productId,
+        productId: params.id,
         storageKey: body.storageKey,
       }),
     {
-      params: t.Object({ productId: t.String({ format: 'uuid' }) }),
+      params: t.Object({ id: t.String({ format: 'uuid' }) }),
       body: t.Object({ storageKey: t.String({ maxLength: 500 }) }),
       detail: {
         summary: 'Confirm the photo upload',

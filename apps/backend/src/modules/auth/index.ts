@@ -57,6 +57,31 @@ const registerBody = t.Union([
   }),
 ])
 
+const credentials = t.Object({
+  email: t.String({ format: 'email' }),
+  password: t.String({ minLength: 1 }),
+})
+
+/**
+ * One login route per site.
+ *
+ * Each frontend has its own sign-in page, so each should refuse the wrong kind
+ * of account outright. Otherwise a brand signing in on the shop gets a valid
+ * token and then 403s on every screen, which looks like a broken site rather
+ * than a wrong turn.
+ */
+const portalLogin = (site: string) => ({
+  summary: `Log in to the ${site}`,
+  description:
+    `Only accepts an account for this site; anything else is 403 ` +
+    `WRONG_PORTAL, naming where to go instead. That check runs AFTER the ` +
+    `password, so it cannot be used to discover which accounts exist — by ` +
+    `then the caller has already proved the account is theirs. ` +
+    `Succeeds regardless of pipeline status, so a pending account can sign ` +
+    `in and be shown why it is blocked.`,
+  tags: ['Auth'],
+})
+
 export const authModule = new Elysia({ name: 'auth', prefix: '/auth' })
   .post(
     '/register',
@@ -80,20 +105,49 @@ export const authModule = new Elysia({ name: 'auth', prefix: '/auth' })
   )
 
   .post('/login', ({ body }) => service.login(body.email, body.password), {
-    body: t.Object({
-      email: t.String({ format: 'email' }),
-      password: t.String({ minLength: 1 }),
-    }),
+    body: credentials,
     detail: {
-      summary: 'Log in',
+      summary: 'Log in (any role)',
       description:
-        'Succeeds regardless of approval status — a pending user must be ' +
-        'able to sign in and see why they are blocked. Feature access is ' +
-        'gated per-route instead.',
+        'Accepts any account. The three site-specific routes below are ' +
+        'preferred — this one cannot tell a brand it is on the wrong site. ' +
+        'Succeeds regardless of approval status: a pending user must be able ' +
+        'to sign in and see why they are blocked, so feature access is gated ' +
+        'per-route instead.',
       tags: ['Auth'],
     },
     response: { 200: session },
   })
+
+  .post(
+    '/login/retailer',
+    ({ body }) => service.login(body.email, body.password, 'RETAILER'),
+    {
+      body: credentials,
+      detail: portalLogin('shop'),
+      response: { 200: session },
+    }
+  )
+
+  .post(
+    '/login/brand',
+    ({ body }) => service.login(body.email, body.password, 'BRAND'),
+    {
+      body: credentials,
+      detail: portalLogin('Seller Centre'),
+      response: { 200: session },
+    }
+  )
+
+  .post(
+    '/login/admin',
+    ({ body }) => service.login(body.email, body.password, 'ADMIN'),
+    {
+      body: credentials,
+      detail: portalLogin('management console'),
+      response: { 200: session },
+    }
+  )
 
   .post('/refresh', ({ body }) => service.refresh(body.refreshToken), {
     body: t.Object({ refreshToken: t.String({ minLength: 1 }) }),
@@ -127,6 +181,36 @@ export const authModule = new Elysia({ name: 'auth', prefix: '/auth' })
   )
 
   .use(requireAuth)
+
+  .post(
+    '/password',
+    ({ auth, body }) =>
+      service.changePassword({
+        userId: auth.userId,
+        currentPassword: body.currentPassword,
+        newPassword: body.newPassword,
+      }),
+    {
+      body: t.Object({
+        currentPassword: t.String({ minLength: 1 }),
+        newPassword: password,
+      }),
+      detail: {
+        summary: 'Change your password',
+        description:
+          'Requires the current password — an open session is not enough, ' +
+          'because a borrowed laptop is exactly the case this protects ' +
+          'against. Every other session is signed out, and a fresh token pair ' +
+          'comes back so the caller stays signed in. Store both: the old ' +
+          'refresh token is dead the moment this returns. Any role.',
+        tags: ['Auth'],
+      },
+      response: {
+        200: t.Object({ accessToken: t.String(), refreshToken: t.String() }),
+      },
+    }
+  )
+
   .get('/me', ({ auth }) => service.findUserById(auth.userId), {
     detail: {
       summary: 'Current account',

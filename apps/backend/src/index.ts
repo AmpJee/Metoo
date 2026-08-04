@@ -31,6 +31,10 @@ import {
 } from './modules/feedback/index.ts'
 import { healthModule } from './modules/health/index.ts'
 import { ordersModule } from './modules/orders/index.ts'
+import {
+  productImageUploadModule,
+  productImagesModule,
+} from './modules/product-images/index.ts'
 import { productsModule } from './modules/products/index.ts'
 import { reviewsModule } from './modules/reviews/index.ts'
 import {
@@ -68,6 +72,8 @@ export const app = new Elysia()
   .use(brandProfileModule)
   .use(adminModule)
   .use(productsModule)
+  .use(productImagesModule)
+  .use(productImageUploadModule)
   .use(catalogModule)
   .use(favouritesModule)
   .use(savedForLaterModule)

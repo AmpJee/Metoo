@@ -46,7 +46,10 @@ const catalogSelect = {
  */
 const catalogDetailSelect = {
   ...catalogSelect,
-  galleryUrls: true,
+  images: {
+    orderBy: { position: 'asc' },
+    select: { id: true, url: true, position: true, altText: true },
+  },
   packPresets: true,
   sku: true,
   barcode: true,

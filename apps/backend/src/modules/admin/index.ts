@@ -174,39 +174,87 @@ export const adminModule = new Elysia({ name: 'admin', prefix: '/admin' })
       params: t.Object({ userId: t.String({ format: 'uuid' }) }),
       body: t.Object({
         brand: t.Optional(
-          t.Object({
-            fdaStatus: t.Optional(t.UnionEnum(FDA_STATUSES)),
-            sizeBand: t.Optional(t.UnionEnum(SIZE_BANDS)),
-            socialHandle: t.Optional(t.String({ maxLength: 100 })),
-            caseWeightKg: t.Optional(t.Number({ minimum: 0 })),
-            caseDimensionsCm: t.Optional(t.String({ maxLength: 100 })),
-            caseUnits: t.Optional(t.Integer({ minimum: 0 })),
-            existingRetailerCount: t.Optional(t.Integer({ minimum: 0 })),
-            referralSource: t.Optional(t.String({ maxLength: 200 })),
-            adminNotes: t.Optional(t.String({ maxLength: 2000 })),
-          })
+          t.Object(
+            {
+              // Core identity, editable here as well as by the brand itself.
+              // Onboarding happens over the phone, often before the account has
+              // ever signed in. Bank details are deliberately absent — see the
+              // note on CoreBrandInput in service.ts.
+              name: t.Optional(t.String({ minLength: 1, maxLength: 120 })),
+              description: t.Optional(
+                t.Union([t.String({ maxLength: 1000 }), t.Null()])
+              ),
+              phone: t.Optional(t.String({ minLength: 6, maxLength: 20 })),
+              addressLine: t.Optional(
+                t.String({ minLength: 1, maxLength: 200 })
+              ),
+              province: t.Optional(t.String({ minLength: 1, maxLength: 100 })),
+              postalCode: t.Optional(t.String({ minLength: 4, maxLength: 10 })),
+              fdaStatus: t.Optional(t.UnionEnum(FDA_STATUSES)),
+              sizeBand: t.Optional(t.UnionEnum(SIZE_BANDS)),
+              socialHandle: t.Optional(t.String({ maxLength: 100 })),
+              caseWeightKg: t.Optional(t.Number({ minimum: 0 })),
+              caseDimensionsCm: t.Optional(t.String({ maxLength: 100 })),
+              caseUnits: t.Optional(t.Integer({ minimum: 0 })),
+              existingRetailerCount: t.Optional(t.Integer({ minimum: 0 })),
+              referralSource: t.Optional(t.String({ maxLength: 200 })),
+              adminNotes: t.Optional(t.String({ maxLength: 2000 })),
+            }
+            // NOTE: Elysia enforces unknown-key rejection on the top-level
+            // body object but not on a nested one, so `additionalProperties:
+            // false` here does nothing. A field that is not listed above is
+            // silently dropped and the call still answers 200. The safety that
+            // matters still holds — bankAccountNumber cannot be written from
+            // here, verified — but the caller is not told it was ignored.
+          )
         ),
         retailer: t.Optional(
-          t.Object({
-            shopType: t.Optional(t.UnionEnum(SHOP_TYPES)),
-            zone: t.Optional(t.String({ maxLength: 200 })),
-            socialHandle: t.Optional(t.String({ maxLength: 100 })),
-            currentProducts: t.Optional(t.String({ maxLength: 500 })),
-            monthlyCapacity: t.Optional(t.Integer({ minimum: 0 })),
-            preferredPayment: t.Optional(t.UnionEnum(PAYMENT_PREFERENCES)),
-            paymentReliability: t.Optional(t.UnionEnum(PAYMENT_RELIABILITIES)),
-            deliveryWindow: t.Optional(t.String({ maxLength: 100 })),
-            referralSource: t.Optional(t.String({ maxLength: 200 })),
-            adminNotes: t.Optional(t.String({ maxLength: 2000 })),
-          })
+          t.Object(
+            {
+              shopName: t.Optional(t.String({ minLength: 1, maxLength: 120 })),
+              phone: t.Optional(t.String({ minLength: 6, maxLength: 20 })),
+              addressLine: t.Optional(
+                t.String({ minLength: 1, maxLength: 200 })
+              ),
+              province: t.Optional(t.String({ minLength: 1, maxLength: 100 })),
+              postalCode: t.Optional(t.String({ minLength: 4, maxLength: 10 })),
+              taxId: t.Optional(
+                t.Union([t.String({ maxLength: 20 }), t.Null()])
+              ),
+              shopType: t.Optional(t.UnionEnum(SHOP_TYPES)),
+              zone: t.Optional(t.String({ maxLength: 200 })),
+              socialHandle: t.Optional(t.String({ maxLength: 100 })),
+              currentProducts: t.Optional(t.String({ maxLength: 500 })),
+              monthlyCapacity: t.Optional(t.Integer({ minimum: 0 })),
+              preferredPayment: t.Optional(t.UnionEnum(PAYMENT_PREFERENCES)),
+              paymentReliability: t.Optional(
+                t.UnionEnum(PAYMENT_RELIABILITIES)
+              ),
+              deliveryWindow: t.Optional(t.String({ maxLength: 100 })),
+              referralSource: t.Optional(t.String({ maxLength: 200 })),
+              adminNotes: t.Optional(t.String({ maxLength: 2000 })),
+            }
+            // Same as above: unlisted keys are dropped, not rejected.
+          )
         ),
       }),
       detail: {
-        summary: 'Update outreach fields on a profile',
+        summary: 'Edit a brand or retailer profile',
         description:
-          'Internal sales data — อย. status, case spec, referral source, ' +
-          'delivery window, notes. adminNotes is never shown to the account ' +
-          'holder.',
+          'Two kinds of field in one call. The core profile — name, phone, ' +
+          'address — which the account can also edit itself; and the internal ' +
+          'sales columns only the console owns: อย. status, case spec, ' +
+          'referral source, delivery window, notes. adminNotes is never shown ' +
+          'to the account holder. ' +
+          'Admin can edit the core fields because onboarding happens over the ' +
+          'phone: someone is reading details back and correcting a mistyped ' +
+          'address as they go, often before that account has ever signed in. ' +
+          'Bank details are deliberately NOT here — an admin already reads ' +
+          'them to make a payout, but rewriting where money lands is a very ' +
+          'different risk from fixing a typo, so that stays with the brand. ' +
+          'Fields not listed in this schema are ignored rather than rejected, ' +
+          'so check the response to confirm what actually changed. ' +
+          'Every change is audit logged.',
         tags: ['Admin'],
       },
       response: { 200: applicant },
