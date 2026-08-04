@@ -52,13 +52,12 @@ protection.
 
 ## Current state
 
-- Merged through **PR #25**; `develop` green
+- Merged through **PR #31**; `develop` green
 - **~100 routes**, **23 models**, **186 domain unit tests**, no database in CI
-- **Seven branches pushed and unmerged** — see "In flight" below. Merge them
-  before starting anything new; several hazards below exist only because they
-  are outstanding.
-- **The pitch is Mon 10 Aug 2026.** Deploying to Railway is the critical path
-  and had not started as of 3 Aug.
+- **One backend branch left unmerged: `feature/admin-table-parity`.**
+  Everything else from the 3 Aug backlog is in.
+- **The pitch is Mon 10 Aug 2026.** Deploying to Railway is still the critical
+  path and had not started as of 4 Aug.
 
 **What works end to end:** a brand registers → admin walks it through the sales
 pipeline to ONBOARDED → brand lists products → retailer browses, fills a cart
@@ -118,39 +117,47 @@ separately, not just the branch tip.
 | #24 | `feature/product-spec` | sku, barcode, weight, ingredients, shelf life, presets |
 | #25 | `feature/chat` | Retailer ↔ brand chat |
 
-### In flight — SEVEN branches pushed, none merged
+### In flight
 
-**Merge these before starting anything new.** Two of them stack, so order
-matters:
+| Branch | State |
+| --- | --- |
+| `feature/admin-table-parity` | **The only unmerged backend branch.** 2 commits, green |
+| `feature/admin-and-seller-side-page-` | Not mine — the seller and admin frontends, 7 admin and 9 seller pages |
+| `frontend`, `feature/client-site-page` | Teammates' |
 
-| Order | Branch | Depends on | What |
-| --- | --- | --- | --- |
-| 1 | `feature/account-management` | — | Password change, profile pictures, admin edits core profile + feedback |
-| 2 | `feature/product-images` | — | `product_images` table replacing `galleryUrls` |
-| 3 | `feature/product-create-images` | #2 | Upload photos while adding a product |
-| 4 | `feature/dashboard-parity` | — | Seller followers, admin category chart, gateway fees, month buckets |
-| 5 | `feature/admin-table-parity` | #4 | Brand category column, pipeline search, derived order columns |
-| 6 | `feature/split-login` | — | `/auth/login/{retailer,brand,admin}` |
-| 7 | `feature/pipeline-seed-data` | — | Pipeline seed data + `make db-demo` trading history |
+PRs #26–#31 merged the rest: commission docs, account management, product
+images, create-with-images, dashboard parity, split login, pipeline seed data.
 
-Also unmerged and **not mine**: `feature/admin-and-seller-side-page-` — the
-seller and admin frontends, 7 admin pages and 9 seller pages. An earlier audit
-in this log said those apps did not exist; that was true of `develop` only.
+### Migration hazard
 
-### Live hazard while those branches are unmerged
+`prisma migrate diff --from-config-datasource` compares against the LIVE
+database. Generating a migration from a branch that lacks another branch's
+schema produces SQL that DROPS it. It fired twice on 3 Aug — once wanting to
+drop `retailer_profiles.avatarUrl`, once wanting to drop the whole
+`product_images` table and re-add `galleryUrls`. Both caught by reading the SQL
+before applying, edited by hand, reason recorded in the migration file.
+**Read every generated migration for unexpected `DROP` lines.**
 
-**`prisma migrate diff --from-config-datasource` compares against the LIVE
-database**, which already carries every unmerged branch's schema. Generating a
-migration from a branch that lacks them produces SQL that DROPS them. It has
-happened twice:
+### Why a new order "does not appear" on a brand dashboard
 
-- a `product_spec_fields` migration wanted to `DROP COLUMN avatarUrl`
-- a `brand_category` migration wanted to `DROP TABLE product_images`, re-add
-  `galleryUrls` and drop `avatarUrl`
+Asked on 4 Aug and investigated by placing a real order. **The backend is
+correct.** Two things cause the confusion:
 
-Both were caught by reading the generated SQL before applying it, edited by
-hand, and the reason recorded in the migration file. **Read every generated
-migration for unexpected `DROP` lines until the backlog is merged.**
+1. **An order belongs to the brand that owns the product.** The seed now has
+   eight brands with catalogs, so ordering an EnerPhère product and then looking
+   at Siam Craft Goods' dashboard shows nothing. Verified both ways: the order
+   appeared on EnerPhère's dashboard and not on Siam Craft's.
+2. **A PENDING order does not move the Revenue or Orders tiles.** Those read
+   `EARNS_REVENUE` (CONFIRMED onward) through `loadOrderFacts` — a request is
+   not a sale. It *does* immediately increment `store.newOrders`, sit top of
+   `recentOrders`, and appear in `/brand/orders` and `/brand/orders/counts`.
+
+Measured on a real checkout: newOrders 1→2, the new order first in
+recentOrders, `/brand/orders` 12→13, counts.PENDING 1→2, while orderCount and
+revenueMinor correctly did not move.
+
+If a *confirmed* order is genuinely missing, check the frontend cache before
+the API — Next caches server components aggressively.
 
 ### Demo data
 
