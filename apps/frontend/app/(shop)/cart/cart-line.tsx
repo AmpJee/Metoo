@@ -13,9 +13,9 @@ import type { CartItem } from '@/lib/types'
 /**
  * One cart line.
  *
- * Quantity steps by `minPacks`, matching the API's MOQ and case-size rules —
- * the same constraint the product page enforces, so a cart can never hold a
- * quantity checkout would reject.
+ * Quantity steps by ONE pack and floors at the product's MOQ — the only rule
+ * the API enforces. Matches the product page; see the note in
+ * components/add-to-cart.tsx for why stepping by `minPacks` was wrong.
  */
 export function CartLine({ item }: { item: CartItem }) {
   const router = useRouter()
@@ -23,7 +23,7 @@ export function CartLine({ item }: { item: CartItem }) {
   const [pending, startTransition] = useTransition()
 
   const { product } = item
-  const step = product.minPacks
+  const min = product.minPacks
 
   const change = (packs: number) => {
     setError(null)
@@ -93,8 +93,8 @@ export function CartLine({ item }: { item: CartItem }) {
             <button
               type="button"
               aria-label="Decrease quantity"
-              disabled={pending || item.packs - step < step}
-              onClick={() => change(item.packs - step)}
+              disabled={pending || item.packs <= min}
+              onClick={() => change(item.packs - 1)}
               className="flex size-8 items-center justify-center disabled:opacity-40"
             >
               <Minus className="size-3" />
@@ -110,7 +110,7 @@ export function CartLine({ item }: { item: CartItem }) {
               type="button"
               aria-label="Increase quantity"
               disabled={pending}
-              onClick={() => change(item.packs + step)}
+              onClick={() => change(item.packs + 1)}
               className="flex size-8 items-center justify-center disabled:opacity-40"
             >
               <Plus className="size-3" />

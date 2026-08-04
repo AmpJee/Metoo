@@ -42,6 +42,10 @@ const adminOrder = t.Object({
   /** False on a retailer's first counted order, true after. */
   isRepeat: t.Boolean(),
   retailerId: t.String(),
+  /** The moves an admin may make from here, in order. */
+  actions: t.Array(
+    t.Object({ to: t.UnionEnum(ORDER_STATUSES), label: t.String() })
+  ),
 })
 
 export const adminOrdersModule = new Elysia({

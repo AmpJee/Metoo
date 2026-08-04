@@ -1,4 +1,8 @@
-import { ORDER_STATUS_LABELS, type OrderStatus } from '@metoo/shared'
+import {
+  BUYER_ORDER_STATUS_LABELS,
+  ORDER_STATUS_LABELS,
+  type OrderStatus,
+} from '@metoo/shared'
 
 /**
  * The "My Purchase" tabs.
@@ -33,6 +37,23 @@ export function tabFor(key: string | undefined) {
   return PURCHASE_TABS.find((tab) => tab.key === key) ?? PURCHASE_TABS[0]
 }
 
+/**
+ * Console pill tone per status.
+ *
+ * Separate from `statusTone` because the two design systems name their tones
+ * differently — the buyer's Badge has `destructive`/`default`, the console's
+ * Pill has `danger`/`neutral`. Same meaning, mapped once here rather than
+ * translated at every call site.
+ */
+export function statusPillTone(
+  status: OrderStatus
+): 'warning' | 'info' | 'success' | 'danger' | 'neutral' {
+  const tone = statusTone(status)
+  if (tone === 'destructive') return 'danger'
+  if (tone === 'default') return 'neutral'
+  return tone
+}
+
 /** Badge tone per status — colour carries the same meaning as the label. */
 export function statusTone(
   status: OrderStatus
@@ -55,8 +76,24 @@ export function statusTone(
   }
 }
 
+/** Seller and admin wording. Never use this in `app/(shop)/`. */
 export function statusLabel(status: OrderStatus) {
   return ORDER_STATUS_LABELS[status]
+}
+
+/**
+ * Buyer wording — "To Pay", "To Ship", "Completed".
+ *
+ * The shop and the consoles describe the same row differently on purpose; see
+ * BUYER_ORDER_STATUS_LABELS in @metoo/shared for why.
+ */
+export function buyerStatusLabel(status: OrderStatus) {
+  return BUYER_ORDER_STATUS_LABELS[status]
+}
+
+/** An order the buyer still needs to pay for. */
+export function awaitingPayment(status: OrderStatus) {
+  return status === 'PENDING'
 }
 
 /** The seven logistics steps the tracker shows, in order. */

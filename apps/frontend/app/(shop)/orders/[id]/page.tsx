@@ -7,7 +7,11 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ApiError, api } from '@/lib/api'
 import { formatBaht, formatDate } from '@/lib/format'
-import { statusLabel, statusTone } from '@/lib/order-status'
+import {
+  awaitingPayment,
+  buyerStatusLabel,
+  statusTone,
+} from '@/lib/order-status'
 import type { Order } from '@/lib/types'
 
 export async function generateMetadata({
@@ -64,9 +68,17 @@ export default async function OrderDetailPage({
             Placed {formatDate(order.createdAt)}
           </p>
         </div>
-        <Badge tone={statusTone(order.status)}>
-          {statusLabel(order.status)}
-        </Badge>
+        <div className="flex items-center gap-3">
+          <Badge tone={statusTone(order.status)}>
+            {buyerStatusLabel(order.status)}
+          </Badge>
+          {/* The whole point of "To Pay" — somewhere to go and pay. */}
+          {awaitingPayment(order.status) ? (
+            <Button asChild>
+              <Link href={`/orders/${order.id}/pay`}>Pay</Link>
+            </Button>
+          ) : null}
+        </div>
       </header>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_340px]">

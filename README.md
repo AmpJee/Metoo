@@ -148,10 +148,17 @@ pipeline, catalog, storefronts and follows, cart, per-brand checkout, the
 nine-state order lifecycle, the wallet ledger with admin-approved withdrawals,
 reviews, saved lists, returns with refunds, uploads and the feedback log.
 
-**Frontend** covers the whole retailer site: landing, auth, pending approval,
-explore with category and search, product detail, brand storefronts, cart,
-checkout, My Purchase with status tabs, order tracking, saved lists and
-returns.
+**Frontend** covers all three surfaces:
+
+- **Buyer** — landing, auth, pending approval, explore with category and
+  search, product detail, storefronts, cart, checkout, My Purchase, order
+  tracking, saved lists, returns.
+- **Seller** — dashboard with a revenue chart, order queue and the full
+  status workflow, product CRUD with photo upload, wallet and withdrawals,
+  customers, returns, store preview.
+- **Admin** — weekly summary, seller and retailer pipelines with document
+  review, orders with delivery-cost entry, withdrawal approvals, returns and
+  the feedback log.
 
 Still to do, in rough dependency order:
 
@@ -163,13 +170,16 @@ Still to do, in rough dependency order:
 2. **Retailer profile** — `GET`/`PATCH /retailer/profile` so a shop can read
    and edit its own delivery address. Checkout currently cannot show it;
    orders still snapshot it correctly server-side.
-3. **Seller dashboard** — `app/(seller)/` route group against the existing
-   `/brand/*` routes (dashboard, products, orders, customers, wallet).
-4. **Admin dashboard** — `app/(admin)/` route group against `/admin/*`
-   (pipeline, orders, withdrawals, returns, feedback).
-5. **Chat, vouchers and coins** — in the designs, with no schema or routes yet.
-6. **Retailer uploads** — return-request photos need a retailer-facing signed
+3. **Admin summary trends** — the design shows GMV over time and a split by
+   category. `GET /admin/summary` returns one period's totals plus
+   `gmvByBrand`, so neither is built. Adding a bucketed series and a category
+   breakdown would mirror what `/brand/dashboard` already does with `chart[]`.
+4. **Chat, vouchers and coins** — in the designs, with no schema or routes yet.
+5. **Retailer uploads** — return-request photos need a retailer-facing signed
    upload route; the existing one is brand-only.
+6. **Pipeline field editing** — the admin console reads every outreach field
+   and can move an account's status, but `PATCH /admin/pipeline/:id/fields`
+   is not yet wired to a form.
 
 Conventions and the decisions that supersede the brief below are in
 [CLAUDE.md](CLAUDE.md); module patterns are in

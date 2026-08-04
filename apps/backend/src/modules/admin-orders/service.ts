@@ -11,7 +11,10 @@
  */
 import type { OrderStatus, Prisma } from '../../generated/prisma/client.ts'
 import { prisma } from '../../config/prisma.ts'
-import { EARNS_REVENUE } from '../../domain/order-state.ts'
+import {
+  EARNS_REVENUE,
+  availableTransitions,
+} from '../../domain/order-state.ts'
 import { AppError } from '../../middleware/error.ts'
 
 const adminOrderSelect = {
@@ -120,6 +123,18 @@ async function decorate<
   })
 }
 
+/**
+ * Attach the moves an admin may make from here.
+ *
+ * Same contract as the brand view: the console renders whatever buttons this
+ * returns, so the state machine in domain/order-state.ts stays the single
+ * source of truth instead of being restated in the frontend. ADMIN sees a
+ * superset of BRAND's moves.
+ */
+function withActions<T extends { status: OrderStatus }>(order: T) {
+  return { ...order, actions: availableTransitions(order.status, 'ADMIN') }
+}
+
 export async function listAll(filter: {
   status?: OrderStatus
   brandId?: string
@@ -149,7 +164,9 @@ export async function listAll(filter: {
     orderBy: { createdAt: 'desc' },
   })
 
-  return decorate(orders)
+  // decorate first — it needs the whole page at once to answer "is this their
+  // first order?" — then withActions per row.
+  return (await decorate(orders)).map(withActions)
 }
 
 export async function getById(orderId: string) {
@@ -162,7 +179,7 @@ export async function getById(orderId: string) {
     throw new AppError(404, 'ORDER_NOT_FOUND', 'No such order.')
   }
 
-  return (await decorate([order]))[0]!
+  return withActions((await decorate([order]))[0]!)
 }
 
 /**
@@ -211,6 +228,6 @@ export async function setDeliveryCost(params: {
       },
     })
 
-    return decorated!
+    return withActions(decorated!)
   })
 }

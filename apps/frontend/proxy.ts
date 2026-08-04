@@ -68,6 +68,8 @@ export async function proxy(request: NextRequest) {
 
   const signedIn = Boolean(accessToken)
 
+  const forward = () => NextResponse.next()
+
   /** Attach a renewed session to whatever response we return. */
   const withSession = (response: NextResponse) => {
     if (renewed) {
@@ -97,19 +99,21 @@ export async function proxy(request: NextRequest) {
     withSession(NextResponse.redirect(new URL(to, request.url)))
 
   if (!signedIn) {
-    if (isPublic(pathname)) return NextResponse.next()
+    if (isPublic(pathname)) return forward()
     const target = new URL('/login', request.url)
     // Come back where they were trying to go once signed in.
     if (pathname !== '/') target.searchParams.set('next', pathname + search)
     return NextResponse.redirect(target)
   }
 
-  // Signed in: keep them out of the auth screens.
+  // Signed in: keep them out of the auth screens. Sent to `/` rather than a
+  // fixed console because the role is not known here — resolving it would
+  // cost a /auth/me call on every navigation. The landing page does it once.
   if (pathname === '/login' || pathname === '/register') {
-    return redirect('/explore')
+    return redirect('/')
   }
 
-  return withSession(NextResponse.next())
+  return withSession(forward())
 }
 
 export const config = {

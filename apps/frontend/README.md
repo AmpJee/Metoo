@@ -1,39 +1,74 @@
 # Frontend
 
-The **retailer (buyer) site** — Next.js 16 App Router, React 19, Tailwind v4
-and shadcn/ui, built to the designer's Figma file.
+All three surfaces — buyer, seller and admin — in one Next.js 16 App Router
+app: React 19, Tailwind v4, shadcn/ui, built to the designer's Figma files.
 
 ```bash
 make dev-frontend   # http://localhost:5173
 ```
 
-The seller and admin dashboards are separate designs and belong in
-`app/(seller)/` and `app/(admin)/` route groups alongside `app/(shop)/`. All
-three share the palette already in `app/globals.css`.
+| Route group | Role                      | Home       | Shell            |
+| ----------- | ------------------------- | ---------- | ---------------- |
+| `(shop)`    | RETAILER, ONBOARDED       | `/explore` | top bar + footer |
+| `(seller)`  | BRAND, ONBOARDED          | `/seller`  | sidebar          |
+| `(admin)`   | ADMIN (no approval check) | `/admin`   | sidebar          |
+
+`lib/roles.ts` decides where a role belongs. Each layout redirects the wrong
+role to its own home instead of 403ing, and `proxy.ts` sends post-login
+traffic to `/`, which resolves the role once.
 
 ## Layout
 
 ```
 app/
 ├── layout.tsx          Inter + globals
-├── page.tsx            landing — the only page with no session
+├── page.tsx            landing (logged out) / role router (logged in)
 ├── login/ register/ pending/
-├── (shop)/             every screen behind the ONBOARDED gate
-│   ├── layout.tsx      header + footer, and the gate itself
-│   ├── explore/        catalog, category filter, search, cursor paging
-│   ├── products/[id]/  detail, add to cart, favourite / save
-│   ├── stores/         brand directory and storefronts
-│   ├── cart/ checkout/
-│   ├── orders/         My Purchase tabs, tracking, checkout groups
-│   ├── saved/ returns/
+├── (shop)/             buyer — explore, product, stores, cart, checkout,
+│                       orders, saved, returns
+├── (seller)/seller/    dashboard, orders, products, wallet, customers,
+│                       returns, preview store
+├── (admin)/admin/      summary, sellers, retailers, orders, withdrawals,
+│                       returns, feedback
 ├── api/auth/           login | logout | register — the only cookie writers
-└── actions/            server actions: cart, checkout, saved, follow, returns
+└── actions/            server actions, one file per domain
 
-components/ui/          button, input, badge, empty-state
-components/             product-card, order-card, order-tracker, site-header…
-lib/                    api, session, token-lifetime, format, order-status
-proxy.ts                session renewal + route gating
+components/ui/          button, input, badge, table, field, stat-tile…
+components/charts/      recharts wrappers — client-only by necessity
+components/             product-card, order-card, order-actions,
+                        dashboard-shell, site-header…
+lib/                    api, session, token-lifetime, roles, format,
+                        order-status
+proxy.ts                session renewal, route gating, x-current-path
 ```
+
+## Two rules that are easy to get wrong
+
+- **Order buttons come from the API.** Both order endpoints return
+  `actions: [{ to, label }]`, derived from the transition table in the
+  backend's domain layer. `components/order-actions.tsx` renders exactly those
+  — a second copy of the state machine here would drift from the one the
+  server enforces.
+- **The status PATCH body key is `status`, not `to`**, even though the action
+  object calls it `to`. Sending `{ to }` fails with a message about the order
+  "already" being in its current state, which points nowhere near the cause.
+
+## Charts
+
+Recharts, client components, fed by data the server already fetched. Two
+exist, and both are deliberately plain:
+
+- **Seller revenue** (`revenue-chart.tsx`) — one series. `/brand/dashboard`
+  also returns an order `count` per bucket, which tempts a second y-axis;
+  two scales on one plot invent a correlation the data does not contain, so
+  count is a stat tile instead.
+- **Admin GMV by brand** (`gmv-by-brand-chart.tsx`) — one measure across
+  nominal categories, so every bar is the same colour. Shading by value would
+  double-encode bar length as hue. With a single brand it degrades to a stat
+  tile, because one bar is not a comparison.
+
+The palette is `#cb2957` on the light surface, checked against the lightness,
+chroma and contrast rules rather than eyeballed.
 
 ## Auth — read this before changing anything
 

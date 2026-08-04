@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { SiteFooter } from '@/components/site-footer'
 import { SiteHeader } from '@/components/site-header'
 import { ApiError, api } from '@/lib/api'
+import { homeForRole } from '@/lib/roles'
 import type { Cart, Me } from '@/lib/types'
 
 /**
@@ -28,13 +29,11 @@ export default async function ShopLayout({
     throw error
   }
 
-  if (me.status !== 'ONBOARDED') redirect('/pending')
+  // Only retailers shop. A brand or admin who lands here goes to their own
+  // console rather than being told they are "pending" — they are not.
+  if (me.role !== 'RETAILER') redirect(homeForRole(me.role))
 
-  // Only retailers shop. The seller and admin dashboards are separate route
-  // groups — `(seller)` and `(admin)` alongside this one, each with its own
-  // layout and role check. Until they exist, a brand or admin landing here is
-  // sent to /pending, which explains the situation rather than 404ing.
-  if (me.role !== 'RETAILER') redirect('/pending')
+  if (me.status !== 'ONBOARDED') redirect('/pending')
 
   // Failure here must not take the whole shell down — a badge showing zero is
   // better than an unusable site.
