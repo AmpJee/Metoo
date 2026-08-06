@@ -30,9 +30,13 @@ interface Counts {
 /**
  * The seller's order queue.
  *
- * Tabs are the raw nine statuses rather than the buyer's five groupings: a
- * seller acts on each state separately — "Preparing" and "Ready for Pickup"
- * are different jobs, even though a buyer thinks of both as "To Ship".
+ * Tabs are the raw statuses rather than the buyer's groupings, because a
+ * seller tracks each stage separately even where a buyer would not.
+ *
+ * Most of these are now read-only to a seller: the only order they can move
+ * is an Incoming one, which they accept. Package pickup, delivery and
+ * settlement belong to admin and the retailer, so the buttons simply do not
+ * appear — `actions` comes from the API, which knows who is asking.
  */
 export default async function SellerOrdersPage({
   searchParams,
@@ -53,7 +57,7 @@ export default async function SellerOrdersPage({
     <>
       <PageHeader
         title="Orders"
-        description="Newest first. Open an order to move it forward."
+        description="Newest first. Accept incoming orders here; delivery and payment release are handled by Metoo and the retailer."
       />
 
       <FilterTabs

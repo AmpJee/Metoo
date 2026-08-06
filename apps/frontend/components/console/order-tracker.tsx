@@ -4,12 +4,13 @@ import type { OrderStatus } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
 /**
- * The seven-step order tracker, in the console's tokens.
+ * The six-step order tracker, in the console's tokens.
  *
  * A near-twin of the buyer's `components/order-tracker.tsx`, deliberately
  * kept apart: the two design systems size and colour this differently, and
  * one shared component with a variant flag would make every future tweak to
- * either side a risk to the other.
+ * either side a risk to the other. They also now show different step counts —
+ * the console shows all six, the buyer only the five that are theirs.
  *
  * CANCELLED and CLOSED sit outside the sequence and get a plain message —
  * a half-filled rail would misrepresent a cancelled order.

@@ -2,12 +2,14 @@ import { ArrowLeft, MapPin, Store } from 'lucide-react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { ConfirmDeliveredButton } from '@/components/confirm-delivered-button'
 import { OrderTracker } from '@/components/order-tracker'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ApiError, api } from '@/lib/api'
 import { formatBaht, formatDate } from '@/lib/format'
 import {
+  awaitingBuyerConfirmation,
   awaitingPayment,
   buyerStatusLabel,
   statusTone,
@@ -165,6 +167,11 @@ export default async function OrderDetailPage({
                 {address.phone ? <p>{address.phone}</p> : null}
               </address>
             </div>
+          ) : null}
+
+          {/* Step 5 -> 6. The one move the buyer owns. */}
+          {awaitingBuyerConfirmation(order.status) ? (
+            <ConfirmDeliveredButton orderId={order.id} />
           ) : null}
 
           {canRequestReturn ? (
