@@ -1,8 +1,9 @@
 /**
  * Retailer order views.
  *
- * Read-only. State transitions belong to the brand and admin, and land with
- * fulfilment — a retailer never moves an order forward itself.
+ * Almost read-only. The retailer owns exactly one move — confirming a
+ * DELIVERED order, which settles it and releases the brand's money. Everything
+ * before that is the brand's acceptance and admin's logistics.
  *
  * Every query is scoped to the calling retailer, and someone else's order id
  * reports 404 rather than 403, matching the rule products already follow: a 403
@@ -11,6 +12,7 @@
 import type { OrderStatus, Prisma } from '../../generated/prisma/client.ts'
 import { prisma } from '../../config/prisma.ts'
 import { AppError } from '../../middleware/error.ts'
+import { transition } from '../brand-orders/service.ts'
 
 /**
  * Commission is deliberately absent.
@@ -67,6 +69,36 @@ export async function getForRetailer(retailerId: string, orderId: string) {
   }
 
   return order
+}
+
+/**
+ * The retailer confirms they received the goods.
+ *
+ * This is step 5 -> 6, and it is the step that writes the brand's wallet
+ * credit. Delegating to the shared `transition` rather than updating the row
+ * here is what guarantees the ledger rows are written in the same transaction
+ * as the status change — the settlement logic exists once, not once per
+ * caller.
+ *
+ * The state machine rejects this on any status other than DELIVERED, so a
+ * retailer cannot settle an order that has not arrived.
+ */
+export async function confirmDelivered(params: {
+  retailerId: string
+  userId: string
+  orderId: string
+}) {
+  await transition({
+    retailerId: params.retailerId,
+    orderId: params.orderId,
+    to: 'SETTLED',
+    actor: 'RETAILER',
+    actorUserId: params.userId,
+  })
+
+  // Re-read through the retailer's own select: `transition` returns the
+  // seller's shape, which carries the commission fields a buyer must not see.
+  return getForRetailer(params.retailerId, params.orderId)
 }
 
 /**
