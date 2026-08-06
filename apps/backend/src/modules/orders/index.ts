@@ -104,3 +104,30 @@ export const ordersModule = new Elysia({ name: 'orders', prefix: '/orders' })
       response: { 200: order },
     }
   )
+
+  .patch(
+    '/:id/confirm-delivered',
+    async ({ auth, params }) =>
+      service.confirmDelivered({
+        retailerId: await retailerIdForUser(auth.userId),
+        userId: auth.userId,
+        orderId: params.id,
+      }),
+    {
+      params: t.Object({ id: t.String({ format: 'uuid' }) }),
+      detail: {
+        summary: 'Confirm the order was delivered',
+        description:
+          'Step 5 → 6, and the retailer’s only move on an order. It settles ' +
+          'the order and credits the brand’s wallet, which is why the buyer ' +
+          'holds it rather than the seller — a brand pressing this would be ' +
+          'crediting itself. ' +
+          'No body: the destination is always SETTLED, so there is nothing ' +
+          'to get wrong. Valid only from DELIVERED; anything else is 422. ' +
+          'Admin can make the same move via PATCH /admin/orders/:id/status ' +
+          'when a retailer never gets round to it.',
+        tags: ['Orders'],
+      },
+      response: { 200: order },
+    }
+  )

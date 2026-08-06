@@ -1,9 +1,11 @@
 import { ChevronRight, Store } from 'lucide-react'
 import Link from 'next/link'
+import { ConfirmDeliveredButton } from '@/components/confirm-delivered-button'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { formatBaht, formatDate } from '@/lib/format'
 import {
+  awaitingBuyerConfirmation,
   awaitingPayment,
   buyerStatusLabel,
   statusTone,
@@ -19,6 +21,7 @@ import type { Order } from '@/lib/types'
  */
 export function OrderCard({ order }: { order: Order }) {
   const toPay = awaitingPayment(order.status)
+  const toConfirm = awaitingBuyerConfirmation(order.status)
 
   return (
     <div className="rounded-[9px] border border-border transition-colors hover:border-primary">
@@ -72,6 +75,8 @@ export function OrderCard({ order }: { order: Order }) {
             <Button asChild size="sm">
               <Link href={`/orders/${order.id}/pay`}>Pay</Link>
             </Button>
+          ) : toConfirm ? (
+            <ConfirmDeliveredButton orderId={order.id} className="w-[190px]" />
           ) : (
             <Link
               href={`/orders/${order.id}`}

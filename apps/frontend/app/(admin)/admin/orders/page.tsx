@@ -123,6 +123,7 @@ export default async function AdminOrdersPage({
                       <TD className="min-w-[200px]">
                         <OrderActions
                           actions={order.actions}
+                          status={order.status}
                           onTransition={onTransition}
                         />
                       </TD>

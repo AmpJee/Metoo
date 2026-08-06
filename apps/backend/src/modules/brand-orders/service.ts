@@ -14,6 +14,7 @@ import { ORDER_STATUSES } from '@metoo/shared'
 import type { OrderStatus, Prisma } from '../../generated/prisma/client.ts'
 import { prisma } from '../../config/prisma.ts'
 import { settlementEntries } from '../../domain/ledger.ts'
+import type { Actor } from '../../domain/order-state.ts'
 import {
   TIMESTAMP_FIELD,
   availableTransitions,
@@ -117,20 +118,31 @@ export async function getForBrand(brandId: string, orderId: string) {
 /**
  * Move an order to the next step.
  *
- * The actor is passed through to the state machine rather than assumed, so the
- * same function serves the seller's buttons and an admin override.
+ * The actor is passed through to the state machine rather than assumed, so one
+ * function serves the seller's Confirm Order, admin's logistics steps and the
+ * retailer's Confirm Delivered.
+ *
+ * `brandId` and `retailerId` are ownership scopes, not authorisation: whoever
+ * calls passes their own id so a mismatched order is a 404 rather than a 403,
+ * which would confirm the order exists. Admin passes neither. What each role
+ * may actually *do* is the state machine's decision, not this function's.
  */
 export async function transition(params: {
   brandId?: string
+  retailerId?: string
   orderId: string
   to: OrderStatus
-  actor: 'BRAND' | 'ADMIN'
+  actor: Actor
   actorUserId: string
 }) {
-  const { brandId, orderId, to, actor, actorUserId } = params
+  const { brandId, retailerId, orderId, to, actor, actorUserId } = params
 
   const order = await prisma.order.findFirst({
-    where: { id: orderId, ...(brandId ? { brandId } : {}) },
+    where: {
+      id: orderId,
+      ...(brandId ? { brandId } : {}),
+      ...(retailerId ? { retailerId } : {}),
+    },
     select: {
       id: true,
       status: true,

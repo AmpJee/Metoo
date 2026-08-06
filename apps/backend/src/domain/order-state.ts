@@ -1,15 +1,20 @@
 /**
  * The order lifecycle — pure, no Prisma, no I/O.
  *
- * The seller's tracker walks seven steps, each with one button:
+ * Six steps, and each one names who may make the move:
  *
- *   PENDING          "Confirm Order"
- *   CONFIRMED        "Prepare Package"
- *   PREPARING        "Mark Ready for Pickup"
- *   READY_FOR_PICKUP "Confirm Pickup"
- *   PICKED_UP        "Mark Delivered"
- *   DELIVERED        "Confirm Money Received"
- *   SETTLED          done
+ *   1 PENDING          "Confirm Order"       BRAND
+ *   2 CONFIRMED        "Package Pickup"      ADMIN
+ *   3 READY_FOR_PICKUP "Out for Delivery"    ADMIN
+ *   4 PICKED_UP        "Mark Delivered"      ADMIN
+ *   5 DELIVERED        "Confirm Delivered"   ADMIN or RETAILER
+ *   6 SETTLED          done
+ *
+ * Logistics is a manual, human-run operation, so admin drives steps 2–5. The
+ * two exceptions are the two ends of the deal: the BRAND accepts the order,
+ * and the RETAILER confirms they received it. That last one is what releases
+ * the brand's money, which is why the buyer is given it — admin can still
+ * press it when a retailer goes quiet.
  *
  * Every transition is explicit. A map of what may follow what — rather than
  * an ordered list and an index comparison — is what makes CANCELLED reachable
@@ -19,8 +24,14 @@
 
 import type { OrderStatus, Role } from '@metoo/shared'
 
-/** Who may move an order into a given state. */
-export type Actor = Extract<Role, 'BRAND' | 'ADMIN'>
+/**
+ * Who may move an order into a given state.
+ *
+ * RETAILER is here for exactly one move — DELIVERED to SETTLED. It is not a
+ * general operator of the machine, and the actors list on every other
+ * transition is what keeps it that way.
+ */
+export type Actor = Extract<Role, 'BRAND' | 'ADMIN' | 'RETAILER'>
 
 interface Transition {
   to: OrderStatus
@@ -38,34 +49,33 @@ interface Transition {
  * would mean unwinding wallet ledger rows that are append-only by design.
  */
 const TRANSITIONS: Record<OrderStatus, Transition[]> = {
+  // Step 1 -> 2. The brand's own decision: it is their stock and their
+  // capacity, so accepting is not admin's to do on their behalf. Admin is
+  // still listed as the override for a brand that has gone quiet.
   PENDING: [
     { to: 'CONFIRMED', label: 'Confirm Order', actors: ['BRAND', 'ADMIN'] },
     { to: 'CANCELLED', label: 'Cancel Order', actors: ['BRAND', 'ADMIN'] },
   ],
+  // Steps 2 -> 5 are logistics, which is a manual operation admin runs. A
+  // brand cannot claim its own parcel was collected or delivered.
   CONFIRMED: [
-    { to: 'PREPARING', label: 'Prepare Package', actors: ['BRAND', 'ADMIN'] },
-    { to: 'CANCELLED', label: 'Cancel Order', actors: ['BRAND', 'ADMIN'] },
-  ],
-  PREPARING: [
-    {
-      to: 'READY_FOR_PICKUP',
-      label: 'Mark Ready for Pickup',
-      actors: ['BRAND', 'ADMIN'],
-    },
+    { to: 'READY_FOR_PICKUP', label: 'Package Pickup', actors: ['ADMIN'] },
     { to: 'CANCELLED', label: 'Cancel Order', actors: ['BRAND', 'ADMIN'] },
   ],
   READY_FOR_PICKUP: [
-    { to: 'PICKED_UP', label: 'Confirm Pickup', actors: ['BRAND', 'ADMIN'] },
+    { to: 'PICKED_UP', label: 'Out for Delivery', actors: ['ADMIN'] },
   ],
   // Once goods are with a courier, cancelling is a return, not a cancellation.
-  PICKED_UP: [
-    { to: 'DELIVERED', label: 'Mark Delivered', actors: ['BRAND', 'ADMIN'] },
-  ],
+  PICKED_UP: [{ to: 'DELIVERED', label: 'Mark Delivered', actors: ['ADMIN'] }],
+  // Step 5 -> 6. The retailer confirming receipt is what releases the brand's
+  // money, so the buyer holds this one. The brand is deliberately NOT an
+  // actor here: letting the seller declare their own sale complete would let
+  // them credit their own wallet.
   DELIVERED: [
     {
       to: 'SETTLED',
-      label: 'Confirm Money Received',
-      actors: ['BRAND', 'ADMIN'],
+      label: 'Confirm Delivered',
+      actors: ['RETAILER', 'ADMIN'],
     },
   ],
   SETTLED: [],
@@ -96,7 +106,6 @@ export const TIMESTAMP_FIELD: Partial<Record<OrderStatus, string>> = {
  */
 export const EARNS_REVENUE = [
   'CONFIRMED',
-  'PREPARING',
   'READY_FOR_PICKUP',
   'PICKED_UP',
   'DELIVERED',

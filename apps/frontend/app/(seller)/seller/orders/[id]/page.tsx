@@ -79,6 +79,7 @@ export default async function SellerOrderPage({
               </h2>
               <OrderActions
                 actions={order.actions}
+                status={order.status}
                 onTransition={onTransition}
               />
             </section>
