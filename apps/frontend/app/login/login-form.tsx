@@ -6,9 +6,10 @@ import { useState } from 'react'
 import { Field } from '@/components/auth-shell'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import type { PortalKey } from '@/lib/portals'
 import { homeForUser } from '@/lib/roles'
 
-export function LoginForm() {
+export function LoginForm({ portal }: { portal: PortalKey }) {
   const router = useRouter()
   const params = useSearchParams()
   const [error, setError] = useState<string | null>(null)
@@ -28,6 +29,10 @@ export function LoginForm() {
         body: JSON.stringify({
           email: form.get('email'),
           password: form.get('password'),
+          // Named so the API can refuse an account for a different site with
+          // a message that says where to go, instead of letting them in and
+          // 403ing on every screen after.
+          portal,
         }),
       })
       const payload = await response.json()
