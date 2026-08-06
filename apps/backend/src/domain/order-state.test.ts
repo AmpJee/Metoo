@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 import { ORDER_STATUSES } from '@metoo/shared'
 import type { OrderStatus } from '@metoo/shared'
+import type { Actor } from './order-state.ts'
 import {
   COUNTS_TOWARD_VOLUME,
   EARNS_REVENUE,
@@ -10,63 +11,116 @@ import {
   isFinal,
 } from './order-state.ts'
 
-/** The happy path the seller's tracker walks, in order. */
-const HAPPY_PATH: OrderStatus[] = [
-  'PENDING',
-  'CONFIRMED',
-  'PREPARING',
-  'READY_FOR_PICKUP',
-  'PICKED_UP',
-  'DELIVERED',
-  'SETTLED',
+/**
+ * The six steps, each with the actor who owns that move.
+ *
+ * No single role can walk this alone, and that is the point: the brand
+ * accepts, admin runs logistics, the retailer confirms receipt.
+ */
+const HAPPY_PATH: Array<{ from: OrderStatus; to: OrderStatus; by: Actor }> = [
+  { from: 'PENDING', to: 'CONFIRMED', by: 'BRAND' },
+  { from: 'CONFIRMED', to: 'READY_FOR_PICKUP', by: 'ADMIN' },
+  { from: 'READY_FOR_PICKUP', to: 'PICKED_UP', by: 'ADMIN' },
+  { from: 'PICKED_UP', to: 'DELIVERED', by: 'ADMIN' },
+  { from: 'DELIVERED', to: 'SETTLED', by: 'RETAILER' },
 ]
 
 describe('canTransition — the happy path', () => {
-  test('a brand can walk an order through all seven steps', () => {
-    for (let i = 0; i < HAPPY_PATH.length - 1; i++) {
-      const from = HAPPY_PATH[i]!
-      const to = HAPPY_PATH[i + 1]!
-      expect(canTransition(from, to, 'BRAND')).toEqual({ ok: true })
+  test('each step is allowed for the actor that owns it', () => {
+    for (const { from, to, by } of HAPPY_PATH) {
+      expect(canTransition(from, to, by)).toEqual({ ok: true })
     }
   })
 
-  test('an admin can make every move a brand can', () => {
-    for (let i = 0; i < HAPPY_PATH.length - 1; i++) {
-      expect(
-        canTransition(HAPPY_PATH[i]!, HAPPY_PATH[i + 1]!, 'ADMIN')
-      ).toEqual({ ok: true })
+  test('an admin can make every move', () => {
+    // Admin is the override on every step, including the two it does not own.
+    for (const { from, to } of HAPPY_PATH) {
+      expect(canTransition(from, to, 'ADMIN')).toEqual({ ok: true })
     }
   })
 
-  test('the seller presses Confirm Money Received', () => {
-    // The design puts this button on the seller's own order card.
-    const moves = availableTransitions('DELIVERED', 'BRAND')
-    expect(moves).toEqual([{ to: 'SETTLED', label: 'Confirm Money Received' }])
+  test('there is no PREPARING step', () => {
+    expect(ORDER_STATUSES).not.toContain('PREPARING' as OrderStatus)
+    expect(canTransition('CONFIRMED', 'READY_FOR_PICKUP', 'ADMIN')).toEqual({
+      ok: true,
+    })
+  })
+})
+
+describe('who may move an order', () => {
+  test('only the brand accepts an order', () => {
+    expect(availableTransitions('PENDING', 'BRAND')).toContainEqual({
+      to: 'CONFIRMED',
+      label: 'Confirm Order',
+    })
+    expect(canTransition('PENDING', 'CONFIRMED', 'RETAILER')).toMatchObject({
+      ok: false,
+      code: 'FORBIDDEN_TRANSITION',
+    })
+  })
+
+  test('a brand cannot drive logistics', () => {
+    // A seller must not be able to claim their own parcel was collected or
+    // delivered — that is admin's to record.
+    for (const { from, to } of HAPPY_PATH.slice(1, 4)) {
+      expect(canTransition(from, to, 'BRAND')).toMatchObject({
+        ok: false,
+        code: 'FORBIDDEN_TRANSITION',
+      })
+    }
+    expect(availableTransitions('READY_FOR_PICKUP', 'BRAND')).toEqual([])
+  })
+
+  test('a brand cannot settle its own order', () => {
+    // This is the one that guards the money: settling writes the wallet
+    // credit, so a seller doing it would be crediting themselves.
+    expect(canTransition('DELIVERED', 'SETTLED', 'BRAND')).toMatchObject({
+      ok: false,
+      code: 'FORBIDDEN_TRANSITION',
+    })
+    expect(availableTransitions('DELIVERED', 'BRAND')).toEqual([])
+  })
+
+  test('the retailer confirms delivery, and admin can too', () => {
+    const label = 'Confirm Delivered'
+    expect(availableTransitions('DELIVERED', 'RETAILER')).toEqual([
+      { to: 'SETTLED', label },
+    ])
+    expect(availableTransitions('DELIVERED', 'ADMIN')).toEqual([
+      { to: 'SETTLED', label },
+    ])
+  })
+
+  test('confirming delivery is the retailer’s only move', () => {
+    // The retailer is not a general operator of the machine.
+    for (const status of ORDER_STATUSES) {
+      if (status === 'DELIVERED') continue
+      expect(availableTransitions(status, 'RETAILER')).toEqual([])
+    }
   })
 })
 
 describe('canTransition — illegal moves', () => {
   test('steps cannot be skipped', () => {
-    // Straight from Confirmed to Delivered would bypass packing and pickup.
-    const result = canTransition('CONFIRMED', 'DELIVERED', 'BRAND')
+    const result = canTransition('CONFIRMED', 'DELIVERED', 'ADMIN')
     expect(result).toMatchObject({ ok: false, code: 'ILLEGAL_TRANSITION' })
   })
 
   test('an order cannot go backwards', () => {
-    expect(canTransition('DELIVERED', 'PREPARING', 'BRAND')).toMatchObject({
+    expect(canTransition('DELIVERED', 'CONFIRMED', 'ADMIN')).toMatchObject({
       ok: false,
       code: 'ILLEGAL_TRANSITION',
     })
   })
 
   test('the error names what may come next', () => {
-    const result = canTransition('PREPARING', 'SETTLED', 'BRAND')
+    const result = canTransition('CONFIRMED', 'SETTLED', 'ADMIN')
     if (result.ok) throw new Error('expected failure')
     expect(result.message).toContain('READY_FOR_PICKUP')
   })
 
   test('moving to the state it is already in is rejected', () => {
-    expect(canTransition('CONFIRMED', 'CONFIRMED', 'BRAND')).toMatchObject({
+    expect(canTransition('CONFIRMED', 'CONFIRMED', 'ADMIN')).toMatchObject({
       ok: false,
       code: 'ORDER_ALREADY_IN_STATE',
     })
@@ -100,7 +154,7 @@ describe('final states', () => {
 
 describe('cancellation', () => {
   test('an order can be cancelled before it is collected', () => {
-    for (const status of ['PENDING', 'CONFIRMED', 'PREPARING'] as const) {
+    for (const status of ['PENDING', 'CONFIRMED'] as const) {
       expect(canTransition(status, 'CANCELLED', 'BRAND')).toEqual({ ok: true })
     }
   })
@@ -117,12 +171,17 @@ describe('cancellation', () => {
       })
     }
   })
+
+  test('a retailer cannot cancel', () => {
+    expect(canTransition('PENDING', 'CANCELLED', 'RETAILER')).toMatchObject({
+      ok: false,
+      code: 'FORBIDDEN_TRANSITION',
+    })
+  })
 })
 
 describe('revenue status sets', () => {
   test('an unaccepted or cancelled order is not revenue', () => {
-    // A PENDING order is a request. Counting it would make revenue fall
-    // whenever a brand declines something.
     expect(EARNS_REVENUE).not.toContain('PENDING')
     expect(EARNS_REVENUE).not.toContain('CANCELLED')
   })
@@ -130,7 +189,6 @@ describe('revenue status sets', () => {
   test('every state from CONFIRMED onward earns revenue', () => {
     for (const status of [
       'CONFIRMED',
-      'PREPARING',
       'READY_FOR_PICKUP',
       'PICKED_UP',
       'DELIVERED',
@@ -141,8 +199,6 @@ describe('revenue status sets', () => {
   })
 
   test('volume excludes CLOSED but is otherwise identical to revenue', () => {
-    // An order closed after a return should not help a brand reach the
-    // discounted commission rate.
     expect(COUNTS_TOWARD_VOLUME).not.toContain('CLOSED')
     expect([...COUNTS_TOWARD_VOLUME].sort()).toEqual(
       EARNS_REVENUE.filter((s) => s !== 'CLOSED').sort()
@@ -150,9 +206,6 @@ describe('revenue status sets', () => {
   })
 
   test('a new order status must be classified deliberately', () => {
-    // This fails when someone adds a status without deciding whether it earns
-    // revenue — which is the divergence that having two copies of these lists
-    // used to cause.
     const classified = new Set<string>([
       ...EARNS_REVENUE,
       'PENDING',
@@ -166,11 +219,8 @@ describe('revenue status sets', () => {
 
 describe('TIMESTAMP_FIELD', () => {
   test('every step past PENDING stamps a column', () => {
-    for (const status of HAPPY_PATH.slice(1)) {
-      // PREPARING is the one step with no column — packing has no meaningful
-      // moment to record beyond the audit log.
-      if (status === 'PREPARING') continue
-      expect(TIMESTAMP_FIELD[status]).toBeTruthy()
+    for (const { to } of HAPPY_PATH) {
+      expect(TIMESTAMP_FIELD[to]).toBeTruthy()
     }
   })
 

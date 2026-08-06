@@ -145,18 +145,29 @@ export const CATEGORY_LABELS: Record<(typeof CATEGORIES)[number], string> = {
 }
 
 /**
- * Order lifecycle.
+ * Order lifecycle — six steps.
+ *
+ *   1 PENDING           To pay
+ *   2 CONFIRMED         Confirmed order        <- the brand accepts
+ *   3 READY_FOR_PICKUP  Package pickup
+ *   4 PICKED_UP         Out for delivery
+ *   5 DELIVERED         Delivered
+ *   6 SETTLED           Confirm delivered      <- releases the brand's money
  *
  * SETTLED is financial rather than logistical: it means the sale was credited
  * to the brand's wallet ledger. CANCELLED and CLOSED are terminal, CLOSED
  * being where an order lands once a return has been resolved.
+ *
+ * There is no PREPARING. It was a seventh step between CONFIRMED and
+ * READY_FOR_PICKUP that nobody operated — packing is not a milestone either
+ * side tracks, and it left the buyer looking at two states that mean the same
+ * thing to them.
  *
  * Must match the `OrderStatus` enum in the Prisma schema.
  */
 export const ORDER_STATUSES = [
   'PENDING',
   'CONFIRMED',
-  'PREPARING',
   'READY_FOR_PICKUP',
   'PICKED_UP',
   'DELIVERED',
@@ -178,9 +189,8 @@ export const ORDER_STATUS_LABELS: Record<
 > = {
   PENDING: 'Incoming',
   CONFIRMED: 'Confirmed',
-  PREPARING: 'Preparing',
-  READY_FOR_PICKUP: 'Ready for Pickup',
-  PICKED_UP: 'Picked Up',
+  READY_FOR_PICKUP: 'Package Pickup',
+  PICKED_UP: 'Out for Delivery',
   DELIVERED: 'Delivered',
   SETTLED: 'Money Received',
   CANCELLED: 'Cancelled',
@@ -188,13 +198,13 @@ export const ORDER_STATUS_LABELS: Record<
 }
 
 /**
- * The same nine states, written for the BUYER.
+ * The same eight states, written for the BUYER.
  *
  * A second map rather than a rename, because the two sides genuinely mean
  * different things by the same row. PENDING is "Incoming" work to a seller and
- * "To Pay" to a shopper. SETTLED is the seller's payday and nothing at all to
- * the buyer — so it reads as Completed, which is also how the My Purchase tabs
- * already group it.
+ * "To Pay" to a shopper. SETTLED is the seller's payday, and to the buyer it
+ * is the receipt they confirmed — so it reads as Completed, which is also how
+ * the My Purchase tabs already group it.
  *
  * Use `buyerStatusLabel()` in the shop; never `ORDER_STATUS_LABELS`.
  */
@@ -204,10 +214,9 @@ export const BUYER_ORDER_STATUS_LABELS: Record<
 > = {
   PENDING: 'To Pay',
   CONFIRMED: 'Confirmed',
-  PREPARING: 'Preparing',
-  READY_FOR_PICKUP: 'To Ship',
-  PICKED_UP: 'Shipped',
-  DELIVERED: 'Completed',
+  READY_FOR_PICKUP: 'Package Pickup',
+  PICKED_UP: 'Out for Delivery',
+  DELIVERED: 'Delivered',
   SETTLED: 'Completed',
   CANCELLED: 'Cancelled',
   CLOSED: 'Closed',

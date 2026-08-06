@@ -107,22 +107,25 @@ enum DocumentStatus {
   REJECTED
 }
 
-/// The seven steps the seller's order tracker shows, in order:
+/// The six steps of an order, and who moves it:
 ///
-///   PENDING          "Incoming"
-///   CONFIRMED        the brand accepted the order
-///   PREPARING        packing
-///   READY_FOR_PICKUP waiting on the courier
-///   PICKED_UP        collected
-///   DELIVERED        with the retailer
-///   SETTLED          "Money Received" — credited to the brand's wallet ledger
+///   1 PENDING          "To pay"             — created at checkout
+///   2 CONFIRMED        "Confirmed order"    — the BRAND accepts
+///   3 READY_FOR_PICKUP "Package pickup"     — ADMIN
+///   4 PICKED_UP        "Out for delivery"   — ADMIN
+///   5 DELIVERED        "Delivered"          — ADMIN
+///   6 SETTLED          "Confirm delivered"  — RETAILER or ADMIN
 ///
-/// SETTLED is a financial state, not a shipping one. CANCELLED and CLOSED are
-/// terminal; CLOSED is where an order lands once a return has been resolved.
+/// SETTLED is a financial state, not a shipping one: it credits the brand's
+/// wallet ledger. The retailer holds that step because confirming receipt is
+/// what should release the seller's money. CANCELLED and CLOSED are terminal;
+/// CLOSED is where an order lands once a return has been resolved.
+///
+/// PREPARING was removed — a packing step nobody operated, which showed the
+/// buyer two states that meant the same thing to them.
 enum OrderStatus {
   PENDING
   CONFIRMED
-  PREPARING
   READY_FOR_PICKUP
   PICKED_UP
   DELIVERED

@@ -20,7 +20,6 @@ describe('canRequestReturn', () => {
     for (const status of [
       'PENDING',
       'CONFIRMED',
-      'PREPARING',
       'READY_FOR_PICKUP',
       'PICKED_UP',
     ] as const) {

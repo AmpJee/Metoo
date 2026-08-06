@@ -133,10 +133,13 @@ export const brandOrdersModule = new Elysia({
       detail: {
         summary: 'Advance an order',
         description:
-          'PENDING → CONFIRMED → PREPARING → READY_FOR_PICKUP → PICKED_UP → ' +
-          'DELIVERED → SETTLED, one step at a time. SETTLED means the seller ' +
-          'is confirming the money arrived. Skipping a step, going backwards, ' +
-          'or touching a settled order returns 422. Every move is audit logged.',
+          'PENDING → CONFIRMED → READY_FOR_PICKUP → PICKED_UP → DELIVERED ' +
+          '→ SETTLED, one step at a time. A brand may only make the first ' +
+          'move: accepting the order. Logistics is admin’s, and SETTLED is ' +
+          'the retailer confirming they received the goods — which is what ' +
+          'releases this brand’s money, so the seller cannot press it. ' +
+          'Skipping a step, going backwards, or touching a settled order ' +
+          'returns 422. Every move is audit logged.',
         tags: ['Brand · Orders'],
       },
       response: { 200: brandOrder },
