@@ -1,4 +1,11 @@
-import { Heart, Package, Search, ShoppingCart, Store } from 'lucide-react'
+import {
+  Heart,
+  Package,
+  Search,
+  Settings,
+  ShoppingCart,
+  Store,
+} from 'lucide-react'
 import Link from 'next/link'
 import { LogoutButton } from '@/components/logout-button'
 import type { Me } from '@/lib/types'
@@ -39,12 +46,16 @@ export function SiteHeader({ me, cartCount }: { me: Me; cartCount: number }) {
             label="Cart"
             badge={cartCount}
           />
+          <IconLink href="/settings" icon={Settings} label="Account" />
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
-          <span className="max-w-[160px] truncate text-sm text-muted-foreground">
+          <Link
+            href="/settings"
+            className="max-w-[160px] truncate text-sm text-muted-foreground hover:text-primary"
+          >
             {me.retailer?.shopName ?? me.email}
-          </span>
+          </Link>
           <LogoutButton variant="outline" size="sm" />
         </div>
       </div>

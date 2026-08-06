@@ -7,11 +7,12 @@ import {
   MessageSquare,
   Package,
   RotateCcw,
+  Settings,
   ShoppingBag,
   Store,
+  type LucideIcon,
   Users,
   Wallet,
-  type LucideIcon,
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -43,6 +44,7 @@ const NAV: Record<'seller' | 'admin', NavItem[]> = {
     { href: '/seller/customers', label: 'Customers', icon: Users },
     { href: '/seller/returns', label: 'Returns', icon: RotateCcw },
     { href: '/seller/preview', label: 'Preview Store', icon: Store },
+    { href: '/seller/settings', label: 'Settings', icon: Settings },
   ],
   admin: [
     { href: '/admin', label: 'Weekly Summary', icon: BarChart3 },

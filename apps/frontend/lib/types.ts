@@ -151,6 +151,41 @@ export interface Order {
   items: OrderItem[]
 }
 
+// --- account profiles ------------------------------------------------------
+
+export interface RetailerProfile {
+  id: string
+  shopName: string
+  phone: string
+  addressLine: string
+  province: string
+  postalCode: string
+  taxId: string | null
+  avatarUrl: string | null
+  updatedAt: string
+}
+
+export interface BrandProfile {
+  id: string
+  name: string
+  description: string | null
+  logoUrl: string | null
+  phone: string
+  addressLine: string
+  province: string
+  postalCode: string
+  bankName: string | null
+  bankAccountName: string | null
+  /** Never the full number — bank details are admin-only PII. */
+  bankAccountLast4: string | null
+}
+
+/** Step one of the two-step avatar upload. */
+export interface SignedUpload {
+  uploadUrl: string
+  storageKey: string
+}
+
 // --- reviews ---------------------------------------------------------------
 
 export interface Review {

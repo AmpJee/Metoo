@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { accessCookieMaxAge } from './lib/token-lifetime'
+import { LOGIN_PATHS, loginPathFor } from './lib/portals'
 
 /**
  * Session renewal and route gating.
@@ -20,11 +21,22 @@ import { accessCookieMaxAge } from './lib/token-lifetime'
 const ACCESS_COOKIE = 'metoo_at'
 const REFRESH_COOKIE = 'metoo_rt'
 
-/** Reachable without a session. Everything else requires one. */
-const PUBLIC_PATHS = ['/', '/login', '/register']
+/**
+ * Reachable without a session. Everything else requires one.
+ *
+ * All three sign-in pages, not just the shop's — leaving the seller and admin
+ * ones out would bounce them to the shop login, which is the confusion the
+ * split exists to remove.
+ */
+const PUBLIC_PATHS = ['/', '/register', ...LOGIN_PATHS]
 
 function isPublic(pathname: string) {
   return PUBLIC_PATHS.includes(pathname)
+}
+
+/** An auth screen a signed-in user should not be sitting on. */
+function isAuthScreen(pathname: string) {
+  return pathname === '/register' || LOGIN_PATHS.includes(pathname)
 }
 
 async function renew(refreshToken: string) {
@@ -100,7 +112,8 @@ export async function proxy(request: NextRequest) {
 
   if (!signedIn) {
     if (isPublic(pathname)) return forward()
-    const target = new URL('/login', request.url)
+    // Send them to the sign-in page for the site they were trying to reach.
+    const target = new URL(loginPathFor(pathname), request.url)
     // Come back where they were trying to go once signed in.
     if (pathname !== '/') target.searchParams.set('next', pathname + search)
     return NextResponse.redirect(target)
@@ -109,7 +122,7 @@ export async function proxy(request: NextRequest) {
   // Signed in: keep them out of the auth screens. Sent to `/` rather than a
   // fixed console because the role is not known here — resolving it would
   // cost a /auth/me call on every navigation. The landing page does it once.
-  if (pathname === '/login' || pathname === '/register') {
+  if (isAuthScreen(pathname)) {
     return redirect('/')
   }
 

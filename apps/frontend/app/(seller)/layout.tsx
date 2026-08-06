@@ -3,6 +3,7 @@ import { DashboardShell } from '@/components/dashboard-shell'
 import { ApiError, api } from '@/lib/api'
 import { homeForRole } from '@/lib/roles'
 import type { Me } from '@/lib/types'
+import { PORTALS } from '@/lib/portals'
 
 /**
  * The gate for the seller console: an ONBOARDED brand.
@@ -20,7 +21,8 @@ export default async function SellerLayout({
   try {
     me = await api.get<Me>('/auth/me')
   } catch (error) {
-    if (error instanceof ApiError && error.isUnauthorized) redirect('/login')
+    if (error instanceof ApiError && error.isUnauthorized)
+      redirect(PORTALS.seller.loginPath)
     throw error
   }
 
