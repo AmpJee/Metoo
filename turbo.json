@@ -1,0 +1,51 @@
+{
+  "$schema": "https://turborepo.dev/schema.json",
+  "globalEnv": [
+    "NODE_ENV",
+    "PORT",
+    "DATABASE_URL",
+    "DIRECT_URL",
+    "CORS_ORIGIN",
+    "JWT_ACCESS_SECRET",
+    "JWT_REFRESH_SECRET",
+    "JWT_ACCESS_TTL",
+    "JWT_REFRESH_TTL",
+    "SUPABASE_URL",
+    "SUPABASE_SERVICE_ROLE_KEY",
+    "SUPABASE_PUBLIC_BUCKET",
+    "SUPABASE_PRIVATE_BUCKET",
+    "API_URL"
+  ],
+  "tasks": {
+    "db:generate": {
+      "cache": false,
+      "inputs": ["prisma/schema.prisma", "prisma.config.ts"]
+    },
+    "build": {
+      "dependsOn": ["^build", "db:generate"],
+      // .next/** for the Next.js frontend, dist/** for anything compiled.
+      // The cache directory is excluded: it is large and machine-local.
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
+    },
+    "dev": {
+      "persistent": true,
+      "cache": false
+    },
+    "lint": {
+      "dependsOn": ["^lint"]
+    },
+    "typecheck": {
+      "dependsOn": ["^typecheck", "db:generate"]
+    },
+    "test": {
+      "dependsOn": ["^test"],
+      "inputs": ["src/domain/**"]
+    },
+    "format": {
+      "dependsOn": ["^format"]
+    },
+    "format:check": {
+      "dependsOn": ["^format:check"]
+    }
+  }
+}

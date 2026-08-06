@@ -1,0 +1,35 @@
+{
+  "name": "@metoo/backend",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun --watch src/index.ts",
+    "start": "bun src/index.ts",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:demo": "bun run prisma/demo-data.ts",
+    "db:seed": "prisma db seed",
+    "db:studio": "prisma studio",
+    "db:reset": "prisma migrate reset",
+    "lint": "eslint .",
+    "test": "bun test src/domain",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "//": "prisma is a runtime dependency, not a devDependency: Railway runs `prisma migrate deploy` as a preDeployCommand inside the built image, so the CLI must survive a --production install.",
+  "dependencies": {
+    "@elysiajs/cors": "^1.4.2",
+    "@elysiajs/openapi": "^1.4.15",
+    "@metoo/shared": "workspace:*",
+    "@prisma/adapter-pg": "^7.9.0",
+    "@prisma/client": "^7.9.0",
+    "@supabase/supabase-js": "^2.111.0",
+    "dotenv": "^17.4.2",
+    "elysia": "^1.4.29",
+    "jose": "^6.2.4",
+    "prisma": "^7.9.0"
+  }
+}

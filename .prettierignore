@@ -1,0 +1,9 @@
+node_modules
+dist
+.turbo
+.next
+bun.lock
+
+# Prisma output and migration SQL are generated, not hand-formatted
+**/src/generated
+**/prisma/migrations

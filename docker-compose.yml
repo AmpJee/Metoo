@@ -1,0 +1,70 @@
+# Local development only. Railway does not read this file — see the
+# railway.json in each app directory for deployment config.
+#
+# There is no database service here on purpose: Supabase is the database in
+# every environment, so local and production run against the same engine and
+# the same SQL. Point DATABASE_URL at a Supabase branch/project you don't mind
+# writing to.
+#
+# Both builds use the repo root as their context so the workspace install can
+# see bun.lock and packages/shared.
+#
+# Host ports are overridable for when 3000 or 5173 is already taken by another
+# project. Set them in a root .env, or inline:
+#
+#   BACKEND_PORT=3100 FRONTEND_PORT=5273 make up
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    env_file:
+      - apps/backend/.env
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      # The browser now only ever talks to Next, which calls this API
+      # server-to-server — so CORS is not on the critical path. It is kept
+      # pointed at the frontend origin for the /openapi console.
+      CORS_ORIGIN: http://localhost:${FRONTEND_PORT:-5173}
+    ports:
+      - '${BACKEND_PORT:-3000}:3000'
+    healthcheck:
+      # `bun -e` rather than curl: the slim image has no curl, and adding one
+      # just for a healthcheck is not worth the layer.
+      test:
+        [
+          'CMD',
+          'bun',
+          '-e',
+          'const r = await fetch("http://localhost:3000/health"); process.exit(r.ok ? 0 : 1)',
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
+    env_file:
+      - apps/frontend/.env
+    environment:
+      NODE_ENV: production
+      PORT: 5173
+      # The service name, not localhost: this call is made by the Next server
+      # inside the Docker network, never by the browser. That is the whole
+      # point of proxying the API — the API origin stays private.
+      API_URL: http://backend:3000
+    ports:
+      - '${FRONTEND_PORT:-5173}:5173'
+    depends_on:
+      backend:
+        # service_started, not service_healthy: gating on health would block
+        # all frontend work whenever Supabase is unreachable, and the app
+        # already renders a clear error state.
+        condition: service_started
+    restart: unless-stopped

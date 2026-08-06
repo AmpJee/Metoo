@@ -1,0 +1,833 @@
+// Prisma v7. Two things changed from v6 that matter here:
+//   1. `prisma-client-js` is deprecated — this uses the `prisma-client`
+//      generator, which emits plain TypeScript into src/generated (gitignored).
+//   2. The datasource has no `url`. Connection details now live in
+//      prisma.config.ts, which the CLI reads.
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  runtime      = "bun"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ===========================================================================
+// CONVENTIONS
+//
+// Money — every `*Minor` field is an Int in satang (100 satang = 1 THB).
+//   Integers map 1:1 to Stripe amounts and keep commission math exact. A
+//   float has no business anywhere near a balance.
+//
+// Wallet — a brand's balance is NEVER a stored column. It is
+//   SUM(wallet_transactions.amountMinor) for that brand. See WalletTransaction.
+//
+// Snapshots — anything a party could later change (product price, bank
+//   account, commission tier) is copied onto the row that depends on it, so
+//   history stays truthful after the source is edited.
+// ===========================================================================
+
+enum Role {
+  ADMIN
+  BRAND
+  RETAILER
+}
+
+/// Where an account sits in the sales pipeline the admin console tracks.
+///
+/// This is also the authorisation gate: **only ONBOARDED accounts can trade.**
+/// A self-registered applicant starts at NOT_CONTACTED — the design shows
+/// exactly that, an account with a signup date still marked "Not Contacted".
+enum PipelineStatus {
+  NOT_CONTACTED
+  CONTACTED
+  INTERESTED
+  ONBOARDED
+  DECLINED
+}
+
+/// อย. (Thai FDA) certification, tracked as its own column in the admin
+/// console. It informs the decision to onboard a brand rather than gating
+/// access itself — a brand can be chased for a certificate while still sitting
+/// at INTERESTED.
+enum FdaStatus {
+  YES
+  PENDING
+  NO
+}
+
+/// Headcount bands the console filters brands by.
+enum SizeBand {
+  SIZE_1_5
+  SIZE_6_20
+  SIZE_21_50
+  SIZE_51_PLUS
+}
+
+enum ShopType {
+  MINIMART
+  SUNDRIES
+  SPECIALTY
+  MARKET_STALL
+}
+
+/// How a retailer prefers to pay. CASH is cash on delivery.
+enum PaymentPreference {
+  PROMPTPAY
+  CASH
+  CARD
+}
+
+/// Payment track record, maintained by admin from experience.
+enum PaymentReliability {
+  ON_TIME
+  PENDING
+  LATE
+}
+
+enum Category {
+  FOOD_BEVERAGE
+  HEALTH_BEAUTY
+  HOME_LIVING
+  FASHION_ACCESSORIES
+}
+
+enum DocumentType {
+  SME_ID
+  NATIONAL_ID
+  FDA_CERT // อย.
+}
+
+enum DocumentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+/// The six steps of an order, and who moves it:
+///
+///   1 PENDING          "To pay"             — created at checkout
+///   2 CONFIRMED        "Confirmed order"    — the BRAND accepts
+///   3 READY_FOR_PICKUP "Package pickup"     — ADMIN
+///   4 PICKED_UP        "Out for delivery"   — ADMIN
+///   5 DELIVERED        "Delivered"          — ADMIN
+///   6 SETTLED          "Confirm delivered"  — RETAILER or ADMIN
+///
+/// SETTLED is a financial state, not a shipping one: it credits the brand's
+/// wallet ledger. The retailer holds that step because confirming receipt is
+/// what should release the seller's money. CANCELLED and CLOSED are terminal;
+/// CLOSED is where an order lands once a return has been resolved.
+///
+/// PREPARING was removed — a packing step nobody operated, which showed the
+/// buyer two states that meant the same thing to them.
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  READY_FOR_PICKUP
+  PICKED_UP
+  DELIVERED
+  SETTLED
+  CANCELLED
+  CLOSED
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  CARD
+  PROMPTPAY
+}
+
+enum ReturnStatus {
+  REQUESTED
+  ACCEPTED
+  REJECTED
+}
+
+enum WalletTxnType {
+  SALE_CREDIT
+  COMMISSION_DEBIT
+  REFUND_DEBIT
+  WITHDRAWAL_DEBIT
+  ADJUSTMENT
+}
+
+enum WithdrawalStatus {
+  REQUESTED
+  APPROVED
+  REJECTED
+  PAID
+}
+
+// --------------------------------------------------------------- identity --
+
+model User {
+  id           String         @id @default(uuid())
+  email        String         @unique
+  passwordHash String
+  role         Role
+  /// Doubles as the authorisation gate — only ONBOARDED accounts can trade.
+  status       PipelineStatus @default(NOT_CONTACTED)
+  /// Shown to the applicant so being blocked or declined is actionable rather
+  /// than mysterious. Distinct from adminNotes, which they never see.
+  reviewNote   String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  brand         BrandProfile?
+  retailer      RetailerProfile?
+  refreshTokens RefreshToken[]
+  messages      Message[]
+  auditLogs     AuditLog[]       @relation("AuditActor")
+  feedback      Feedback[]       @relation("FeedbackAuthor")
+
+  @@index([role, status])
+  @@map("users")
+}
+
+/// Stored hashed and rotated on every use, so a leaked database row cannot be
+/// replayed as a credential.
+model RefreshToken {
+  id        String    @id @default(uuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model BrandProfile {
+  id          String  @id @default(uuid())
+  userId      String  @unique
+  name        String
+  description String?
+  logoUrl     String?
+  phone       String
+  addressLine String
+  province    String
+  postalCode  String
+
+  /// Bank details for MANUAL payout — the platform does not use Stripe
+  /// Connect. This is sensitive PII: admin-only, never returned on a
+  /// non-admin route, never written to logs.
+  bankName          String?
+  bankAccountName   String?
+  bankAccountNumber String?
+
+  // --- Sales pipeline, maintained by admin -------------------------------
+  // Everything below is outreach data the console shows and the brand never
+  // edits. adminNotes in particular is internal and must not leak to a
+  // non-admin route.
+  ///
+  /// The Sellers table shows ONE category per brand, which is how the team
+  /// thinks of a brand ("a Food & Beverage brand") even when its catalog
+  /// crosses categories. Distinct from Product.category, which decides
+  /// commission and drives browse filtering — this one is for the console.
+  /// Nullable: brands registered before this column existed have none, and a
+  /// signup form does not ask for it.
+  category              Category?
+  fdaStatus             FdaStatus @default(NO)
+  sizeBand              SizeBand?
+  socialHandle          String?
+  /// Logistics case spec, e.g. "5.2 kg", "30x20x18 cm", 24 bags per case.
+  caseWeightKg          Decimal?  @db.Decimal(6, 2)
+  caseDimensionsCm      String?
+  caseUnits             Int?
+  /// How many retailers the brand already supplies, outside the platform.
+  existingRetailerCount Int?
+  referralSource        String?
+  adminNotes            String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user        User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  products    Product[]
+  orders      Order[]
+  documents   VerificationDocument[]
+  walletTxns  WalletTransaction[]
+  withdrawals WithdrawalRequest[]
+  threads     ChatThread[]
+  followers   BrandFollow[]
+
+  @@map("brand_profiles")
+}
+
+model RetailerProfile {
+  id          String  @id @default(uuid())
+  userId      String  @unique
+  shopName    String
+  phone       String
+  addressLine String
+  province    String
+  postalCode  String
+  taxId       String?
+  /// Shop photo, shown wherever a retailer appears — chat, the seller's
+  /// Customers list, admin. The brand-side equivalent is `logoUrl`.
+  avatarUrl   String?
+
+  // --- Sales pipeline, maintained by admin -------------------------------
+  shopType           ShopType?
+  /// District or neighbourhood within the province, e.g. "Mueang / Nimman".
+  zone               String?
+  socialHandle       String?
+  /// What the shop already stocks, free text, e.g. "Snacks, Beverages".
+  currentProducts    String?
+  /// Orders per month the shop can absorb — used to size restock cadence.
+  monthlyCapacity    Int?
+  preferredPayment   PaymentPreference?
+  paymentReliability PaymentReliability @default(PENDING)
+  /// Preferred delivery slot, e.g. "Tue AM".
+  deliveryWindow     String?
+  referralSource     String?
+  adminNotes         String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user       User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cart       Cart?
+  orders     Order[]
+  favourites Favourite[]
+  reviews    Review[]
+  documents  VerificationDocument[]
+  threads    ChatThread[]
+  follows    BrandFollow[]
+
+  @@map("retailer_profiles")
+}
+
+/// Brand approval requires an ID (SME or National) plus an อย. certificate.
+///
+/// Files live in the PRIVATE Supabase bucket. `storageKey` is an object path,
+/// never a public URL — reads go through a short-lived signed URL minted
+/// server-side for an admin.
+model VerificationDocument {
+  id         String         @id @default(uuid())
+  brandId    String?
+  retailerId String?
+  type       DocumentType
+  storageKey String
+  status     DocumentStatus @default(PENDING)
+  reviewNote String?
+  reviewedAt DateTime?
+  createdAt  DateTime       @default(now())
+
+  brand    BrandProfile?    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  retailer RetailerProfile? @relation(fields: [retailerId], references: [id], onDelete: Cascade)
+
+  @@index([brandId])
+  @@index([retailerId])
+  @@map("verification_documents")
+}
+
+// ---------------------------------------------------------------- catalog --
+
+/// Sold BY THE PACK. Price, stock and order quantities are all counted in
+/// packs; `unitsPerPack` only describes what is inside one ("5 units/pack") and
+/// never constrains how many packs may be ordered.
+model Product {
+  id                String   @id @default(uuid())
+  brandId           String
+  name              String
+  description       String?
+  /// The cover, denormalised from `images[position 0]`.
+  ///
+  /// Kept as a column because eight surfaces — cards, cart lines, order rows,
+  /// favourites — need one image and nothing else, and a join for each of them
+  /// would be a lot of work to render a thumbnail. Every write that changes
+  /// the image list rewrites this in the same transaction, so it cannot drift.
+  photoUrl          String?
+  /// Price of ONE PACK, in satang.
+  pricePerPackMinor Int
+  /// Fewest packs a retailer may order. Enforced when writing a cart item, not
+  /// at checkout — a retailer should find out immediately, not after filling
+  /// a cart.
+  minPacks          Int      @default(1)
+  /// Descriptive only: how many units are inside one pack.
+  unitsPerPack      Int      @default(1)
+  /// The "Amount" quick-pick buttons beside the stepper, in display order.
+  /// Per-product because a 12-pack minimum and a single cannot offer the same
+  /// shortcuts. Every entry must be >= minPacks, or the button renders a
+  /// quantity the cart will refuse.
+  packPresets       Int[]    @default([])
+  category          Category
+  /// Stock on hand, in packs.
+  stockPacks        Int?
+  isActive          Boolean  @default(true)
+
+  // --- identification and spec ---------------------------------------------
+  /// The brand's own stock code. Unique per brand, not globally: two brands
+  /// picking "SOAP-01" is normal and not a conflict.
+  sku             String?
+  /// GTIN-8/12/13/14, digits only. Validated by its check digit on write, so
+  /// a transposed digit is caught here and not at the retailer's till.
+  /// Deliberately NOT unique: a GTIN is globally unique in principle, but
+  /// enforcing that would let one brand's typo permanently block the brand
+  /// that actually owns the code.
+  barcode         String?
+  /// Shipping weight of ONE PACK, in grams. Named for the pack because packs
+  /// are the unit everything else here counts in, and because delivery cost
+  /// is charged per pack.
+  packWeightGrams Int?
+  /// Free text. Thai FDA (อย.) rules make this expected on food and cosmetics,
+  /// and a minimart is asked about allergens by its own customers.
+  ingredients     String?
+  /// Days from manufacture. A minimart sizes its order around this — a
+  /// 30-day product and a 2-year product are not ordered the same way.
+  shelfLifeDays   Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  brand      BrandProfile @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  images     ProductImage[]
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+  favourites Favourite[]
+  reviews    Review[]
+
+  @@unique([brandId, sku])
+  @@index([category, isActive])
+  @@index([brandId, isActive])
+  /// Retailers look products up by scanning, so this is a lookup path.
+  @@index([barcode])
+  @@map("products")
+}
+
+/// Every photo of a product, in display order.
+///
+/// A table rather than a string array so an image can be deleted, reordered
+/// and referred to by id — none of which an array supports without rewriting
+/// the whole column and hoping two admins never do it at once. `storageKey` is
+/// kept alongside the URL so deleting the row can also delete the object; a
+/// public bucket would otherwise keep serving a "deleted" photo forever.
+model ProductImage {
+  id         String   @id @default(uuid())
+  productId  String
+  /// Public URL, derived from storageKey at confirm time.
+  url        String
+  /// Object path in the public bucket, for deletion.
+  storageKey String
+  /// 0 is the cover. Contiguous — removing one closes the gap.
+  position   Int      @default(0)
+  /// Alt text. Nullable because a brand uploading five photos will not write
+  /// five descriptions, and an empty string would be worse for a screen reader
+  /// than no attribute at all.
+  altText    String?
+  createdAt  DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, position])
+  @@index([productId])
+  @@map("product_images")
+}
+
+/// The two save actions the marketplace shows on every product card.
+///
+/// FAVOURITE is a lasting "I like this brand's product"; SAVED_FOR_LATER is
+/// "not this order, maybe the next one". The design renders them as separate
+/// icons, so a product can legitimately be in both at once — which is why the
+/// unique key includes the kind.
+enum SavedItemKind {
+  FAVOURITE
+  SAVED_FOR_LATER
+}
+
+model Favourite {
+  id         String        @id @default(uuid())
+  retailerId String
+  productId  String
+  kind       SavedItemKind @default(FAVOURITE)
+  createdAt  DateTime      @default(now())
+
+  retailer RetailerProfile @relation(fields: [retailerId], references: [id], onDelete: Cascade)
+  product  Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([retailerId, productId, kind])
+  @@index([retailerId, kind])
+  @@map("favourites")
+}
+
+/// A retailer's star rating of a product they bought.
+///
+/// `orderId` is the proof of purchase: a review can only be written against a
+/// delivered order containing the product, which is what stops a brand rating
+/// its own goods or a competitor rating them down.
+///
+/// One review per retailer per product, not per order — a shop that reorders
+/// the same crisps every month has one opinion of them, not twelve.
+model Review {
+  id         String   @id @default(uuid())
+  productId  String
+  retailerId String
+  orderId    String
+  /// Whole stars, 1 to 5.
+  rating     Int
+  comment    String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  product  Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  retailer RetailerProfile @relation(fields: [retailerId], references: [id], onDelete: Cascade)
+  order    Order           @relation(fields: [orderId], references: [id])
+
+  @@unique([retailerId, productId])
+  // Listing a product's reviews newest-first is the common read.
+  @@index([productId, createdAt])
+  @@map("reviews")
+}
+
+model Cart {
+  id         String   @id @default(uuid())
+  retailerId String   @unique
+  updatedAt  DateTime @updatedAt
+
+  retailer RetailerProfile @relation(fields: [retailerId], references: [id], onDelete: Cascade)
+  items    CartItem[]
+
+  @@map("carts")
+}
+
+model CartItem {
+  id        String   @id @default(uuid())
+  cartId    String
+  productId String
+  /// Number of packs.
+  packs     Int
+  createdAt DateTime @default(now())
+
+  cart    Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([cartId, productId])
+  @@map("cart_items")
+}
+
+// ----------------------------------------------------------------- orders --
+
+/// One Order == one BRAND. A cart spanning three brands produces three Orders
+/// sharing a checkoutGroupId, each with its own PaymentIntent — never a single
+/// order per checkout session.
+model Order {
+  id              String      @id @default(uuid())
+  orderNumber     String      @unique
+  checkoutGroupId String
+  retailerId      String
+  brandId         String
+  status          OrderStatus @default(PENDING)
+
+  subtotalMinor   Int
+  shippingMinor   Int @default(0)
+  totalMinor      Int
+  /// Commission rate SNAPSHOT in basis points (400 = 4.00%). Frozen at
+  /// checkout so a later tier change never rewrites historical payouts.
+  commissionBps   Int
+  commissionMinor Int
+  payoutMinor     Int
+
+  /// How the retailer intends to settle, chosen at checkout and shown in the
+  /// admin order table. Payment itself is manual at MVP — the seller confirms
+  /// receipt by moving the order to SETTLED — so this records intent, not a
+  /// gateway result.
+  paymentMethod PaymentPreference @default(PROMPTPAY)
+
+  /// What logistics actually cost the platform for this order. Admin fills it
+  /// in; it feeds the contribution-margin figure on the admin dashboard.
+  deliveryCostMinor Int @default(0)
+
+  /// Copy of the retailer's address at order time.
+  shippingAddress Json
+
+  confirmedAt      DateTime?
+  readyForPickupAt DateTime?
+  pickedUpAt       DateTime?
+  deliveredAt      DateTime?
+  settledAt        DateTime?
+  closedAt         DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  retailer      RetailerProfile     @relation(fields: [retailerId], references: [id])
+  brand         BrandProfile        @relation(fields: [brandId], references: [id])
+  items         OrderItem[]
+  payments      Payment[]
+  returnRequest ReturnRequest?
+  walletTxns    WalletTransaction[]
+  reviews       Review[]
+  refunds       Refund[]
+
+  @@index([retailerId, status])
+  @@index([brandId, status])
+  @@index([checkoutGroupId])
+  @@map("orders")
+}
+
+model OrderItem {
+  id                String @id @default(uuid())
+  orderId           String
+  productId         String
+  /// Snapshots — the product may be renamed or repriced after the sale.
+  productName       String
+  pricePerPackMinor Int
+  /// Units per pack at the time of sale, so a past order still reads correctly
+  /// after the brand repackages.
+  unitsPerPack      Int    @default(1)
+  packs             Int
+  lineTotalMinor    Int
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@map("order_items")
+}
+
+/// One row per ATTEMPT, not per order. A failed payment leaves the order in
+/// PENDING and a retry adds another row, so the retailer is never stuck with
+/// an order that cannot be paid for.
+model Payment {
+  id                    String        @id @default(uuid())
+  orderId               String
+  stripePaymentIntentId String        @unique
+  method                PaymentMethod
+  status                PaymentStatus @default(PENDING)
+  amountMinor           Int
+  currency              String        @default("thb")
+  failureCode           String?
+  failureMessage        String?
+  paidAt                DateTime?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  refunds Refund[]
+
+  @@index([orderId, status])
+  @@map("payments")
+}
+
+/// Money returned to a retailer after an accepted return.
+///
+/// Attached to the ORDER rather than a Payment: payment is manual, so there
+/// are no Payment rows to hang a refund off. `paymentId` and `providerRefundId`
+/// stay optional for when a gateway exists — a card refund would fill both,
+/// a bank transfer fills `reference` instead.
+model Refund {
+  id               String   @id @default(uuid())
+  orderId          String
+  paymentId        String?
+  providerRefundId String?  @unique
+  amountMinor      Int
+  /// Bank transfer reference for a manual refund.
+  reference        String?
+  reason           String?
+  /// The admin or brand user who issued it.
+  issuedBy         String?
+  createdAt        DateTime @default(now())
+
+  order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  payment Payment? @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+  @@map("refunds")
+}
+
+/// Only creatable once the order has reached DELIVERED or SETTLED. Accepted
+/// means a refund is issued and the order closes; rejected leaves the order
+/// closed as delivered.
+model ReturnRequest {
+  id         String       @id @default(uuid())
+  orderId    String       @unique
+  reason     String
+  photoUrls  String[]
+  status     ReturnStatus @default(REQUESTED)
+  reviewNote String?
+  reviewedBy String?
+  reviewedAt DateTime?
+  createdAt  DateTime     @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@map("return_requests")
+}
+
+// ----------------------------------------------------------------- wallet --
+
+/// Append-only ledger. NEVER update or delete a row — correct a mistake by
+/// writing a compensating ADJUSTMENT row, so the history stays auditable.
+///
+/// `amountMinor` is SIGNED: credits positive, debits negative. A brand's
+/// balance is therefore a single SUM with no branching, and concurrent orders
+/// and refunds cannot race each other into a wrong number the way a mutable
+/// balance column would.
+model WalletTransaction {
+  id           String        @id @default(uuid())
+  brandId      String
+  type         WalletTxnType
+  amountMinor  Int
+  /// Set for SALE_CREDIT, COMMISSION_DEBIT and REFUND_DEBIT.
+  orderId      String?
+  /// Set for WITHDRAWAL_DEBIT.
+  withdrawalId String?
+  note         String?
+  createdAt    DateTime      @default(now())
+
+  brand      BrandProfile       @relation(fields: [brandId], references: [id])
+  order      Order?             @relation(fields: [orderId], references: [id])
+  withdrawal WithdrawalRequest? @relation(fields: [withdrawalId], references: [id])
+
+  @@index([brandId, createdAt])
+  @@index([orderId])
+  @@map("wallet_transactions")
+}
+
+/// The brand requests a payout; an admin approves it, transfers the money by
+/// bank manually, then marks it PAID. The WITHDRAWAL_DEBIT ledger row is
+/// written on approval, inside a transaction that re-checks the available
+/// balance first.
+model WithdrawalRequest {
+  id          String           @id @default(uuid())
+  brandId     String
+  amountMinor Int
+  status      WithdrawalStatus @default(REQUESTED)
+
+  /// Bank details copied at request time: the brand may edit their profile
+  /// later, and this record must still show where the money actually went.
+  bankName          String
+  bankAccountName   String
+  bankAccountNumber String
+
+  reviewNote String?
+  reviewedBy String?
+  reviewedAt DateTime?
+  /// Bank transfer reference, filled in when an admin marks it PAID.
+  paymentRef String?
+  paidAt     DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  brand      BrandProfile        @relation(fields: [brandId], references: [id])
+  walletTxns WalletTransaction[]
+
+  @@index([brandId, status])
+  @@index([status])
+  @@map("withdrawal_requests")
+}
+
+/// A retailer following a brand's storefront.
+///
+/// The design shows a follower count and a Follow button on every store page.
+/// Unique per pair, so following twice is idempotent rather than inflating the
+/// count.
+model BrandFollow {
+  id         String   @id @default(uuid())
+  retailerId String
+  brandId    String
+  createdAt  DateTime @default(now())
+
+  retailer RetailerProfile @relation(fields: [retailerId], references: [id], onDelete: Cascade)
+  brand    BrandProfile    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  @@unique([retailerId, brandId])
+  @@index([brandId])
+  @@map("brand_follows")
+}
+
+/// Feedback from anyone using the platform, for the admin Feedback Log.
+///
+/// Deliberately not tied to an order or a product: the design's nav item is a
+/// general channel, and forcing a category on someone reporting a problem is
+/// how you stop them reporting it.
+enum FeedbackStatus {
+  OPEN
+  RESOLVED
+}
+
+model Feedback {
+  id        String         @id @default(uuid())
+  /// Null once the author's account is removed — the feedback still matters.
+  authorId  String?
+  /// Snapshot of who wrote it, so the log stays readable after an account goes.
+  authorRole Role
+  authorLabel String
+  message   String
+  status    FeedbackStatus @default(OPEN)
+  adminNote String?
+  resolvedBy String?
+  resolvedAt DateTime?
+  createdAt DateTime       @default(now())
+
+  author User? @relation("FeedbackAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@map("feedback")
+}
+
+// ------------------------------------------------------------------- chat --
+
+model ChatThread {
+  id            String   @id @default(uuid())
+  retailerId    String
+  brandId       String
+  /// Denormalised so the thread list sorts without touching every message.
+  lastMessageAt DateTime @default(now())
+  createdAt     DateTime @default(now())
+
+  retailer RetailerProfile @relation(fields: [retailerId], references: [id], onDelete: Cascade)
+  brand    BrandProfile    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  messages Message[]
+
+  @@unique([retailerId, brandId])
+  @@index([lastMessageAt])
+  @@map("chat_threads")
+}
+
+model Message {
+  id        String    @id @default(uuid())
+  threadId  String
+  senderId  String
+  body      String
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  thread ChatThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  sender User       @relation(fields: [senderId], references: [id])
+
+  @@index([threadId, createdAt])
+  @@map("messages")
+}
+
+/// Every admin action and every order state change writes one row. This is
+/// what makes "who marked this delivered, and when?" an answerable question.
+model AuditLog {
+  id         String   @id @default(uuid())
+  actorId    String?
+  action     String
+  entityType String
+  entityId   String
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  actor User? @relation("AuditActor", fields: [actorId], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
