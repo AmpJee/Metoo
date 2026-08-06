@@ -260,11 +260,10 @@ const CATALOG: Record<
 const STEP: Record<string, number> = {
   PENDING: 0,
   CONFIRMED: 1,
-  PREPARING: 2,
-  READY_FOR_PICKUP: 3,
-  PICKED_UP: 4,
-  DELIVERED: 5,
-  SETTLED: 6,
+  READY_FOR_PICKUP: 2,
+  PICKED_UP: 3,
+  DELIVERED: 4,
+  SETTLED: 5,
 }
 
 /** Weighted so most orders are finished — a board of PENDING looks abandoned. */
@@ -272,9 +271,8 @@ const STATUS_MIX: OrderStatus[] = [
   ...Array<OrderStatus>(14).fill('SETTLED'),
   ...Array<OrderStatus>(5).fill('DELIVERED'),
   ...Array<OrderStatus>(3).fill('PICKED_UP'),
-  ...Array<OrderStatus>(2).fill('READY_FOR_PICKUP'),
-  ...Array<OrderStatus>(3).fill('PREPARING'),
-  ...Array<OrderStatus>(3).fill('CONFIRMED'),
+  ...Array<OrderStatus>(3).fill('READY_FOR_PICKUP'),
+  ...Array<OrderStatus>(5).fill('CONFIRMED'),
   ...Array<OrderStatus>(3).fill('PENDING'),
   'CANCELLED',
 ]
@@ -404,7 +402,7 @@ async function main() {
     const status =
       // Anything placed in the last few days has not had time to settle.
       daysAgo < 3
-        ? pick(['PENDING', 'CONFIRMED', 'PREPARING'] as OrderStatus[])
+        ? pick(['PENDING', 'CONFIRMED'] as OrderStatus[])
         : pick(STATUS_MIX)
 
     const lineCount = between(1, Math.min(3, brand.products.length))

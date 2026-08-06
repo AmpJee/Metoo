@@ -17,13 +17,16 @@ import {
 export const PURCHASE_TABS = [
   { key: 'all', label: 'All', statuses: null },
   { key: 'to-pay', label: 'To Pay', statuses: ['PENDING'] },
-  { key: 'to-ship', label: 'To Ship', statuses: ['CONFIRMED', 'PREPARING'] },
+  { key: 'to-ship', label: 'To Ship', statuses: ['CONFIRMED'] },
   {
     key: 'to-receive',
     label: 'To Receive',
-    statuses: ['READY_FOR_PICKUP', 'PICKED_UP'],
+    statuses: ['READY_FOR_PICKUP', 'PICKED_UP', 'DELIVERED'],
   },
-  { key: 'completed', label: 'Completed', statuses: ['DELIVERED', 'SETTLED'] },
+  // DELIVERED sits under To Receive, not Completed: the buyer still has
+  // something to do there — confirm they got it — and an order they must act
+  // on does not belong in a tab named for finished business.
+  { key: 'completed', label: 'Completed', statuses: ['SETTLED'] },
   { key: 'cancelled', label: 'Cancelled', statuses: ['CANCELLED', 'CLOSED'] },
 ] as const satisfies readonly {
   key: string
@@ -62,7 +65,6 @@ export function statusTone(
     case 'PENDING':
       return 'warning'
     case 'CONFIRMED':
-    case 'PREPARING':
     case 'READY_FOR_PICKUP':
     case 'PICKED_UP':
       return 'info'
@@ -96,13 +98,32 @@ export function awaitingPayment(status: OrderStatus) {
   return status === 'PENDING'
 }
 
-/** The seven logistics steps the tracker shows, in order. */
+/** The six steps the seller and admin trackers show, in order. */
 export const TRACKER_STEPS = [
   'PENDING',
   'CONFIRMED',
-  'PREPARING',
   'READY_FOR_PICKUP',
   'PICKED_UP',
   'DELIVERED',
   'SETTLED',
 ] as const satisfies readonly OrderStatus[]
+
+/**
+ * The five steps the BUYER's tracker shows.
+ *
+ * SETTLED is deliberately absent. To the retailer it is not a further stage of
+ * their parcel — it is the button they press on step 5, and showing it as a
+ * sixth dot would imply something still had to happen after they confirmed.
+ */
+export const BUYER_TRACKER_STEPS = [
+  'PENDING',
+  'CONFIRMED',
+  'READY_FOR_PICKUP',
+  'PICKED_UP',
+  'DELIVERED',
+] as const satisfies readonly OrderStatus[]
+
+/** Is this the buyer's own move — confirming they received the goods? */
+export function awaitingBuyerConfirmation(status: OrderStatus) {
+  return status === 'DELIVERED'
+}
