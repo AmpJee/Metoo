@@ -151,6 +151,24 @@ export interface Order {
   items: OrderItem[]
 }
 
+// --- reviews ---------------------------------------------------------------
+
+export interface Review {
+  id: string
+  rating: number
+  comment: string | null
+  createdAt: string
+  updatedAt: string
+  retailer: { id: string; shopName: string; province: string }
+}
+
+/** GET /products/:id/reviews/mine — drives the review form's initial state. */
+export interface OwnReview {
+  /** False until a delivered order containing this product exists. */
+  canReview: boolean
+  review: Review | null
+}
+
 // --- saved lists -----------------------------------------------------------
 
 export interface SavedStatus {

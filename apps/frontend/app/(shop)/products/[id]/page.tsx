@@ -6,10 +6,11 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { AddToCart } from '@/components/add-to-cart'
 import { SaveToggle } from '@/components/save-toggle'
+import { StarDisplay } from '@/components/star-rating'
 import { Badge } from '@/components/ui/badge'
 import { ApiError, api } from '@/lib/api'
-import { formatBaht, formatPackSummary } from '@/lib/format'
-import type { CatalogProduct, SavedStatus } from '@/lib/types'
+import { formatBaht, formatDate, formatPackSummary } from '@/lib/format'
+import type { CatalogProduct, Rating, Review, SavedStatus } from '@/lib/types'
 
 export async function generateMetadata({
   params,
@@ -48,6 +49,18 @@ export default async function ProductPage({
     saved = await api.get<SavedStatus>(`/products/${id}/saved`)
   } catch {
     // Non-fatal: the toggles just start unfilled.
+  }
+
+  // The written reviews behind the star average. Non-fatal on failure: a
+  // product page without its reviews is still a usable product page.
+  let reviews: Review[] = []
+  try {
+    const data = await api.get<{ summary: Rating; reviews: Review[] }>(
+      `/products/${id}/reviews`
+    )
+    reviews = data.reviews
+  } catch {
+    // Leave the list empty; the summary above still renders from the catalog.
   }
 
   const outOfStock = product.stockPacks === 0
@@ -162,6 +175,34 @@ export default async function ProductPage({
           ) : null}
         </div>
       </div>
+
+      {reviews.length > 0 ? (
+        <section className="mt-12 flex flex-col gap-4">
+          <h2 className="text-base font-semibold">
+            Reviews ({product.rating.count})
+          </h2>
+          <ul className="flex flex-col divide-y divide-border rounded-[9px] border border-border px-4">
+            {reviews.map((review) => (
+              <li key={review.id} className="flex flex-col gap-1 py-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <StarDisplay rating={review.rating} />
+                  <span className="text-sm font-medium">
+                    {review.retailer.shopName}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {review.retailer.province} · {formatDate(review.createdAt)}
+                  </span>
+                </div>
+                {review.comment ? (
+                  <p className="text-sm whitespace-pre-line text-muted-foreground">
+                    {review.comment}
+                  </p>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
     </div>
   )
 }

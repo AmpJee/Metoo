@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ConfirmDeliveredButton } from '@/components/confirm-delivered-button'
+import { OrderItemReview } from '@/components/order-item-review'
 import { OrderTracker } from '@/components/order-tracker'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -14,7 +15,7 @@ import {
   buyerStatusLabel,
   statusTone,
 } from '@/lib/order-status'
-import type { Order } from '@/lib/types'
+import type { Order, OwnReview } from '@/lib/types'
 
 export async function generateMetadata({
   params,
@@ -49,6 +50,27 @@ export default async function OrderDetailPage({
   // order that has not reached DELIVERED or SETTLED.
   const canRequestReturn =
     order.status === 'DELIVERED' || order.status === 'SETTLED'
+
+  // Reviewing needs the same delivered order the API checks for, so the
+  // section appears exactly when the rating would be accepted. One request per
+  // line item, in parallel — an order has a handful of items, not hundreds.
+  const reviews = canRequestReturn
+    ? await Promise.all(
+        order.items.map(async (item) => {
+          try {
+            const own = await api.get<OwnReview>(
+              `/products/${item.productId}/reviews/mine`
+            )
+            return { item, own }
+          } catch {
+            // A deleted product should not take the whole order page down.
+            return { item, own: { canReview: false, review: null } }
+          }
+        })
+      )
+    : []
+
+  const reviewable = reviews.filter((entry) => entry.own.canReview)
 
   const address = order.shippingAddress
 
@@ -89,6 +111,25 @@ export default async function OrderDetailPage({
             <h2 className="text-base font-semibold">Track</h2>
             <OrderTracker status={order.status} />
           </section>
+
+          {reviewable.length > 0 ? (
+            <section className="flex flex-col gap-1">
+              <h2 className="text-base font-semibold">Rate what you bought</h2>
+              <p className="text-sm text-muted-foreground">
+                Your rating is public and helps other shops decide.
+              </p>
+              <div className="mt-2 divide-y divide-border rounded-[9px] border border-border px-4">
+                {reviewable.map(({ item, own }) => (
+                  <OrderItemReview
+                    key={item.id}
+                    productId={item.productId}
+                    productName={item.productName}
+                    existing={own.review}
+                  />
+                ))}
+              </div>
+            </section>
+          ) : null}
 
           <section className="flex flex-col gap-3">
             <h2 className="text-base font-semibold">Products Ordered</h2>
