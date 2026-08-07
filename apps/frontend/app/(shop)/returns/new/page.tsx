@@ -4,16 +4,22 @@ import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { ApiError, api } from '@/lib/api'
 import { formatBaht, formatDate } from '@/lib/format'
+import { getLocale, getT } from '@/lib/i18n/server'
 import type { Order } from '@/lib/types'
 import { ReturnForm } from './return-form'
 
-export const metadata: Metadata = { title: 'Request a return' }
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT()
+  return { title: t('returnNew.title') }
+}
 
 export default async function NewReturnPage({
   searchParams,
 }: {
   searchParams: Promise<{ orderId?: string }>
 }) {
+  const t = await getT()
+  const locale = await getLocale()
   const { orderId } = await searchParams
   if (!orderId) redirect('/orders')
 
@@ -37,12 +43,12 @@ export default async function NewReturnPage({
         href={`/orders/${order.id}`}
         className="mb-6 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary"
       >
-        <ArrowLeft className="size-4" /> Back to order
+        <ArrowLeft className="size-4" /> {t('pay.backToOrder')}
       </Link>
 
       <div className="max-w-[560px]">
         <h1 className="text-[20px] font-bold md:text-[32px]">
-          Request a return
+          {t('returnNew.title')}
         </h1>
 
         <div className="mt-6 rounded-[9px] border border-border p-4 text-sm">
@@ -50,15 +56,17 @@ export default async function NewReturnPage({
             {order.orderNumber} · {order.brand.name}
           </p>
           <p className="text-muted-foreground">
-            Delivered{' '}
-            {order.deliveredAt ? formatDate(order.deliveredAt) : 'recently'} ·{' '}
-            {formatBaht(order.totalMinor)}
+            {t('returnNew.delivered', {
+              date: order.deliveredAt
+                ? formatDate(order.deliveredAt, locale)
+                : t('returnNew.deliveredRecently'),
+              amount: formatBaht(order.totalMinor),
+            })}
           </p>
         </div>
 
         <p className="mt-6 text-sm text-muted-foreground">
-          The brand reviews your request. If it is accepted, the item total is
-          refunded to your wallet and the order is closed.
+          {t('returnNew.explainer')}
         </p>
 
         <div className="mt-6">

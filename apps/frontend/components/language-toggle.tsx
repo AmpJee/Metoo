@@ -3,10 +3,13 @@
 import { Languages } from 'lucide-react'
 import { useTransition } from 'react'
 import { setLocale } from '@/app/actions/locale'
-import { useLocale } from '@/components/i18n-provider'
+import { useLocale, useT } from '@/components/i18n-provider'
 import { LOCALES, type Locale } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
 
+// Each language names itself, so neither button changes when you switch. The
+// point of the control is to be readable from inside the language you cannot
+// read, which a translated "Thai"/"อังกฤษ" pair would defeat.
 const SHORT: Record<Locale, string> = { th: 'ไทย', en: 'EN' }
 
 /**
@@ -19,6 +22,7 @@ const SHORT: Record<Locale, string> = { th: 'ไทย', en: 'EN' }
  */
 export function LanguageToggle({ className }: { className?: string }) {
   const locale = useLocale()
+  const t = useT()
   const [pending, startTransition] = useTransition()
 
   return (
@@ -28,7 +32,7 @@ export function LanguageToggle({ className }: { className?: string }) {
         className
       )}
       role="group"
-      aria-label="Language"
+      aria-label={t('lang.label')}
     >
       <Languages
         className="ml-1.5 size-3.5 shrink-0 text-muted-foreground"

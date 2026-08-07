@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ApiError, api } from '@/lib/api'
 import { formatBaht, formatDate } from '@/lib/format'
+import { getLocale, getT } from '@/lib/i18n/server'
 import {
   awaitingBuyerConfirmation,
   awaitingPayment,
@@ -22,12 +23,13 @@ export async function generateMetadata({
 }: {
   params: Promise<{ id: string }>
 }): Promise<Metadata> {
+  const t = await getT()
   const { id } = await params
   try {
     const order = await api.get<Order>(`/orders/${id}`)
-    return { title: `Order ${order.orderNumber}` }
+    return { title: t('order.title', { number: order.orderNumber }) }
   } catch {
-    return { title: 'Order' }
+    return { title: t('order.fallbackTitle') }
   }
 }
 
@@ -36,6 +38,8 @@ export default async function OrderDetailPage({
 }: {
   params: Promise<{ id: string }>
 }) {
+  const t = await getT()
+  const locale = await getLocale()
   const { id } = await params
 
   let order: Order
@@ -80,26 +84,26 @@ export default async function OrderDetailPage({
         href="/orders"
         className="mb-6 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary"
       >
-        <ArrowLeft className="size-4" /> My Purchase
+        <ArrowLeft className="size-4" /> {t('orders.title')}
       </Link>
 
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex flex-col gap-1">
           <h1 className="text-[20px] font-bold md:text-[32px]">
-            Order {order.orderNumber}
+            {t('order.title', { number: order.orderNumber })}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Placed {formatDate(order.createdAt)}
+            {t('order.placed', { date: formatDate(order.createdAt, locale) })}
           </p>
         </div>
         <div className="flex items-center gap-3">
           <Badge tone={statusTone(order.status)}>
-            {buyerStatusLabel(order.status)}
+            {buyerStatusLabel(order.status, t)}
           </Badge>
           {/* The whole point of "To Pay" — somewhere to go and pay. */}
           {awaitingPayment(order.status) ? (
             <Button asChild>
-              <Link href={`/orders/${order.id}/pay`}>Pay</Link>
+              <Link href={`/orders/${order.id}/pay`}>{t('orders.pay')}</Link>
             </Button>
           ) : null}
         </div>
@@ -108,15 +112,17 @@ export default async function OrderDetailPage({
       <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_340px]">
         <div className="flex flex-col gap-8">
           <section className="flex flex-col gap-4">
-            <h2 className="text-base font-semibold">Track</h2>
+            <h2 className="text-base font-semibold">{t('order.track')}</h2>
             <OrderTracker status={order.status} />
           </section>
 
           {reviewable.length > 0 ? (
             <section className="flex flex-col gap-1">
-              <h2 className="text-base font-semibold">Rate what you bought</h2>
+              <h2 className="text-base font-semibold">
+                {t('order.rateTitle')}
+              </h2>
               <p className="text-sm text-muted-foreground">
-                Your rating is public and helps other shops decide.
+                {t('order.rateSubtitle')}
               </p>
               <div className="mt-2 divide-y divide-border rounded-[9px] border border-border px-4">
                 {reviewable.map(({ item, own }) => (
@@ -132,7 +138,9 @@ export default async function OrderDetailPage({
           ) : null}
 
           <section className="flex flex-col gap-3">
-            <h2 className="text-base font-semibold">Products Ordered</h2>
+            <h2 className="text-base font-semibold">
+              {t('order.productsOrdered')}
+            </h2>
             <div className="rounded-[9px] border border-border">
               <header className="flex items-center gap-2 border-b border-border px-4 py-3 text-sm font-medium">
                 <Store className="size-4" />
@@ -158,7 +166,10 @@ export default async function OrderDetailPage({
                       </span>
                     </div>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      {formatBaht(item.pricePerPackMinor)} × {item.packs} packs
+                      {t('order.lineDetail', {
+                        price: formatBaht(item.pricePerPackMinor),
+                        packs: item.packs,
+                      })}
                     </p>
                   </li>
                 ))}
@@ -167,26 +178,28 @@ export default async function OrderDetailPage({
             {/* Prices here are the snapshot taken at checkout, so this stays
                 truthful even after the brand edits the product. */}
             <p className="text-xs text-muted-foreground">
-              Prices shown are those at the time the order was placed.
+              {t('order.priceNote')}
             </p>
           </section>
         </div>
 
         <aside className="flex h-fit flex-col gap-4">
           <div className="rounded-[9px] border border-border p-5">
-            <h2 className="text-base font-semibold">Order Total</h2>
+            <h2 className="text-base font-semibold">
+              {t('orders.orderTotal')}
+            </h2>
             <dl className="mt-4 flex flex-col gap-2 text-sm">
               <div className="flex justify-between">
-                <dt className="text-muted-foreground">Subtotal</dt>
+                <dt className="text-muted-foreground">{t('order.subtotal')}</dt>
                 <dd>{formatBaht(order.subtotalMinor)}</dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-muted-foreground">Shipping</dt>
+                <dt className="text-muted-foreground">{t('order.shipping')}</dt>
                 <dd>{formatBaht(order.shippingMinor)}</dd>
               </div>
             </dl>
             <div className="mt-4 flex justify-between border-t border-border pt-4 text-base font-semibold">
-              <span>Total</span>
+              <span>{t('order.total')}</span>
               <span className="text-primary">
                 {formatBaht(order.totalMinor)}
               </span>
@@ -196,7 +209,7 @@ export default async function OrderDetailPage({
           {address ? (
             <div className="rounded-[9px] border border-border p-5">
               <h2 className="flex items-center gap-2 text-base font-semibold">
-                <MapPin className="size-4" /> Delivery Address
+                <MapPin className="size-4" /> {t('order.deliveryAddress')}
               </h2>
               <address className="mt-3 text-sm not-italic text-muted-foreground">
                 {address.addressLine ? <p>{address.addressLine}</p> : null}
@@ -218,14 +231,14 @@ export default async function OrderDetailPage({
           {canRequestReturn ? (
             <Button asChild variant="outline">
               <Link href={`/returns/new?orderId=${order.id}`}>
-                Request a return
+                {t('order.requestReturn')}
               </Link>
             </Button>
           ) : null}
 
           <Button asChild variant="ghost">
             <Link href={`/orders/group/${order.checkoutGroupId}`}>
-              View all orders from this checkout
+              {t('order.viewGroup')}
             </Link>
           </Button>
         </aside>

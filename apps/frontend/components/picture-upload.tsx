@@ -8,6 +8,7 @@ import {
   confirmPictureUpload,
   requestPictureUpload,
 } from '@/app/actions/account'
+import { useT } from '@/components/i18n-provider'
 
 /** Matches MAX_PHOTO_BYTES on the API. */
 const MAX_BYTES = 5 * 1024 * 1024
@@ -37,6 +38,7 @@ export function PictureUpload({
   label: string
 }) {
   const router = useRouter()
+  const t = useT()
   const inputRef = useRef<HTMLInputElement>(null)
   const [preview, setPreview] = useState(url)
   const [error, setError] = useState<string | null>(null)
@@ -50,11 +52,11 @@ export function PictureUpload({
     // Checked locally first so an oversized file is refused instantly rather
     // than after a round-trip. The API enforces the same limits regardless.
     if (!ACCEPTED.includes(file.type)) {
-      setError('Use a JPEG, PNG or WebP image.')
+      setError(t('picture.badType'))
       return
     }
     if (file.size > MAX_BYTES) {
-      setError('That image is larger than 5 MB.')
+      setError(t('picture.tooLarge'))
       return
     }
 
@@ -71,7 +73,7 @@ export function PictureUpload({
         body: file,
       })
       if (!put.ok) {
-        setError('The upload did not complete. Try again.')
+        setError(t('picture.failed'))
         return
       }
 
@@ -112,10 +114,10 @@ export function PictureUpload({
           className="inline-flex h-9 w-fit items-center gap-2 rounded-[9px] border border-border px-3 text-sm font-medium disabled:opacity-60"
         >
           {pending ? <Loader2 className="size-4 animate-spin" /> : null}
-          {preview ? 'Change picture' : 'Upload picture'}
+          {t(preview ? 'picture.change' : 'picture.upload')}
         </button>
         <span className="text-xs text-muted-foreground">
-          JPEG, PNG or WebP, up to 5 MB.
+          {t('picture.limits')}
         </span>
         {error ? (
           <span role="alert" className="text-xs text-destructive">

@@ -3,7 +3,7 @@ import {
   ORDER_STATUS_LABELS,
   type OrderStatus,
 } from '@metoo/shared'
-import type { Translate } from '@/lib/i18n'
+import type { MessageKey, Translate } from '@/lib/i18n'
 
 /**
  * The "My Purchase" tabs.
@@ -16,22 +16,26 @@ import type { Translate } from '@/lib/i18n'
  * (/returns), not an order status.
  */
 export const PURCHASE_TABS = [
-  { key: 'all', label: 'All', statuses: null },
-  { key: 'to-pay', label: 'To Pay', statuses: ['PENDING'] },
-  { key: 'to-ship', label: 'To Ship', statuses: ['CONFIRMED'] },
+  { key: 'all', labelKey: 'orders.tab.all', statuses: null },
+  { key: 'to-pay', labelKey: 'orders.tab.toPay', statuses: ['PENDING'] },
+  { key: 'to-ship', labelKey: 'orders.tab.toShip', statuses: ['CONFIRMED'] },
   {
     key: 'to-receive',
-    label: 'To Receive',
+    labelKey: 'orders.tab.toReceive',
     statuses: ['READY_FOR_PICKUP', 'PICKED_UP', 'DELIVERED'],
   },
   // DELIVERED sits under To Receive, not Completed: the buyer still has
   // something to do there — confirm they got it — and an order they must act
   // on does not belong in a tab named for finished business.
-  { key: 'completed', label: 'Completed', statuses: ['SETTLED'] },
-  { key: 'cancelled', label: 'Cancelled', statuses: ['CANCELLED', 'CLOSED'] },
+  { key: 'completed', labelKey: 'orders.tab.completed', statuses: ['SETTLED'] },
+  {
+    key: 'cancelled',
+    labelKey: 'orders.tab.cancelled',
+    statuses: ['CANCELLED', 'CLOSED'],
+  },
 ] as const satisfies readonly {
   key: string
-  label: string
+  labelKey: MessageKey
   statuses: readonly OrderStatus[] | null
 }[]
 
@@ -79,9 +83,15 @@ export function statusTone(
   }
 }
 
-/** Seller and admin wording. Never use this in `app/(shop)/`. */
-export function statusLabel(status: OrderStatus) {
-  return ORDER_STATUS_LABELS[status]
+/**
+ * Seller and admin wording. Never use this in `app/(shop)/`.
+ *
+ * `orderStatus.*` rather than `status.*` — the console reads PENDING as work
+ * arriving ("ออร์เดอร์ใหม่") where the buyer reads it as money owed
+ * ("รอชำระเงิน"). Two namespaces, same eight states.
+ */
+export function statusLabel(status: OrderStatus, t?: Translate) {
+  return t ? t(`orderStatus.${status}`) : ORDER_STATUS_LABELS[status]
 }
 
 /**
@@ -91,8 +101,9 @@ export function statusLabel(status: OrderStatus) {
  * BUYER_ORDER_STATUS_LABELS in @metoo/shared for why.
  */
 export function buyerStatusLabel(status: OrderStatus, t?: Translate) {
-  // The translator is optional so the console — which stays English for now —
-  // can keep calling this without one.
+  // The translator stays optional in both helpers: the shared English map is
+  // the fallback for any call site not yet converted, so a missed one renders
+  // English rather than a raw key.
   return t ? t(`status.${status}`) : BUYER_ORDER_STATUS_LABELS[status]
 }
 

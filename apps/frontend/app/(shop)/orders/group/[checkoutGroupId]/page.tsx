@@ -6,9 +6,13 @@ import { OrderCard } from '@/components/order-card'
 import { Button } from '@/components/ui/button'
 import { ApiError, api } from '@/lib/api'
 import { formatBaht } from '@/lib/format'
+import { getT } from '@/lib/i18n/server'
 import type { OrderGroup } from '@/lib/types'
 
-export const metadata: Metadata = { title: 'Order placed' }
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT()
+  return { title: t('group.title') }
+}
 
 /**
  * Every order created by one checkout.
@@ -24,6 +28,7 @@ export default async function CheckoutGroupPage({
   params: Promise<{ checkoutGroupId: string }>
   searchParams: Promise<{ placed?: string }>
 }) {
+  const t = await getT()
   const { checkoutGroupId } = await params
   const { placed } = await searchParams
 
@@ -44,21 +49,18 @@ export default async function CheckoutGroupPage({
         <div className="mb-8 flex items-start gap-3 rounded-[9px] border border-success/30 bg-success/5 p-5">
           <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-success" />
           <div>
-            <p className="font-medium">
-              Order placed! Thank you for shopping with metoo.
-            </p>
+            <p className="font-medium">{t('group.placed')}</p>
             <p className="mt-1 text-sm text-muted-foreground">
               {orders.length === 1
-                ? 'The brand will confirm your order shortly.'
-                : `Your cart spanned ${orders.length} brands, so it was placed as ${orders.length} separate orders. Each is confirmed and delivered on its own.`}{' '}
-              No payment has been taken yet — you will arrange that with the
-              brand once they confirm.
+                ? t('group.oneBrand')
+                : t('group.manyBrands', { n: orders.length })}{' '}
+              {t('group.noPaymentYet')}
             </p>
           </div>
         </div>
       ) : (
         <h1 className="mb-6 text-[20px] font-bold md:text-[32px]">
-          Orders from this checkout
+          {t('group.heading')}
         </h1>
       )}
 
@@ -70,17 +72,19 @@ export default async function CheckoutGroupPage({
 
       <div className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-[9px] border border-border p-5">
         <span className="text-sm text-muted-foreground">
-          {orders.length} {orders.length === 1 ? 'order' : 'orders'} total
+          {t(orders.length === 1 ? 'group.countOne' : 'group.countMany', {
+            n: orders.length,
+          })}
         </span>
         <span className="text-base font-semibold">{formatBaht(total)}</span>
       </div>
 
       <div className="mt-6 flex flex-wrap gap-3">
         <Button asChild>
-          <Link href="/orders">Go to My Purchase</Link>
+          <Link href="/orders">{t('group.goToOrders')}</Link>
         </Button>
         <Button asChild variant="outline">
-          <Link href="/explore">Continue shopping</Link>
+          <Link href="/explore">{t('cart.continue')}</Link>
         </Button>
       </div>
     </div>

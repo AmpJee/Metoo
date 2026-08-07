@@ -3,6 +3,7 @@
 import { Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
+import { useT } from '@/components/i18n-provider'
 
 export interface ProfileField {
   name: string
@@ -36,6 +37,7 @@ export function ProfileForm({
   ) => Promise<{ ok: boolean; error?: string }>
 }) {
   const router = useRouter()
+  const t = useT()
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
   const [pending, startTransition] = useTransition()
@@ -55,7 +57,7 @@ export function ProfileForm({
     startTransition(async () => {
       const result = await onSave(values)
       if (!result.ok) {
-        setError(result.error ?? 'Could not save your profile.')
+        setError(result.error ?? t('settings.saveFailed'))
         return
       }
       setSaved(true)
@@ -71,7 +73,7 @@ export function ProfileForm({
             {field.label}
             {field.optional ? (
               <span className="ml-1 font-normal text-muted-foreground">
-                (optional)
+                {t('common.optional')}
               </span>
             ) : null}
           </span>
@@ -115,7 +117,7 @@ export function ProfileForm({
           role="status"
           className="rounded-md bg-success/10 px-3 py-2 text-sm text-success"
         >
-          Saved.
+          {t('common.saved')}
         </p>
       ) : null}
 
@@ -125,7 +127,7 @@ export function ProfileForm({
         className="inline-flex h-10 w-fit items-center justify-center gap-2 rounded-[9px] bg-primary px-4 text-sm font-medium text-primary-foreground disabled:opacity-60"
       >
         {pending ? <Loader2 className="size-4 animate-spin" /> : null}
-        Save changes
+        {t('common.save')}
       </button>
     </form>
   )

@@ -4,6 +4,7 @@ import { Loader2, Pencil } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { submitReview } from '@/app/actions/reviews'
+import { useT } from '@/components/i18n-provider'
 import { StarDisplay, StarRating } from '@/components/star-rating'
 import { Button } from '@/components/ui/button'
 import type { Review } from '@/lib/types'
@@ -29,6 +30,7 @@ export function OrderItemReview({
   existing: Review | null
 }) {
   const router = useRouter()
+  const t = useT()
   const [open, setOpen] = useState(existing === null)
   const [rating, setRating] = useState(existing?.rating ?? 0)
   const [comment, setComment] = useState(existing?.comment ?? '')
@@ -37,7 +39,7 @@ export function OrderItemReview({
 
   const save = () => {
     if (rating === 0) {
-      setError('Pick a star rating first.')
+      setError(t('review.pickStars'))
       return
     }
     setError(null)
@@ -67,7 +69,7 @@ export function OrderItemReview({
           </span>
         </div>
         <Button size="sm" variant="ghost" onClick={() => setOpen(true)}>
-          <Pencil className="mr-1 size-3" /> Edit
+          <Pencil className="mr-1 size-3" /> {t('review.edit')}
         </Button>
       </div>
     )
@@ -90,14 +92,14 @@ export function OrderItemReview({
         disabled={pending}
         rows={2}
         maxLength={2000}
-        placeholder="How was it? (optional)"
+        placeholder={t('review.placeholder')}
         className="w-full rounded-[9px] border border-border bg-transparent px-3 py-2 text-sm outline-none focus:border-primary"
       />
 
       <div className="flex items-center gap-2">
         <Button size="sm" disabled={pending} onClick={save}>
           {pending ? <Loader2 className="mr-1 size-3 animate-spin" /> : null}
-          {existing ? 'Update review' : 'Submit review'}
+          {t(existing ? 'review.update' : 'review.submit')}
         </Button>
         {existing ? (
           <Button
@@ -113,7 +115,7 @@ export function OrderItemReview({
               setOpen(false)
             }}
           >
-            Cancel
+            {t('common.cancel')}
           </Button>
         ) : null}
       </div>

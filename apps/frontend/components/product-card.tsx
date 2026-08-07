@@ -3,13 +3,14 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { formatBaht, formatPackSummary } from '@/lib/format'
+import { getT } from '@/lib/i18n/server'
 
 /**
  * One product tile, shared by explore, storefront and saved.
  *
  * Radius and aspect follow the design (rounded-[9px], square image).
  */
-export function ProductCard({
+export async function ProductCard({
   product,
   action,
 }: {
@@ -28,6 +29,7 @@ export function ProductCard({
   /** Slot for a favourite toggle or a remove button. */
   action?: React.ReactNode
 }) {
+  const t = await getT()
   const outOfStock = product.stockPacks === 0
   const retired = product.isActive === false
 
@@ -53,14 +55,14 @@ export function ProductCard({
           />
         ) : (
           <div className="flex size-full items-center justify-center text-sm text-muted-foreground">
-            No photo
+            {t('explore.noPhoto')}
           </div>
         )}
 
         {retired || outOfStock ? (
           <div className="absolute inset-0 flex items-center justify-center bg-background/70">
             <Badge tone="outline">
-              {retired ? 'No longer sold' : 'Out of stock'}
+              {retired ? t('card.noLongerSold') : t('card.outOfStock')}
             </Badge>
           </div>
         ) : null}
@@ -86,12 +88,12 @@ export function ProductCard({
         <p className="text-base font-semibold text-primary">
           {formatBaht(product.pricePerPackMinor)}
           <span className="ml-1 text-xs font-normal text-muted-foreground">
-            /pack
+            {t('explore.perPack')}
           </span>
         </p>
 
         <p className="text-xs text-muted-foreground">
-          {formatPackSummary(product.unitsPerPack, product.minPacks)}
+          {formatPackSummary(product.unitsPerPack, product.minPacks, t)}
         </p>
 
         {/* Null average, not zero — an unrated product is not a bad one, so

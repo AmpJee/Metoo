@@ -3,6 +3,7 @@
 import { Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { useT } from '@/components/i18n-provider'
 import { PasswordInput } from '@/components/ui/password-input'
 
 /** Matches the API's own minimum, so a short password is refused instantly. */
@@ -21,6 +22,7 @@ const MIN_LENGTH = 8
  */
 export function ChangePasswordForm() {
   const router = useRouter()
+  const t = useT()
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState(false)
   const [pending, setPending] = useState(false)
@@ -39,15 +41,15 @@ export function ChangePasswordForm() {
     // Checked here, not server-side: the API has no idea what the user typed
     // twice, and a round-trip to say "these do not match" is wasted.
     if (newPassword !== confirm) {
-      setError('The two new passwords do not match.')
+      setError(t('password.mismatch'))
       return
     }
     if (newPassword.length < MIN_LENGTH) {
-      setError(`Use at least ${MIN_LENGTH} characters.`)
+      setError(t('password.tooShort', { n: MIN_LENGTH }))
       return
     }
     if (newPassword === currentPassword) {
-      setError('That is the password you already have.')
+      setError(t('password.unchanged'))
       return
     }
 
@@ -61,7 +63,7 @@ export function ChangePasswordForm() {
 
       if (!response.ok) {
         const payload = await response.json().catch(() => null)
-        setError(payload?.error?.message ?? 'Could not change your password.')
+        setError(payload?.error?.message ?? t('password.failed'))
         return
       }
 
@@ -71,7 +73,7 @@ export function ChangePasswordForm() {
       // them rather than leaving the page holding the old session.
       router.refresh()
     } catch {
-      setError('Cannot reach the server. Check your connection and try again.')
+      setError(t('auth.unreachable'))
     } finally {
       setPending(false)
     }
@@ -80,7 +82,7 @@ export function ChangePasswordForm() {
   return (
     <form onSubmit={onSubmit} className="flex max-w-[420px] flex-col gap-4">
       <label className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium">Current password</span>
+        <span className="text-sm font-medium">{t('password.current')}</span>
         <PasswordInput
           name="currentPassword"
           required
@@ -90,7 +92,7 @@ export function ChangePasswordForm() {
       </label>
 
       <label className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium">New password</span>
+        <span className="text-sm font-medium">{t('password.new')}</span>
         <PasswordInput
           name="newPassword"
           required
@@ -99,12 +101,12 @@ export function ChangePasswordForm() {
           className="h-10 rounded-[9px] border border-border bg-transparent px-3 text-sm outline-none focus:border-primary"
         />
         <span className="text-xs text-muted-foreground">
-          At least {MIN_LENGTH} characters.
+          {t('password.minimum', { n: MIN_LENGTH })}
         </span>
       </label>
 
       <label className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium">Confirm new password</span>
+        <span className="text-sm font-medium">{t('password.confirm')}</span>
         <PasswordInput
           name="confirmPassword"
           required
@@ -127,8 +129,7 @@ export function ChangePasswordForm() {
           role="status"
           className="rounded-md bg-success/10 px-3 py-2 text-sm text-success"
         >
-          Password changed. Any other device signed in as you has been signed
-          out.
+          {t('password.changed')}
         </p>
       ) : null}
 
@@ -138,7 +139,7 @@ export function ChangePasswordForm() {
         className="inline-flex h-10 items-center justify-center gap-2 rounded-[9px] bg-primary px-4 text-sm font-medium text-primary-foreground disabled:opacity-60"
       >
         {pending ? <Loader2 className="size-4 animate-spin" /> : null}
-        Change password
+        {t('password.submit')}
       </button>
     </form>
   )

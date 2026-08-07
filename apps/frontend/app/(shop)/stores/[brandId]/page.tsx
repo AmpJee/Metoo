@@ -7,6 +7,7 @@ import { ProductCard } from '@/components/product-card'
 import { EmptyState } from '@/components/ui/empty-state'
 import { ApiError, api } from '@/lib/api'
 import { formatDate } from '@/lib/format'
+import { getLocale, getT } from '@/lib/i18n/server'
 import type { Storefront } from '@/lib/types'
 
 export async function generateMetadata({
@@ -19,7 +20,7 @@ export async function generateMetadata({
     const store = await api.get<Storefront>(`/stores/${brandId}`)
     return { title: store.name }
   } catch {
-    return { title: 'Store' }
+    return { title: (await getT())('store.fallbackTitle') }
   }
 }
 
@@ -28,6 +29,8 @@ export default async function StorefrontPage({
 }: {
   params: Promise<{ brandId: string }>
 }) {
+  const t = await getT()
+  const locale = await getLocale()
   const { brandId } = await params
 
   let store: Storefront
@@ -74,8 +77,12 @@ export default async function StorefrontPage({
                   {store.rating.average.toFixed(1)} ({store.rating.count})
                 </span>
               ) : null}
-              <span>{store.productCount} products</span>
-              <span>Member since {formatDate(store.memberSince)}</span>
+              <span>{t('store.productCount', { n: store.productCount })}</span>
+              <span>
+                {t('store.memberSince', {
+                  date: formatDate(store.memberSince, locale),
+                })}
+              </span>
             </p>
           </div>
         </div>
@@ -99,8 +106,8 @@ export default async function StorefrontPage({
         {store.products.length === 0 ? (
           <EmptyState
             icon={PackageSearch}
-            title="No products listed"
-            description="This brand has not published any products yet."
+            title={t('store.noProducts')}
+            description={t('store.noProductsBody')}
           />
         ) : (
           <div className="grid grid-cols-2 gap-x-[16px] gap-y-[32px] md:grid-cols-4 md:gap-x-[26px]">
