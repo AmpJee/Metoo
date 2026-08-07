@@ -21,9 +21,15 @@ export default function RegisterPage() {
               Log in
             </Link>
           </p>
-          {/* The design says as much: brand onboarding is a separate surface
-              and is not part of the buyer app. */}
-          <p>Are you a brand? Brand sign-up coming soon.</p>
+          <p>
+            Are you a brand?{' '}
+            <Link
+              href="/register/seller"
+              className="font-medium text-primary hover:underline"
+            >
+              Sell on Metoo
+            </Link>
+          </p>
         </div>
       }
     >
