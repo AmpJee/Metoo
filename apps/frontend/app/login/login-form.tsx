@@ -10,6 +10,24 @@ import { PasswordInput } from '@/components/ui/password-input'
 import type { PortalKey } from '@/lib/portals'
 import { homeForUser } from '@/lib/roles'
 
+/**
+ * What to show when a sign-in is refused.
+ *
+ * WRONG_PORTAL is deliberately flattened into the same wording as a bad
+ * password. The API answers it only after the password checks out, so naming
+ * the account type is not a leak — but it reads as "your password worked,
+ * now go somewhere else", which is a confusing thing to tell someone who
+ * simply used the wrong page. One message for every refusal is less to
+ * interpret.
+ *
+ * The account is still not signed in either way; the distinction only ever
+ * affected the wording.
+ */
+function signInError(error: { code?: string; message?: string } | undefined) {
+  if (error?.code === 'WRONG_PORTAL') return 'Email or password is incorrect.'
+  return error?.message ?? 'Could not sign you in.'
+}
+
 export function LoginForm({ portal }: { portal: PortalKey }) {
   const router = useRouter()
   const params = useSearchParams()
@@ -39,7 +57,7 @@ export function LoginForm({ portal }: { portal: PortalKey }) {
       const payload = await response.json()
 
       if (!response.ok) {
-        setError(payload?.error?.message ?? 'Could not sign you in.')
+        setError(signInError(payload?.error))
         return
       }
 

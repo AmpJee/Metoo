@@ -5,20 +5,27 @@ import { writeSession } from '@/lib/session'
 import type { Session } from '@/lib/types'
 
 /**
- * Retailer signup.
+ * Signup, for either side of the marketplace.
  *
- * Only RETAILER is accepted here: this is the buyer app, and the backend
- * takes a discriminated union where a brand signup needs different fields.
- * Brand onboarding is a separate surface — the design says as much
- * ("Brand sign-up coming soon").
+ * The backend takes a discriminated union — a brand sends `name` and an
+ * optional description, a retailer sends `shopName` and an optional taxId —
+ * so the role decides which shape is valid and cannot be inferred from the
+ * fields alone.
+ *
+ * The role is pinned to one of the two literals here rather than passed
+ * through: forwarding whatever the client sent would let a caller register
+ * itself as ADMIN, and admins are seeded, never self-registered.
  */
 export async function POST(request: Request) {
-  const body = (await request.json()) as Record<string, unknown>
+  const { role, ...body } = (await request.json()) as Record<string, unknown>
 
   const response = await fetch(`${env.API_URL}/auth/register`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ ...body, role: 'RETAILER' }),
+    body: JSON.stringify({
+      ...body,
+      role: role === 'BRAND' ? 'BRAND' : 'RETAILER',
+    }),
     cache: 'no-store',
   })
 
