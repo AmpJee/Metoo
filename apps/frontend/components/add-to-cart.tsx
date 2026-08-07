@@ -4,6 +4,7 @@ import { Loader2, Minus, Plus, ShoppingCart } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import {
   lineTotalMinor,
+  quickPickQuantities,
   savingsMinor,
   unitPriceMinor,
   type PriceTier,
@@ -49,10 +50,14 @@ export function AddToCart({
   const unit = unitPriceMinor(pricePerPackMinor, priceTiers, packs)
   const lineTotal = lineTotalMinor(pricePerPackMinor, priceTiers, packs)
   const saved = savingsMinor(pricePerPackMinor, priceTiers, packs)
-  // Anything unreachable is dropped rather than shown disabled: a button that
-  // cannot be pressed is a worse answer than no button.
-  const presets = packPresets.filter(
-    (n) => n >= minPacks && (stockPacks === null || n <= stockPacks)
+  // Derived from the ladder, not from a second list the seller has to keep in
+  // step with it: every price break gets a button, so a discount at 12 is one
+  // tap away instead of something a buyer has to find by typing.
+  //
+  // Anything above the stock on hand is dropped rather than shown disabled — a
+  // button that cannot be pressed is a worse answer than no button.
+  const presets = quickPickQuantities(minPacks, priceTiers, packPresets).filter(
+    (n) => stockPacks === null || n <= stockPacks
   )
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState(false)

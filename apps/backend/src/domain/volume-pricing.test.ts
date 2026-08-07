@@ -5,6 +5,7 @@ import {
   checkPriceTiers,
   lineTotalMinor,
   savingsMinor,
+  quickPickQuantities,
   unitPriceMinor,
 } from './volume-pricing.ts'
 
@@ -136,5 +137,32 @@ describe('checkPriceTiers', () => {
       pricePerPackMinor: BASE - (i + 1) * 1000,
     }))
     expect(ok(many)).toMatchObject({ ok: false, code: 'TIERS_TOO_MANY' })
+  })
+})
+
+describe('quickPickQuantities', () => {
+  test('every price break gets a button', () => {
+    // A seller who set breaks at 20 and 30 has already said which quantities
+    // matter; the buyer should be one tap from each.
+    expect(quickPickQuantities(6, TIERS)).toEqual([6, 20, 30])
+  })
+
+  test('the minimum order leads, so the cheapest legal order is one tap away', () => {
+    expect(quickPickQuantities(12, TIERS)[0]).toBe(12)
+  })
+
+  test('a flat-priced product falls back to its own presets', () => {
+    expect(quickPickQuantities(5, [], [5, 10, 20])).toEqual([5, 10, 20])
+  })
+
+  test('presets and tiers merge without duplicating', () => {
+    expect(quickPickQuantities(6, TIERS, [10, 20, 40])).toEqual([
+      6, 10, 20, 30, 40,
+    ])
+  })
+
+  test('a preset below the minimum order is dropped', () => {
+    // It could never be ordered, so a button for it is a dead end.
+    expect(quickPickQuantities(12, [], [5, 24])).toEqual([12, 24])
   })
 })
