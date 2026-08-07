@@ -97,7 +97,13 @@ export async function dashboard(brandId: string, period: Period) {
       followerCount: brand?._count.followers ?? 0,
       activeProducts: products.filter((p) => p.isActive).length,
       totalProducts: brand?._count.products ?? 0,
-      newOrders: recent.filter((o) => o.status === 'PENDING').length,
+      // Both pre-acceptance states count as new: PENDING is placed but not
+      // yet paid, PAYMENT_CONFIRMED is paid and waiting on this brand. Only
+      // the second is actionable, but the tile answers "what has come in",
+      // and dropping PENDING would make the count fall when an order arrives.
+      newOrders: recent.filter(
+        (o) => o.status === 'PENDING' || o.status === 'PAYMENT_CONFIRMED'
+      ).length,
       // The "4.8 Store rating" tile. Null until someone reviews.
       rating,
     },

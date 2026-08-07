@@ -18,7 +18,8 @@ import {
  * accepts, admin runs logistics, the retailer confirms receipt.
  */
 const HAPPY_PATH: Array<{ from: OrderStatus; to: OrderStatus; by: Actor }> = [
-  { from: 'PENDING', to: 'CONFIRMED', by: 'BRAND' },
+  { from: 'PENDING', to: 'PAYMENT_CONFIRMED', by: 'ADMIN' },
+  { from: 'PAYMENT_CONFIRMED', to: 'CONFIRMED', by: 'BRAND' },
   { from: 'CONFIRMED', to: 'READY_FOR_PICKUP', by: 'BRAND' },
   { from: 'READY_FOR_PICKUP', to: 'PICKED_UP', by: 'ADMIN' },
   { from: 'PICKED_UP', to: 'DELIVERED', by: 'ADMIN' },
@@ -49,14 +50,29 @@ describe('canTransition — the happy path', () => {
 
 describe('who may move an order', () => {
   test('only the brand accepts an order', () => {
-    expect(availableTransitions('PENDING', 'BRAND')).toContainEqual({
+    expect(availableTransitions('PAYMENT_CONFIRMED', 'BRAND')).toContainEqual({
       to: 'CONFIRMED',
       label: 'Confirm Order',
     })
-    expect(canTransition('PENDING', 'CONFIRMED', 'RETAILER')).toMatchObject({
-      ok: false,
-      code: 'FORBIDDEN_TRANSITION',
+    expect(
+      canTransition('PAYMENT_CONFIRMED', 'CONFIRMED', 'RETAILER')
+    ).toMatchObject({ ok: false, code: 'FORBIDDEN_TRANSITION' })
+  })
+
+  test('only an admin can say the money arrived', () => {
+    // Payment is a manual bank transfer; a seller confirming their own
+    // payment would be marking themselves paid.
+    expect(
+      canTransition('PENDING', 'PAYMENT_CONFIRMED', 'BRAND')
+    ).toMatchObject({ ok: false, code: 'FORBIDDEN_TRANSITION' })
+    expect(canTransition('PENDING', 'PAYMENT_CONFIRMED', 'ADMIN')).toEqual({
+      ok: true,
     })
+  })
+
+  test('payment received is not yet revenue', () => {
+    // The brand can still decline, and then it is refunded.
+    expect(EARNS_REVENUE).not.toContain('PAYMENT_CONFIRMED')
   })
 
   test('a brand marks its own parcel ready', () => {
@@ -71,7 +87,9 @@ describe('who may move an order', () => {
     // "It is ready" is a claim about their own premises. "A courier took it"
     // and "it arrived" are claims about someone else's, and both move the
     // order towards the money.
-    for (const { from, to } of HAPPY_PATH.slice(2, 4)) {
+    // Indices, not names, so this must move whenever a step is inserted:
+    // READY_FOR_PICKUP -> PICKED_UP and PICKED_UP -> DELIVERED.
+    for (const { from, to } of HAPPY_PATH.slice(3, 5)) {
       expect(canTransition(from, to, 'BRAND')).toMatchObject({
         ok: false,
         code: 'FORBIDDEN_TRANSITION',
@@ -164,7 +182,11 @@ describe('final states', () => {
 
 describe('cancellation', () => {
   test('an order can be cancelled before it is collected', () => {
-    for (const status of ['PENDING', 'CONFIRMED'] as const) {
+    for (const status of [
+      'PENDING',
+      'PAYMENT_CONFIRMED',
+      'CONFIRMED',
+    ] as const) {
       expect(canTransition(status, 'CANCELLED', 'BRAND')).toEqual({ ok: true })
     }
   })
@@ -219,6 +241,7 @@ describe('revenue status sets', () => {
     const classified = new Set<string>([
       ...EARNS_REVENUE,
       'PENDING',
+      'PAYMENT_CONFIRMED',
       'CANCELLED',
     ])
     for (const status of ORDER_STATUSES) {

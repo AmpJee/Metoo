@@ -18,7 +18,14 @@ import type { MessageKey, Translate } from '@/lib/i18n'
 export const PURCHASE_TABS = [
   { key: 'all', labelKey: 'orders.tab.all', statuses: null },
   { key: 'to-pay', labelKey: 'orders.tab.toPay', statuses: ['PENDING'] },
-  { key: 'to-ship', labelKey: 'orders.tab.toShip', statuses: ['CONFIRMED'] },
+  {
+    key: 'to-ship',
+    labelKey: 'orders.tab.toShip',
+    // PAYMENT_CONFIRMED belongs here, not under To Pay: the buyer's money has
+    // arrived and there is nothing left for them to do but wait for the brand
+    // to accept. Leaving it in To Pay would ask them to pay twice.
+    statuses: ['PAYMENT_CONFIRMED', 'CONFIRMED'],
+  },
   {
     key: 'to-receive',
     labelKey: 'orders.tab.toReceive',
@@ -69,6 +76,7 @@ export function statusTone(
   switch (status) {
     case 'PENDING':
       return 'warning'
+    case 'PAYMENT_CONFIRMED':
     case 'CONFIRMED':
     case 'READY_FOR_PICKUP':
     case 'PICKED_UP':
@@ -88,7 +96,7 @@ export function statusTone(
  *
  * `orderStatus.*` rather than `status.*` — the console reads PENDING as work
  * arriving ("ออร์เดอร์ใหม่") where the buyer reads it as money owed
- * ("รอชำระเงิน"). Two namespaces, same eight states.
+ * ("รอชำระเงิน"). Two namespaces, same nine states.
  */
 export function statusLabel(status: OrderStatus, t?: Translate) {
   return t ? t(`orderStatus.${status}`) : ORDER_STATUS_LABELS[status]
@@ -112,9 +120,10 @@ export function awaitingPayment(status: OrderStatus) {
   return status === 'PENDING'
 }
 
-/** The six steps the seller and admin trackers show, in order. */
+/** The seven steps the seller and admin trackers show, in order. */
 export const TRACKER_STEPS = [
   'PENDING',
+  'PAYMENT_CONFIRMED',
   'CONFIRMED',
   'READY_FOR_PICKUP',
   'PICKED_UP',
@@ -123,14 +132,15 @@ export const TRACKER_STEPS = [
 ] as const satisfies readonly OrderStatus[]
 
 /**
- * The five steps the BUYER's tracker shows.
+ * The six steps the BUYER's tracker shows.
  *
  * SETTLED is deliberately absent. To the retailer it is not a further stage of
  * their parcel — it is the button they press on step 5, and showing it as a
- * sixth dot would imply something still had to happen after they confirmed.
+ * seventh dot would imply something still had to happen after they confirmed.
  */
 export const BUYER_TRACKER_STEPS = [
   'PENDING',
+  'PAYMENT_CONFIRMED',
   'CONFIRMED',
   'READY_FOR_PICKUP',
   'PICKED_UP',

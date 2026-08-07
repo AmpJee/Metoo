@@ -66,6 +66,7 @@ export const en: Record<EnumKey, string> = {
 
   // --- order status, as the buyer reads it ---------------------------------
   'status.PENDING': 'To Pay',
+  'status.PAYMENT_CONFIRMED': 'Payment received',
   'status.CONFIRMED': 'Confirmed',
   'status.READY_FOR_PICKUP': 'Package Pickup',
   'status.PICKED_UP': 'Out for Delivery',
@@ -75,7 +76,8 @@ export const en: Record<EnumKey, string> = {
   'status.CLOSED': 'Closed',
 
   // --- order status, as the seller and admin read it -----------------------
-  'orderStatus.PENDING': 'Incoming',
+  'orderStatus.PENDING': 'Awaiting payment',
+  'orderStatus.PAYMENT_CONFIRMED': 'Paid — to accept',
   'orderStatus.CONFIRMED': 'Confirmed',
   'orderStatus.READY_FOR_PICKUP': 'Package Pickup',
   'orderStatus.PICKED_UP': 'Out for Delivery',
@@ -86,6 +88,7 @@ export const en: Record<EnumKey, string> = {
 
   // --- transition buttons, keyed by destination ----------------------------
   'action.PENDING': 'Reopen',
+  'action.PAYMENT_CONFIRMED': 'Payment Received',
   'action.CONFIRMED': 'Confirm Order',
   'action.READY_FOR_PICKUP': 'Package Pickup',
   'action.PICKED_UP': 'Out for Delivery',
@@ -155,6 +158,7 @@ export const th: Record<EnumKey, string> = {
 
   // --- order status, as the buyer reads it ---------------------------------
   'status.PENDING': 'รอชำระเงิน',
+  'status.PAYMENT_CONFIRMED': 'ได้รับเงินแล้ว',
   'status.CONFIRMED': 'ยืนยันแล้ว',
   'status.READY_FOR_PICKUP': 'รอเข้ารับพัสดุ',
   'status.PICKED_UP': 'กำลังจัดส่ง',
@@ -165,7 +169,8 @@ export const th: Record<EnumKey, string> = {
 
   // --- order status, as the seller and admin read it -----------------------
   // PENDING is work arriving, not money owed; SETTLED is the payday.
-  'orderStatus.PENDING': 'ออร์เดอร์ใหม่',
+  'orderStatus.PENDING': 'รอชำระเงิน',
+  'orderStatus.PAYMENT_CONFIRMED': 'ชำระแล้ว รอร้านรับ',
   'orderStatus.CONFIRMED': 'ยืนยันแล้ว',
   'orderStatus.READY_FOR_PICKUP': 'รอเข้ารับพัสดุ',
   'orderStatus.PICKED_UP': 'กำลังจัดส่ง',
@@ -176,6 +181,7 @@ export const th: Record<EnumKey, string> = {
 
   // --- transition buttons, keyed by destination ----------------------------
   'action.PENDING': 'เปิดรายการใหม่',
+  'action.PAYMENT_CONFIRMED': 'ยืนยันรับเงินแล้ว',
   'action.CONFIRMED': 'รับออร์เดอร์',
   'action.READY_FOR_PICKUP': 'พร้อมให้เข้ารับ',
   'action.PICKED_UP': 'เริ่มจัดส่ง',
