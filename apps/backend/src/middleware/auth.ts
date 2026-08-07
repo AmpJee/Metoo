@@ -18,6 +18,7 @@
 import { Elysia } from 'elysia'
 import { TRADING_STATUS } from '@metoo/shared'
 import type { PipelineStatus, Role } from '@metoo/shared'
+import { prisma } from '../config/prisma.ts'
 import { verifyAccessToken } from '../lib/jwt.ts'
 import { AppError } from './error.ts'
 
@@ -109,16 +110,38 @@ export function requireAccess(options: AccessOptions = {}) {
         )
       }
 
-      if (approved && claims.status !== TRADING_STATUS) {
-        const [code, message] = BLOCKED[claims.status]
-        throw new AppError(403, code, message)
+      // The claim is a snapshot from when the token was issued, up to 15
+      // minutes ago. An admin may have approved this account since — so a
+      // token that says "not onboarded" is re-checked against the database
+      // before anyone is turned away.
+      //
+      // Only on the refusing path, so an already-onboarded caller — almost
+      // all traffic — still costs zero queries. Without this the frontend and
+      // the API disagree the moment an approval lands: the shop layout reads
+      // the live status from /auth/me and lets the retailer in, then every
+      // request behind this guard 403s, and the page renders as a crash
+      // rather than as the pending screen.
+      let status = claims.status
+
+      if (approved && status !== TRADING_STATUS) {
+        const current = await prisma.user.findUnique({
+          where: { id: claims.sub },
+          select: { status: true },
+        })
+
+        status = current?.status ?? status
+
+        if (status !== TRADING_STATUS) {
+          const [code, message] = BLOCKED[status]
+          throw new AppError(403, code, message)
+        }
       }
 
       return {
         auth: {
           userId: claims.sub,
           role: claims.role,
-          status: claims.status,
+          status,
         } satisfies AuthContext,
       }
     })

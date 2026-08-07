@@ -23,6 +23,9 @@ export default async function SellerLayout({
   } catch (error) {
     if (error instanceof ApiError && error.isUnauthorized)
       redirect(PORTALS.seller.loginPath)
+    // An account still in the pipeline gets the screen that explains why,
+    // not an error boundary.
+    if (error instanceof ApiError && error.isNotOnboarded) redirect('/pending')
     throw error
   }
 
