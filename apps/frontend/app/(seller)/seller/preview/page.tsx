@@ -6,9 +6,13 @@ import { ProductCard } from '@/components/product-card'
 import { CardEmpty } from '@/components/console/card'
 import { api } from '@/lib/api'
 import { formatDate } from '@/lib/format'
+import { getLocale, getT } from '@/lib/i18n/server'
 import type { Storefront } from '@/lib/types'
 
-export const metadata: Metadata = { title: 'Preview store' }
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT()
+  return { title: t('preview.title') }
+}
 
 /**
  * The seller's own store, exactly as a buyer sees it.
@@ -18,13 +22,15 @@ export const metadata: Metadata = { title: 'Preview store' }
  * near-copy that could drift.
  */
 export default async function StorePreviewPage() {
+  const t = await getT()
+  const locale = await getLocale()
   const store = await api.get<Storefront>('/brand/storefront')
 
   return (
     <>
       <PageHeader
-        title="Preview Store"
-        description="What retailers see when they open your store."
+        title={t('preview.title')}
+        description={t('preview.subtitle')}
       />
 
       <div>
@@ -62,10 +68,16 @@ export default async function StorePreviewPage() {
                       {store.rating.average.toFixed(1)} ({store.rating.count})
                     </span>
                   ) : (
-                    <span>No reviews yet</span>
+                    <span>{t('preview.noReviews')}</span>
                   )}
-                  <span>{store.followerCount} followers</span>
-                  <span>Member since {formatDate(store.memberSince)}</span>
+                  <span>
+                    {t('preview.followers', { n: store.followerCount })}
+                  </span>
+                  <span>
+                    {t('preview.memberSince', {
+                      date: formatDate(store.memberSince, locale),
+                    })}
+                  </span>
                 </p>
               </div>
             </div>
@@ -81,10 +93,10 @@ export default async function StorePreviewPage() {
             {store.products.length === 0 ? (
               <CardEmpty
                 icon={PackageSearch}
-                title="No products listed"
-                description="Only visible, in-catalog products appear here."
+                title={t('preview.emptyTitle')}
+                description={t('preview.emptyBody')}
                 action={{
-                  label: 'Add a product',
+                  label: t('preview.addProduct'),
                   href: '/seller/products/new',
                 }}
               />

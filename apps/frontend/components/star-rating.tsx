@@ -2,6 +2,7 @@
 
 import { Star } from 'lucide-react'
 import { useState } from 'react'
+import { useT } from '@/components/i18n-provider'
 import { cn } from '@/lib/utils'
 
 const STARS = [1, 2, 3, 4, 5]
@@ -26,6 +27,7 @@ export function StarRating({
   name?: string
   disabled?: boolean
 }) {
+  const t = useT()
   const [hovered, setHovered] = useState(0)
   // Hover previews the score without committing it.
   const shown = hovered || value
@@ -35,7 +37,7 @@ export function StarRating({
       className="flex items-center gap-1"
       onMouseLeave={() => setHovered(0)}
       role="radiogroup"
-      aria-label="Rating out of 5"
+      aria-label={t('review.ratingGroup')}
     >
       {STARS.map((star) => (
         <label
@@ -59,7 +61,7 @@ export function StarRating({
               !disabled && 'hover:scale-110'
             )}
           />
-          <span className="sr-only">{star} stars</span>
+          <span className="sr-only">{t('review.stars', { n: star })}</span>
         </label>
       ))}
     </div>
@@ -74,10 +76,12 @@ export function StarDisplay({
   rating: number
   className?: string
 }) {
+  const t = useT()
+
   return (
     <span
       className={cn('flex items-center gap-0.5', className)}
-      aria-label={`${rating} out of 5`}
+      aria-label={t('review.outOf', { n: rating })}
     >
       {STARS.map((star) => (
         <Star

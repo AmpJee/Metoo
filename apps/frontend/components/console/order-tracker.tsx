@@ -1,4 +1,5 @@
 import { Check } from 'lucide-react'
+import { getT } from '@/lib/i18n/server'
 import { statusLabel, TRACKER_STEPS } from '@/lib/order-status'
 import type { OrderStatus } from '@/lib/types'
 import { cn } from '@/lib/utils'
@@ -15,11 +16,17 @@ import { cn } from '@/lib/utils'
  * CANCELLED and CLOSED sit outside the sequence and get a plain message —
  * a half-filled rail would misrepresent a cancelled order.
  */
-export function OrderTracker({ status }: { status: OrderStatus }) {
+export async function OrderTracker({ status }: { status: OrderStatus }) {
+  const t = await getT()
+
   if (status === 'CANCELLED' || status === 'CLOSED') {
     return (
       <p className="rounded-[8px] bg-[#f5f5f5] px-[16px] py-[12px] text-[15px] text-black/50">
-        This order is {status === 'CANCELLED' ? 'cancelled' : 'closed'}.
+        {t(
+          status === 'CANCELLED'
+            ? 'sellerOrder.cancelled'
+            : 'sellerOrder.closed'
+        )}
       </p>
     )
   }
@@ -61,7 +68,7 @@ export function OrderTracker({ status }: { status: OrderStatus }) {
                 done ? 'font-bold text-black' : 'text-black/50'
               )}
             >
-              {statusLabel(step)}
+              {statusLabel(step, t)}
             </span>
           </li>
         )

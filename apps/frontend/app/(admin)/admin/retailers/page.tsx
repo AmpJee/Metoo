@@ -1,9 +1,5 @@
 import {
-  PAYMENT_PREFERENCE_LABELS,
-  PAYMENT_RELIABILITY_LABELS,
   PIPELINE_STATUSES,
-  PIPELINE_STATUS_LABELS,
-  SHOP_TYPE_LABELS,
   type PaymentPreference,
   type PaymentReliability,
   type PipelineStatus,
@@ -18,10 +14,15 @@ import { Card, CardEmpty } from '@/components/console/card'
 import { Table, TBody, TD, TH, THead, TR } from '@/components/console/table'
 import { api } from '@/lib/api'
 import { formatDate } from '@/lib/format'
+import { getLocale } from '@/lib/i18n/server'
+import { getT } from '@/lib/i18n/server'
 import type { Applicant } from '@/lib/types'
 import { PipelineStatusControl } from '../pipeline-status'
 
-export const metadata: Metadata = { title: 'Retailers' }
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT()
+  return { title: t('adminRetailers.title') }
+}
 
 const TONE: Record<
   PipelineStatus,
@@ -53,6 +54,9 @@ export default async function AdminRetailersPage({
     ? (raw as PipelineStatus)
     : undefined
 
+  const t = await getT()
+  const locale = await getLocale()
+
   const applicants = await api.get<Applicant[]>(
     `/admin/pipeline?role=RETAILER${status ? `&status=${status}` : ''}`
   )
@@ -60,17 +64,21 @@ export default async function AdminRetailersPage({
   return (
     <>
       <PageHeader
-        title="Retailers"
-        description="Shop pipeline, capacity, and payment reliability."
+        title={t('adminRetailers.title')}
+        description={t('adminRetailers.subtitle')}
       />
 
       <div>
         <FilterTabs
           items={[
-            { href: '/admin/retailers', label: 'All', active: !status },
+            {
+              href: '/admin/retailers',
+              label: t('adminSellers.all'),
+              active: !status,
+            },
             ...PIPELINE_STATUSES.map((value) => ({
               href: `/admin/retailers?status=${value}`,
-              label: PIPELINE_STATUS_LABELS[value],
+              label: t(`pipeline.${value}`),
               active: status === value,
             })),
           ]}
@@ -80,21 +88,21 @@ export default async function AdminRetailersPage({
           {applicants.length === 0 ? (
             <CardEmpty
               icon={Users}
-              title="No retailers here"
-              description="Shops appear as they sign up."
+              title={t('adminRetailers.emptyTitle')}
+              description={t('adminRetailers.emptyBody')}
             />
           ) : (
             <Table>
               <THead>
                 <TR>
-                  <TH>Shop</TH>
-                  <TH>Location / zone</TH>
-                  <TH>Type</TH>
-                  <TH>Currently stocks</TH>
-                  <TH className="text-right">Capacity</TH>
-                  <TH>Payment</TH>
-                  <TH>Delivery</TH>
-                  <TH>Status</TH>
+                  <TH>{t('adminRetailers.shop')}</TH>
+                  <TH>{t('adminRetailers.zone')}</TH>
+                  <TH>{t('adminRetailers.type')}</TH>
+                  <TH>{t('adminRetailers.stocks')}</TH>
+                  <TH className="text-right">{t('adminRetailers.capacity')}</TH>
+                  <TH>{t('adminRetailers.payment')}</TH>
+                  <TH>{t('adminRetailers.delivery')}</TH>
+                  <TH>{t('adminSellers.status')}</TH>
                 </TR>
               </THead>
               <TBody>
@@ -110,7 +118,9 @@ export default async function AdminRetailersPage({
                           {applicant.email}
                         </span>
                         <span className="block text-[13px] text-black/50">
-                          Signed up {formatDate(applicant.createdAt)}
+                          {t('adminSellers.signedUp', {
+                            date: formatDate(applicant.createdAt, locale),
+                          })}
                         </span>
                       </TD>
                       <TD className="text-black/50">
@@ -121,7 +131,7 @@ export default async function AdminRetailersPage({
                       </TD>
                       <TD className="text-black/50">
                         {shop?.shopType
-                          ? SHOP_TYPE_LABELS[shop.shopType as ShopType]
+                          ? t(`shopType.${shop.shopType as ShopType}`)
                           : '—'}
                       </TD>
                       <TD className="max-w-[180px] text-black/50">
@@ -129,15 +139,17 @@ export default async function AdminRetailersPage({
                       </TD>
                       <TD numeric>
                         {shop?.monthlyCapacity
-                          ? `${shop.monthlyCapacity}/mo`
+                          ? t('adminRetailers.capacityValue', {
+                              n: shop.monthlyCapacity,
+                            })
                           : '—'}
                       </TD>
                       <TD>
                         <span className="block text-[13px] text-black/50">
                           {shop?.preferredPayment
-                            ? PAYMENT_PREFERENCE_LABELS[
-                                shop.preferredPayment as PaymentPreference
-                              ]
+                            ? t(
+                                `payment.${shop.preferredPayment as PaymentPreference}`
+                              )
                             : '—'}
                         </span>
                         {shop ? (
@@ -148,11 +160,9 @@ export default async function AdminRetailersPage({
                               ]
                             }
                           >
-                            {
-                              PAYMENT_RELIABILITY_LABELS[
-                                shop.paymentReliability as PaymentReliability
-                              ]
-                            }
+                            {t(
+                              `reliability.${shop.paymentReliability as PaymentReliability}`
+                            )}
                           </Pill>
                         ) : null}
                       </TD>
@@ -161,7 +171,7 @@ export default async function AdminRetailersPage({
                       </TD>
                       <TD className="min-w-[180px]">
                         <Pill tone={TONE[applicant.status]} className="mb-2">
-                          {PIPELINE_STATUS_LABELS[applicant.status]}
+                          {t(`pipeline.${applicant.status}`)}
                         </Pill>
                         <PipelineStatusControl
                           userId={applicant.id}

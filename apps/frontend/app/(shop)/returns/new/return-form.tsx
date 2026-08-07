@@ -4,10 +4,12 @@ import { Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { requestReturn } from '@/app/actions/returns'
+import { useT } from '@/components/i18n-provider'
 import { Button } from '@/components/ui/button'
 
 export function ReturnForm({ orderId }: { orderId: string }) {
   const router = useRouter()
+  const t = useT()
   const [reason, setReason] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
@@ -30,9 +32,7 @@ export function ReturnForm({ orderId }: { orderId: string }) {
       }}
     >
       <label className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium">
-          What is wrong with the order?
-        </span>
+        <span className="text-sm font-medium">{t('returnNew.prompt')}</span>
         <textarea
           value={reason}
           onChange={(event) => setReason(event.target.value)}
@@ -40,7 +40,7 @@ export function ReturnForm({ orderId }: { orderId: string }) {
           minLength={1}
           maxLength={2000}
           rows={6}
-          placeholder="Describe the problem — damaged items, wrong products, short delivery…"
+          placeholder={t('returnNew.placeholder')}
           className="rounded-lg bg-input px-3 py-2 text-sm placeholder:text-muted-foreground"
         />
         <span className="text-xs text-muted-foreground">
@@ -64,7 +64,7 @@ export function ReturnForm({ orderId }: { orderId: string }) {
 
       <Button type="submit" size="lg" disabled={pending || !reason.trim()}>
         {pending ? <Loader2 className="size-4 animate-spin" /> : null}
-        Submit
+        {t('returnNew.submit')}
       </Button>
     </form>
   )

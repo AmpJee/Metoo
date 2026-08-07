@@ -1,33 +1,39 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { AuthShell } from '@/components/auth-shell'
+import { getT } from '@/lib/i18n/server'
 import { RegisterForm } from './register-form'
 
-export const metadata: Metadata = { title: 'Sign up' }
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT()
+  return { title: t('signup.retailer.title') }
+}
 
-export default function RegisterPage() {
+export default async function RegisterPage() {
+  const t = await getT()
+
   return (
     <AuthShell
-      title="Sign up to buy"
-      subtitle="Welcome! Create your account to unlock wholesale pricing."
+      title={t('signup.retailer.title')}
+      subtitle={t('signup.retailer.subtitle')}
       footer={
         <div className="flex flex-col gap-2 text-muted-foreground">
           <p>
-            Already have an account?{' '}
+            {t('signup.retailer.haveAccount')}{' '}
             <Link
               href="/login"
               className="font-medium text-primary hover:underline"
             >
-              Log in
+              {t('auth.login')}
             </Link>
           </p>
           <p>
-            Are you a brand?{' '}
+            {t('signup.retailer.areYouBrand')}{' '}
             <Link
               href="/register/seller"
               className="font-medium text-primary hover:underline"
             >
-              Sell on Metoo
+              {t('auth.sellOnMetoo')}
             </Link>
           </p>
         </div>

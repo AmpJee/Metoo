@@ -1,4 +1,5 @@
 import { Check } from 'lucide-react'
+import { getT } from '@/lib/i18n/server'
 import { BUYER_TRACKER_STEPS, buyerStatusLabel } from '@/lib/order-status'
 import type { OrderStatus } from '@/lib/types'
 import { cn } from '@/lib/utils'
@@ -15,11 +16,16 @@ import { cn } from '@/lib/utils'
  * a plain message instead of a progress rail — showing a half-filled track
  * for a cancelled order would misrepresent it.
  */
-export function OrderTracker({ status }: { status: OrderStatus }) {
+export async function OrderTracker({ status }: { status: OrderStatus }) {
+  const t = await getT()
+
   if (status === 'CANCELLED' || status === 'CLOSED') {
     return (
       <div className="rounded-[9px] border border-border p-4 text-sm text-muted-foreground">
-        This order is {status === 'CANCELLED' ? 'cancelled' : 'closed'}.
+        {/* Two whole sentences rather than a slot in one. Thai does not put
+            an adjective where English does, so "This order is {x}." cannot be
+            assembled from a fragment. */}
+        {t(status === 'CANCELLED' ? 'order.cancelled' : 'order.closed')}
       </div>
     )
   }
@@ -65,7 +71,7 @@ export function OrderTracker({ status }: { status: OrderStatus }) {
                 done ? 'font-medium' : 'text-muted-foreground'
               )}
             >
-              {buyerStatusLabel(step)}
+              {buyerStatusLabel(step, t)}
             </span>
           </li>
         )

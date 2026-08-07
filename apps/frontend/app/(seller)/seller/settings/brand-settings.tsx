@@ -4,38 +4,51 @@ import { Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { updateBankDetails, updateBrandProfile } from '@/app/actions/account'
+import { useT } from '@/components/i18n-provider'
 import { ProfileForm, type ProfileField } from '@/components/profile-form'
 import type { BrandProfile } from '@/lib/types'
 
 export function BrandSettings({ profile }: { profile: BrandProfile }) {
+  const t = useT()
+
   const fields: ProfileField[] = [
-    { name: 'name', label: 'Brand name', value: profile.name, maxLength: 120 },
+    {
+      name: 'name',
+      label: t('sellerSettings.name'),
+      value: profile.name,
+      maxLength: 120,
+    },
     {
       name: 'description',
-      label: 'About your brand',
+      label: t('sellerSettings.about'),
       value: profile.description ?? '',
       multiline: true,
       optional: true,
       maxLength: 1000,
-      hint: 'Shown on your storefront.',
+      hint: t('sellerSettings.aboutHint'),
     },
-    { name: 'phone', label: 'Phone', value: profile.phone, maxLength: 20 },
+    {
+      name: 'phone',
+      label: t('sellerSettings.phone'),
+      value: profile.phone,
+      maxLength: 20,
+    },
     {
       name: 'addressLine',
-      label: 'Address',
+      label: t('sellerSettings.address'),
       value: profile.addressLine,
       maxLength: 200,
-      hint: 'Where couriers collect your parcels.',
+      hint: t('sellerSettings.addressHint'),
     },
     {
       name: 'province',
-      label: 'Province',
+      label: t('sellerSettings.province'),
       value: profile.province,
       maxLength: 100,
     },
     {
       name: 'postalCode',
-      label: 'Postal code',
+      label: t('sellerSettings.postalCode'),
       value: profile.postalCode,
       maxLength: 10,
     },
@@ -82,6 +95,7 @@ export function BrandSettings({ profile }: { profile: BrandProfile }) {
  */
 export function BankForm({ profile }: { profile: BrandProfile }) {
   const router = useRouter()
+  const t = useT()
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
   const [pending, startTransition] = useTransition()
@@ -114,18 +128,23 @@ export function BankForm({ profile }: { profile: BrandProfile }) {
     <form onSubmit={onSubmit} className="flex max-w-[560px] flex-col gap-4">
       {profile.bankAccountLast4 ? (
         <p className="rounded-[9px] border border-border px-3 py-2 text-sm text-muted-foreground">
-          Currently paying out to {profile.bankName} ····
-          {profile.bankAccountLast4}
-          {profile.bankAccountName ? ` · ${profile.bankAccountName}` : null}
+          {/* Two whole sentences rather than a trailing " · name" fragment:
+              Thai puts the account holder before the bank, so appending it
+              afterwards reads backwards. */}
+          {t(profile.bankAccountName ? 'bank.currentNamed' : 'bank.current', {
+            bank: profile.bankName ?? '',
+            last4: profile.bankAccountLast4,
+            name: profile.bankAccountName ?? '',
+          })}
         </p>
       ) : (
         <p className="rounded-[9px] border border-border px-3 py-2 text-sm text-muted-foreground">
-          No bank account on file — you cannot withdraw until you add one.
+          {t('bank.none')}
         </p>
       )}
 
       <label className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium">Bank</span>
+        <span className="text-sm font-medium">{t('bank.name')}</span>
         <input
           name="bankName"
           required
@@ -135,7 +154,7 @@ export function BankForm({ profile }: { profile: BrandProfile }) {
       </label>
 
       <label className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium">Account name</span>
+        <span className="text-sm font-medium">{t('bank.accountName')}</span>
         <input
           name="bankAccountName"
           required
@@ -145,7 +164,7 @@ export function BankForm({ profile }: { profile: BrandProfile }) {
       </label>
 
       <label className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium">Account number</span>
+        <span className="text-sm font-medium">{t('bank.accountNumber')}</span>
         <input
           name="bankAccountNumber"
           required
@@ -155,8 +174,7 @@ export function BankForm({ profile }: { profile: BrandProfile }) {
           className="h-10 rounded-[9px] border border-border bg-transparent px-3 text-sm outline-none focus:border-primary"
         />
         <span className="text-xs text-muted-foreground">
-          Digits, spaces or dashes. Stored for admin payouts only and never
-          shown back in full.
+          {t('bank.accountNumberHint')}
         </span>
       </label>
 
@@ -174,7 +192,7 @@ export function BankForm({ profile }: { profile: BrandProfile }) {
           role="status"
           className="rounded-md bg-success/10 px-3 py-2 text-sm text-success"
         >
-          Bank details saved.
+          {t('bank.saved')}
         </p>
       ) : null}
 
@@ -184,7 +202,7 @@ export function BankForm({ profile }: { profile: BrandProfile }) {
         className="inline-flex h-10 w-fit items-center justify-center gap-2 rounded-[9px] bg-primary px-4 text-sm font-medium text-primary-foreground disabled:opacity-60"
       >
         {pending ? <Loader2 className="size-4 animate-spin" /> : null}
-        Save bank details
+        {t('bank.save')}
       </button>
     </form>
   )

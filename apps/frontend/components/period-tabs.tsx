@@ -1,12 +1,14 @@
 import Link from 'next/link'
+import { getT } from '@/lib/i18n/server'
+import type { MessageKey } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
 
 const PERIODS = [
-  { key: 'day', label: 'Day' },
-  { key: 'week', label: 'Week' },
-  { key: 'month', label: 'Month' },
-  { key: 'year', label: 'Year' },
-] as const
+  { key: 'day', labelKey: 'period.day' },
+  { key: 'week', labelKey: 'period.week' },
+  { key: 'month', labelKey: 'period.month' },
+  { key: 'year', labelKey: 'period.year' },
+] as const satisfies readonly { key: string; labelKey: MessageKey }[]
 
 /**
  * The Day / Week / Month / Year toggle.
@@ -17,13 +19,15 @@ const PERIODS = [
  *
  * Selected state is a solid crimson pill, matching the sidebar's active item.
  */
-export function PeriodTabs({
+export async function PeriodTabs({
   basePath,
   active,
 }: {
   basePath: string
   active: string
 }) {
+  const t = await getT()
+
   return (
     <nav className="flex gap-[6px] rounded-[9px] bg-white p-[6px]">
       {PERIODS.map((period) => (
@@ -38,7 +42,7 @@ export function PeriodTabs({
               : 'text-black hover:bg-[#cb2957]/10'
           )}
         >
-          {period.label}
+          {t(period.labelKey)}
         </Link>
       ))}
     </nav>

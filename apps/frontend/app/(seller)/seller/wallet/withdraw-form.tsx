@@ -6,6 +6,7 @@ import { useState, useTransition } from 'react'
 import { requestWithdrawal } from '@/app/actions/seller'
 import { CButton } from '@/components/console/button'
 import { CField, CInput } from '@/components/console/field'
+import { useT } from '@/components/i18n-provider'
 import { formatBaht } from '@/lib/format'
 
 /**
@@ -27,6 +28,7 @@ export function WithdrawForm({
   bankAccountLast4: string | null
 }) {
   const router = useRouter()
+  const t = useT()
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState(false)
   const [pending, startTransition] = useTransition()
@@ -35,8 +37,7 @@ export function WithdrawForm({
   if (!bankName || !bankAccountLast4) {
     return (
       <p className="rounded-md bg-[#f5f5f5] p-3 text-[15px] text-black/50">
-        Add your bank details before requesting a withdrawal — contact support
-        to set them up.
+        {t('withdraw.needBank')}
       </p>
     )
   }
@@ -44,8 +45,9 @@ export function WithdrawForm({
   if (availableMinor < minWithdrawalMinor) {
     return (
       <p className="rounded-md bg-[#f5f5f5] p-3 text-[15px] text-black/50">
-        The minimum withdrawal is {formatBaht(minWithdrawalMinor)}. Your balance
-        will be available once more orders reach Money Received.
+        {t('withdraw.belowMinimum', {
+          amount: formatBaht(minWithdrawalMinor),
+        })}
       </p>
     )
   }
@@ -62,11 +64,15 @@ export function WithdrawForm({
         const amountMinor = Math.round(baht * 100)
 
         if (!Number.isFinite(baht) || amountMinor < minWithdrawalMinor) {
-          setError(`Enter at least ${formatBaht(minWithdrawalMinor)}.`)
+          setError(
+            t('withdraw.atLeast', {
+              amount: formatBaht(minWithdrawalMinor),
+            })
+          )
           return
         }
         if (amountMinor > availableMinor) {
-          setError('Amount exceeds available balance.')
+          setError(t('withdraw.exceedsBalance'))
           return
         }
 
@@ -82,8 +88,11 @@ export function WithdrawForm({
       }}
     >
       <CField
-        label="Amount (฿)"
-        hint={`Available ${formatBaht(availableMinor)} · minimum ${formatBaht(minWithdrawalMinor)}`}
+        label={t('withdraw.amount')}
+        hint={t('withdraw.amountHint', {
+          available: formatBaht(availableMinor),
+          minimum: formatBaht(minWithdrawalMinor),
+        })}
       >
         <CInput
           name="amountBaht"
@@ -96,8 +105,10 @@ export function WithdrawForm({
       </CField>
 
       <p className="text-[13px] text-black/50">
-        Paid to {bankName} ····{bankAccountLast4}. The amount leaves your
-        balance immediately; an admin then approves and transfers it.
+        {t('withdraw.payoutNote', {
+          bank: bankName,
+          last4: bankAccountLast4,
+        })}
       </p>
 
       {error ? (
@@ -111,13 +122,13 @@ export function WithdrawForm({
 
       {done ? (
         <p className="rounded-md bg-[#1f7a4d]/10 px-3 py-2 text-[15px] text-[#1f7a4d]">
-          Withdrawal requested.
+          {t('withdraw.done')}
         </p>
       ) : null}
 
       <CButton type="submit" disabled={pending}>
         {pending ? <Loader2 className="size-4 animate-spin" /> : null}
-        Confirm withdrawal
+        {t('withdraw.confirm')}
       </CButton>
     </form>
   )

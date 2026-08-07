@@ -3,6 +3,7 @@
 import { Check, Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
+import { useT } from '@/components/i18n-provider'
 import { resolveFeedback } from '@/app/actions/admin'
 import { CButton } from '@/components/console/button'
 import { CTextarea } from '@/components/console/field'
@@ -13,12 +14,13 @@ export function ResolveButton({ id }: { id: string }) {
   const [open, setOpen] = useState(false)
   const [note, setNote] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const t = useT()
   const [pending, startTransition] = useTransition()
 
   if (!open) {
     return (
       <CButton size="sm" variant="secondary" onClick={() => setOpen(true)}>
-        <Check className="size-3.5" /> Resolve
+        <Check className="size-3.5" /> {t('feedback.resolve')}
       </CButton>
     )
   }
@@ -30,7 +32,7 @@ export function ResolveButton({ id }: { id: string }) {
         onChange={(event) => setNote(event.target.value)}
         rows={2}
         maxLength={2000}
-        placeholder="What was done about it (optional, internal)."
+        placeholder={t('feedback.notePlaceholder')}
         className="min-h-0 text-[15px]"
       />
       <div className="flex gap-2">
@@ -54,7 +56,7 @@ export function ResolveButton({ id }: { id: string }) {
           Mark resolved
         </CButton>
         <CButton size="sm" variant="ghost" onClick={() => setOpen(false)}>
-          Cancel
+          {t('common.cancel')}
         </CButton>
       </div>
       {error ? (

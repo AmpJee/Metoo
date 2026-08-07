@@ -7,10 +7,14 @@ import { Button } from '@/components/ui/button'
 import { ApiError, api } from '@/lib/api'
 import { env } from '@/lib/env'
 import { formatBaht } from '@/lib/format'
-import { awaitingPayment } from '@/lib/order-status'
+import { getT } from '@/lib/i18n/server'
+import { awaitingPayment, buyerStatusLabel } from '@/lib/order-status'
 import type { Order } from '@/lib/types'
 
-export const metadata: Metadata = { title: 'Pay' }
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT()
+  return { title: t('pay.title') }
+}
 
 /**
  * Pay by PromptPay transfer.
@@ -27,6 +31,7 @@ export default async function PayOrderPage({
 }: {
   params: Promise<{ id: string }>
 }) {
+  const t = await getT()
   const { id } = await params
 
   let order: Order
@@ -48,12 +53,12 @@ export default async function PayOrderPage({
         href={`/orders/${order.id}`}
         className="mb-6 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary"
       >
-        <ArrowLeft className="size-4" /> Back to order
+        <ArrowLeft className="size-4" /> {t('pay.backToOrder')}
       </Link>
 
       <div className="mx-auto max-w-[520px]">
         <h1 className="text-[20px] font-bold md:text-[28px]">
-          Pay {order.orderNumber}
+          {t('pay.heading', { number: order.orderNumber })}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">{order.brand.name}</p>
 
@@ -62,7 +67,7 @@ export default async function PayOrderPage({
             <div className="relative size-[260px] overflow-hidden rounded-[9px] bg-white">
               <Image
                 src={qrUrl}
-                alt="PromptPay QR code"
+                alt={t('pay.qrAlt')}
                 fill
                 sizes="260px"
                 className="object-contain"
@@ -78,42 +83,43 @@ export default async function PayOrderPage({
                 strokeWidth={1.5}
               />
               <p className="px-6 text-xs text-muted-foreground">
-                The PromptPay QR has not been set up yet. Contact support to
-                arrange payment.
+                {t('pay.noQr')}
               </p>
             </div>
           )}
 
           <dl className="w-full border-t border-border pt-4 text-sm">
             <div className="flex items-baseline justify-between py-1">
-              <dt className="text-muted-foreground">Amount</dt>
+              <dt className="text-muted-foreground">{t('pay.amount')}</dt>
               <dd className="text-[20px] font-bold text-primary">
                 {formatBaht(order.totalMinor)}
               </dd>
             </div>
             <div className="flex items-baseline justify-between py-1">
-              <dt className="text-muted-foreground">Reference</dt>
+              <dt className="text-muted-foreground">{t('pay.reference')}</dt>
               <dd className="font-mono">{order.orderNumber}</dd>
             </div>
           </dl>
 
           <p className="w-full rounded-md bg-secondary p-3 text-xs text-muted-foreground">
-            Put the order number in the transfer note — it is how the seller
-            matches your payment to this order.
+            {t('pay.referenceHint')}
           </p>
         </div>
 
         <div className="mt-4 flex items-start gap-2 rounded-[9px] border border-border p-4 text-sm">
           <Info className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
           <p className="text-muted-foreground">
-            The order stays in <span className="font-medium">To Pay</span> until
-            the seller confirms your transfer arrived. Shipping starts after
-            that.
+            {/* The status name is interpolated rather than written out, so it
+                stays the same words as the badge on the order itself. It also
+                loses the bold, which no longer has a slot to sit in. */}
+            {t('pay.stillToPay', {
+              status: buyerStatusLabel('PENDING', t),
+            })}
           </p>
         </div>
 
         <Button asChild variant="outline" className="mt-6 w-full">
-          <Link href={`/orders/${order.id}`}>Back to order</Link>
+          <Link href={`/orders/${order.id}`}>{t('pay.backToOrder')}</Link>
         </Button>
       </div>
     </div>

@@ -4,25 +4,27 @@ import { Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { CButton } from '@/components/console/button'
+import { useT } from '@/components/i18n-provider'
+import type { MessageKey } from '@/lib/i18n'
 import type { OrderAction, OrderStatus } from '@/lib/types'
 
 /** Why there is nothing to press, given where the order sits. */
-function waitingOn(status: OrderStatus | undefined) {
+function waitingOn(status: OrderStatus | undefined): MessageKey {
   switch (status) {
     case 'CONFIRMED':
     case 'READY_FOR_PICKUP':
     case 'PICKED_UP':
-      return 'With Metoo for delivery — nothing for you to do here.'
+      return 'sellerOrder.waitingDelivery'
     case 'DELIVERED':
-      return 'Delivered. Waiting for the retailer to confirm, which releases your payment.'
+      return 'sellerOrder.waitingBuyer'
     case 'SETTLED':
-      return 'Complete — this sale is in your wallet.'
+      return 'sellerOrder.waitingSettled'
     case 'CANCELLED':
-      return 'This order was cancelled.'
+      return 'sellerOrder.waitingCancelled'
     case 'CLOSED':
-      return 'Closed after a return.'
+      return 'sellerOrder.waitingClosed'
     default:
-      return 'No further action on this order.'
+      return 'sellerOrder.waitingNone'
   }
 }
 
@@ -33,6 +35,14 @@ function waitingOn(status: OrderStatus | undefined) {
  * table in the backend's domain layer. Nothing here decides what is legal —
  * that would be a second copy of the state machine, free to drift from the
  * one the server enforces.
+ *
+ * The *wording* is local, though, keyed by destination status. The API's own
+ * `label` is English and there is nowhere for it to learn otherwise; taking
+ * only the set of legal moves from the server and naming them here keeps the
+ * state machine in one place while letting the buttons speak Thai. Each `to`
+ * maps to exactly one label across every source state — CANCELLED reads
+ * "Cancel Order" from both PENDING and CONFIRMED — so keying by destination
+ * loses nothing. `action.label` remains the fallback.
  *
  * Cancelling is destructive and terminal, so it is styled apart and confirmed.
  */
@@ -47,6 +57,7 @@ export function OrderActions({
   onTransition: (to: OrderStatus) => Promise<{ ok: boolean; error?: string }>
 }) {
   const router = useRouter()
+  const t = useT()
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
 
@@ -55,15 +66,13 @@ export function OrderActions({
     // "finished". Most of the lifecycle now belongs to admin, and the last
     // step belongs to the buyer, so saying "complete" would be wrong on every
     // order between Confirmed and Delivered.
-    return <p className="text-[15px] text-black/50">{waitingOn(status)}</p>
+    return <p className="text-[15px] text-black/50">{t(waitingOn(status))}</p>
   }
 
   const run = (action: OrderAction) => {
     if (
       action.to === 'CANCELLED' &&
-      !window.confirm(
-        'Cancel this order? The buyer is notified and it cannot be reopened.'
-      )
+      !window.confirm(t('sellerOrder.cancelAsk'))
     ) {
       return
     }
@@ -72,7 +81,7 @@ export function OrderActions({
     startTransition(async () => {
       const result = await onTransition(action.to)
       if (!result.ok) {
-        setError(result.error ?? 'Could not update the order.')
+        setError(result.error ?? t('sellerOrder.transitionFailed'))
         return
       }
       router.refresh()
@@ -95,7 +104,7 @@ export function OrderActions({
             onClick={() => run(action)}
           >
             {pending ? <Loader2 className="size-4 animate-spin" /> : null}
-            {action.label}
+            {t(`action.${action.to}`) || action.label}
           </CButton>
         ))}
       </div>

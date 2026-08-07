@@ -4,6 +4,7 @@ import { Loader2, Minus, Plus, ShoppingCart } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { addToCart } from '@/app/actions/cart'
+import { useT } from '@/components/i18n-provider'
 import { Button } from '@/components/ui/button'
 import { formatBaht } from '@/lib/format'
 
@@ -30,6 +31,7 @@ export function AddToCart({
   disabled?: boolean
 }) {
   const router = useRouter()
+  const t = useT()
   const [packs, setPacks] = useState(minPacks)
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState(false)
@@ -45,7 +47,7 @@ export function AddToCart({
         <div className="flex items-center rounded-lg border border-neutral-line">
           <button
             type="button"
-            aria-label="Decrease quantity"
+            aria-label={t('product.decreaseQuantity')}
             disabled={!canDecrease || pending}
             onClick={() => setPacks((n) => Math.max(minPacks, n - 1))}
             className="flex size-10 items-center justify-center disabled:opacity-40"
@@ -57,7 +59,7 @@ export function AddToCart({
           </span>
           <button
             type="button"
-            aria-label="Increase quantity"
+            aria-label={t('product.increaseQuantity')}
             disabled={!canIncrease || pending}
             onClick={() => setPacks((n) => Math.min(max, n + 1))}
             className="flex size-10 items-center justify-center disabled:opacity-40"
@@ -67,7 +69,7 @@ export function AddToCart({
         </div>
 
         <div className="text-sm text-muted-foreground">
-          {packs} {packs === 1 ? 'pack' : 'packs'} ·{' '}
+          {t(packs === 1 ? 'product.pack' : 'product.packs', { n: packs })} ·{' '}
           <span className="font-semibold text-foreground">
             {formatBaht(packs * pricePerPackMinor)}
           </span>
@@ -77,7 +79,7 @@ export function AddToCart({
       {/* The MOQ is real; the "multiples" rule never was. */}
       {minPacks > 1 ? (
         <p className="text-xs text-muted-foreground">
-          Minimum order {minPacks} packs.
+          {t('product.minimumOrder', { n: minPacks })}
         </p>
       ) : null}
 
@@ -104,7 +106,7 @@ export function AddToCart({
         ) : (
           <ShoppingCart className="size-4" />
         )}
-        {disabled ? 'Unavailable' : 'Add to Cart'}
+        {disabled ? t('product.unavailable') : t('product.addToCart')}
       </Button>
 
       {error ? (
@@ -118,7 +120,7 @@ export function AddToCart({
 
       {done && !error ? (
         <p className="rounded-md bg-success/10 px-3 py-2 text-sm text-success">
-          Added to your cart.
+          {t('product.addedToCart')}
         </p>
       ) : null}
     </div>

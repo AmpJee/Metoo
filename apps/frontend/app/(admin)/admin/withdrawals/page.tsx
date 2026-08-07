@@ -1,4 +1,3 @@
-import { WITHDRAWAL_STATUS_LABELS } from '@metoo/shared'
 import { Banknote } from 'lucide-react'
 import type { Metadata } from 'next'
 import { PageHeader } from '@/components/dashboard-shell'
@@ -7,11 +6,15 @@ import { Card, CardEmpty } from '@/components/console/card'
 import { StatTile } from '@/components/console/stat-tile'
 import { Table, TBody, TD, TH, THead, TR } from '@/components/console/table'
 import { api } from '@/lib/api'
+import { getT } from '@/lib/i18n/server'
 import { formatBaht, formatDate } from '@/lib/format'
 import type { AdminWithdrawal, WithdrawalStatus } from '@/lib/types'
 import { WithdrawalActions } from './withdrawal-actions'
 
-export const metadata: Metadata = { title: 'Withdrawals' }
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT()
+  return { title: t('adminWithdrawals.title') }
+}
 
 const TONE: Record<
   WithdrawalStatus,
@@ -32,6 +35,7 @@ const TONE: Record<
  * it is admin-only PII and must not leak anywhere else.
  */
 export default async function AdminWithdrawalsPage() {
+  const t = await getT()
   const withdrawals = await api.get<AdminWithdrawal[]>('/admin/withdrawals')
 
   const awaiting = withdrawals.filter((row) => row.status === 'REQUESTED')
@@ -44,23 +48,23 @@ export default async function AdminWithdrawalsPage() {
   return (
     <>
       <PageHeader
-        title="Withdrawals"
-        description="Approve a request, transfer the money, then record the reference."
+        title={t('adminWithdrawals.title')}
+        description={t('adminWithdrawals.subtitle')}
       />
 
       <div className="flex flex-col gap-[20px]">
         <section className="grid gap-4 sm:grid-cols-3">
           <StatTile
-            label="Awaiting review"
+            label={t('adminWithdrawals.awaiting')}
             value={String(awaiting.length)}
             tint="warning"
           />
           <StatTile
-            label="Approved, not yet paid"
+            label={t('adminWithdrawals.approvedUnpaid')}
             value={String(approved.length)}
           />
           <StatTile
-            label="Total outstanding"
+            label={t('adminWithdrawals.outstanding')}
             value={formatBaht(owed)}
             tint="primary"
           />
@@ -70,19 +74,19 @@ export default async function AdminWithdrawalsPage() {
           {withdrawals.length === 0 ? (
             <CardEmpty
               icon={Banknote}
-              title="No withdrawal requests"
-              description="Brands request payouts from their wallet."
+              title={t('adminWithdrawals.emptyTitle')}
+              description={t('adminWithdrawals.emptyBody')}
             />
           ) : (
             <Table>
               <THead>
                 <TR>
-                  <TH>Requested</TH>
-                  <TH>Brand</TH>
-                  <TH>Transfer to</TH>
-                  <TH className="text-right">Amount</TH>
-                  <TH>Status</TH>
-                  <TH>Action</TH>
+                  <TH>{t('adminWithdrawals.requested')}</TH>
+                  <TH>{t('adminWithdrawals.brand')}</TH>
+                  <TH>{t('adminWithdrawals.transferTo')}</TH>
+                  <TH className="text-right">{t('adminWithdrawals.amount')}</TH>
+                  <TH>{t('adminWithdrawals.status')}</TH>
+                  <TH>{t('adminWithdrawals.action')}</TH>
                 </TR>
               </THead>
               <TBody>
@@ -106,7 +110,7 @@ export default async function AdminWithdrawalsPage() {
                     </TD>
                     <TD>
                       <Pill tone={TONE[row.status]}>
-                        {WITHDRAWAL_STATUS_LABELS[row.status]}
+                        {t(`withdrawal.${row.status}`)}
                       </Pill>
                       {row.reviewNote ? (
                         <span className="mt-1 block max-w-[200px] text-[13px] text-black/50">
@@ -115,7 +119,7 @@ export default async function AdminWithdrawalsPage() {
                       ) : null}
                       {row.paymentRef ? (
                         <span className="mt-1 block text-[13px] text-black/50">
-                          Ref {row.paymentRef}
+                          {t('adminWithdrawals.ref', { ref: row.paymentRef })}
                         </span>
                       ) : null}
                     </TD>

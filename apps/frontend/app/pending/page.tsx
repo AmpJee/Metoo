@@ -4,9 +4,13 @@ import { redirect } from 'next/navigation'
 import { AuthShell } from '@/components/auth-shell'
 import { LogoutButton } from '@/components/logout-button'
 import { ApiError, api } from '@/lib/api'
+import { getT } from '@/lib/i18n/server'
 import type { Me, PipelineStatus } from '@/lib/types'
 
-export const metadata: Metadata = { title: 'Account under review' }
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT()
+  return { title: t('pending.title') }
+}
 
 /**
  * Where a signed-in but not-yet-ONBOARDED retailer lands.
@@ -14,44 +18,24 @@ export const metadata: Metadata = { title: 'Account under review' }
  * This screen is not optional: registration creates an account at
  * NOT_CONTACTED, and every buyer route requires ONBOARDED. Without it a new
  * signup would face a redirect loop or a blank page.
+ *
+ * Only the icon and tone live here now — the wording is keyed by pipeline
+ * status in the dictionary (`pending.NOT_CONTACTED.title` and friends).
  */
-const COPY: Record<
+const PRESENTATION: Record<
   PipelineStatus,
-  { icon: typeof Clock; tone: string; title: string; body: string }
+  { icon: typeof Clock; tone: string }
 > = {
-  NOT_CONTACTED: {
-    icon: Clock,
-    tone: 'text-warning',
-    title: 'Your account is under review',
-    body: 'Thanks for signing up. Our team reviews every shop before opening wholesale pricing — we will be in touch shortly.',
-  },
-  CONTACTED: {
-    icon: Clock,
-    tone: 'text-warning',
-    title: 'We have been in touch',
-    body: 'Someone from our team has reached out. Once we have finished going through your details, your account will be opened.',
-  },
-  INTERESTED: {
-    icon: CheckCircle2,
-    tone: 'text-info',
-    title: 'Almost there',
-    body: 'Your shop is being set up. You will be able to browse the catalog as soon as onboarding is complete.',
-  },
-  ONBOARDED: {
-    icon: CheckCircle2,
-    tone: 'text-success',
-    title: 'You are approved',
-    body: 'Your account is active.',
-  },
-  DECLINED: {
-    icon: XCircle,
-    tone: 'text-destructive',
-    title: 'We could not approve this account',
-    body: 'Unfortunately we are unable to open wholesale access for this shop at the moment.',
-  },
+  NOT_CONTACTED: { icon: Clock, tone: 'text-warning' },
+  CONTACTED: { icon: Clock, tone: 'text-warning' },
+  INTERESTED: { icon: CheckCircle2, tone: 'text-info' },
+  ONBOARDED: { icon: CheckCircle2, tone: 'text-success' },
+  DECLINED: { icon: XCircle, tone: 'text-destructive' },
 }
 
 export default async function PendingPage() {
+  const t = await getT()
+
   let me: Me
   try {
     me = await api.get<Me>('/auth/me')
@@ -64,7 +48,9 @@ export default async function PendingPage() {
   // Approved users have no business here.
   if (me.status === 'ONBOARDED') redirect('/explore')
 
-  const { icon: Icon, tone, title, body } = COPY[me.status]
+  const { icon: Icon, tone } = PRESENTATION[me.status]
+  const title = t(`pending.${me.status}.title`)
+  const body = t(`pending.${me.status}.body`)
 
   return (
     <AuthShell title={title} subtitle={body}>
@@ -77,7 +63,10 @@ export default async function PendingPage() {
           <div className="text-sm">
             <p className="font-medium">{me.retailer?.shopName ?? me.email}</p>
             <p className="text-muted-foreground">
-              Status: {me.status.replaceAll('_', ' ').toLowerCase()}
+              {/* The pipeline label rather than a lowercased enum name: it is
+                  already translated, and "not contacted" was never wording
+                  anyone chose. */}
+              {t('pending.status')}: {t(`pipeline.${me.status}`)}
             </p>
           </div>
         </div>
@@ -86,7 +75,7 @@ export default async function PendingPage() {
             point of it is that being blocked is actionable, not mysterious. */}
         {me.reviewNote ? (
           <div className="rounded-[9px] bg-secondary p-4 text-sm">
-            <p className="mb-1 font-medium">A note from our team</p>
+            <p className="mb-1 font-medium">{t('pending.noteTitle')}</p>
             <p className="text-muted-foreground">{me.reviewNote}</p>
           </div>
         ) : null}

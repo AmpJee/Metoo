@@ -74,6 +74,33 @@
     outline: 2px solid var(--color-ring);
     outline-offset: 2px;
   }
+
+  /**
+   * Thai needs more vertical room than the design allows for.
+   *
+   * The script stacks marks above and below the baseline — สระบน like ิ ี ึ,
+   * สระล่าง like ุ ู, plus tone marks above those — so a line box sized for
+   * Latin clips them. The console is the worst case, being full of 15px text
+   * at default leading. 1.7 clears the tallest stack; anything a component
+   * sets explicitly still wins, so the design's own tight headings survive.
+   *
+   * Scoped to :lang(th), which the root layout stamps from the locale cookie.
+   */
+  :lang(th) {
+    line-height: 1.7;
+  }
+
+  /**
+   * Thai does not put spaces between words, so a long string is one
+   * unbreakable token to the default wrapping rules and will overflow its
+   * container rather than wrap. `line-break: loose` lets the browser break at
+   * Thai word boundaries where it can work them out; `overflow-wrap` is the
+   * backstop for when it cannot.
+   */
+  :lang(th) {
+    line-break: loose;
+    overflow-wrap: break-word;
+  }
 }
 
 @utility container-page {

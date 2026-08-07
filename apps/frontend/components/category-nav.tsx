@@ -1,9 +1,18 @@
-import { CATEGORIES, CATEGORY_LABELS } from '@metoo/shared'
+import { CATEGORIES } from '@metoo/shared'
 import Link from 'next/link'
+import { getT } from '@/lib/i18n/server'
 import { cn } from '@/lib/utils'
 
 /** Category pills. "All" clears the filter rather than selecting a value. */
-export function CategoryNav({ active, q }: { active?: string; q?: string }) {
+export async function CategoryNav({
+  active,
+  q,
+}: {
+  active?: string
+  q?: string
+}) {
+  const t = await getT()
+
   const href = (category?: string) => {
     const params = new URLSearchParams()
     if (category) params.set('category', category)
@@ -15,11 +24,11 @@ export function CategoryNav({ active, q }: { active?: string; q?: string }) {
   return (
     <nav className="flex flex-wrap gap-[10px]">
       <Pill href={href()} active={!active}>
-        All
+        {t('explore.all')}
       </Pill>
       {CATEGORIES.map((category) => (
         <Pill key={category} href={href(category)} active={active === category}>
-          {CATEGORY_LABELS[category]}
+          {t(`category.${category}`)}
         </Pill>
       ))}
     </nav>

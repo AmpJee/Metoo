@@ -9,12 +9,16 @@ import { Pill } from '@/components/console/pill'
 import { Card, CardEmpty } from '@/components/console/card'
 import { Table, TBody, TD, TH, THead, TR } from '@/components/console/table'
 import { api } from '@/lib/api'
+import { getT } from '@/lib/i18n/server'
 import { formatBaht, formatDate } from '@/lib/format'
 import { statusLabel, statusPillTone } from '@/lib/order-status'
 import type { AdminOrder } from '@/lib/types'
 import { DeliveryCostField } from './delivery-cost'
 
-export const metadata: Metadata = { title: 'Orders' }
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT()
+  return { title: t('adminOrders.title') }
+}
 
 /**
  * Every order on the platform, with both sides and the full commission
@@ -25,6 +29,7 @@ export default async function AdminOrdersPage({
 }: {
   searchParams: Promise<{ status?: string }>
 }) {
+  const t = await getT()
   const { status: raw } = await searchParams
   const status = ORDER_STATUSES.includes(raw as OrderStatus)
     ? (raw as OrderStatus)
@@ -43,17 +48,25 @@ export default async function AdminOrdersPage({
   return (
     <>
       <PageHeader
-        title="Orders"
-        description={`${orders.length} orders · ${formatBaht(gmv)} GMV · ${formatBaht(commission)} commission`}
+        title={t('adminOrders.title')}
+        description={t('adminOrders.subtitle', {
+          orders: orders.length,
+          gmv: formatBaht(gmv),
+          commission: formatBaht(commission),
+        })}
       />
 
       <div>
         <FilterTabs
           items={[
-            { href: '/admin/orders', label: 'All', active: !status },
+            {
+              href: '/admin/orders',
+              label: t('adminSellers.all'),
+              active: !status,
+            },
             ...ORDER_STATUSES.map((value) => ({
               href: `/admin/orders?status=${value}`,
-              label: statusLabel(value),
+              label: statusLabel(value, t),
               active: status === value,
             })),
           ]}
@@ -63,21 +76,21 @@ export default async function AdminOrdersPage({
           {orders.length === 0 ? (
             <CardEmpty
               icon={ShoppingBag}
-              title="No orders"
-              description="Orders with this status will appear here."
+              title={t('adminOrders.emptyTitle')}
+              description={t('adminOrders.emptyBody')}
             />
           ) : (
             <Table>
               <THead>
                 <TR>
-                  <TH>Order</TH>
-                  <TH>Brand → Retailer</TH>
-                  <TH>Status</TH>
-                  <TH className="text-right">GMV</TH>
-                  <TH className="text-right">Commission</TH>
-                  <TH className="text-right">Payout</TH>
-                  <TH>Delivery cost</TH>
-                  <TH>Move</TH>
+                  <TH>{t('adminOrders.order')}</TH>
+                  <TH>{t('adminOrders.parties')}</TH>
+                  <TH>{t('adminOrders.status')}</TH>
+                  <TH className="text-right">{t('adminOrders.gmv')}</TH>
+                  <TH className="text-right">{t('adminOrders.commission')}</TH>
+                  <TH className="text-right">{t('adminOrders.payout')}</TH>
+                  <TH>{t('adminOrders.deliveryCost')}</TH>
+                  <TH>{t('adminOrders.move')}</TH>
                 </TR>
               </THead>
               <TBody>

@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { DashboardShell } from '@/components/dashboard-shell'
 import { ApiError, api } from '@/lib/api'
+import { getT } from '@/lib/i18n/server'
 import { homeForRole } from '@/lib/roles'
 import type { Me } from '@/lib/types'
 import { PORTALS } from '@/lib/portals'
@@ -17,6 +18,8 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode
 }) {
+  const t = await getT()
+
   let me: Me
   try {
     me = await api.get<Me>('/auth/me')
@@ -30,10 +33,10 @@ export default async function AdminLayout({
 
   return (
     <DashboardShell
-      title="Management Console"
+      title={t('console.admin')}
       console="admin"
       accountName={me.email}
-      accountSubtitle="Internal admin"
+      accountSubtitle={t('adminHome.internalAdmin')}
     >
       {children}
     </DashboardShell>

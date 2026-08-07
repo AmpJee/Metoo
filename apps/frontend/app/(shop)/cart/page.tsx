@@ -6,12 +6,17 @@ import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { api } from '@/lib/api'
 import { formatBaht } from '@/lib/format'
+import { getT } from '@/lib/i18n/server'
 import type { Cart, RetailerProfile } from '@/lib/types'
 import { CartLine } from './cart-line'
 
-export const metadata: Metadata = { title: 'Shopping Cart' }
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT()
+  return { title: t('cart.title') }
+}
 
 export default async function CartPage() {
+  const t = await getT()
   const cart = await api.get<Cart>('/cart')
 
   // Checked here as well as at checkout. The API refuses an incomplete shop
@@ -27,14 +32,14 @@ export default async function CartPage() {
     return (
       <div className="container-page py-8 md:py-12">
         <h1 className="text-[20px] font-bold text-primary md:text-[36px]">
-          Shopping Cart
+          {t('cart.title')}
         </h1>
         <div className="mt-8">
           <EmptyState
             icon={ShoppingCart}
-            title="Your cart is empty"
-            description="Browse the marketplace and add items to your cart."
-            action={{ label: 'Start shopping', href: '/explore' }}
+            title={t('cart.emptyTitle')}
+            description={t('cart.emptyBody')}
+            action={{ label: t('cart.startShopping'), href: '/explore' }}
           />
         </div>
       </div>
@@ -44,7 +49,7 @@ export default async function CartPage() {
   return (
     <div className="container-page py-8 md:py-12">
       <h1 className="text-[20px] font-bold text-primary md:text-[36px]">
-        Shopping Cart
+        {t('cart.title')}
       </h1>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_340px]">
@@ -80,58 +85,62 @@ export default async function CartPage() {
         </div>
 
         <aside className="h-fit rounded-[9px] border border-border p-5 lg:sticky lg:top-[100px]">
-          <h2 className="text-base font-semibold">Order summary</h2>
+          <h2 className="text-base font-semibold">{t('cart.summary')}</h2>
 
           <dl className="mt-4 flex flex-col gap-2 text-sm">
             <div className="flex justify-between">
               <dt className="text-muted-foreground">
-                Subtotal ({cart.itemCount}{' '}
-                {cart.itemCount === 1 ? 'item' : 'items'})
+                {t(
+                  cart.itemCount === 1
+                    ? 'cart.subtotalItem'
+                    : 'cart.subtotalItems',
+                  { n: cart.itemCount }
+                )}
               </dt>
               <dd>{formatBaht(cart.totalMinor)}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-muted-foreground">Shipping</dt>
+              <dt className="text-muted-foreground">{t('cart.shipping')}</dt>
               {/* Delivery cost is set by an admin per order after it is
                   placed, so it genuinely is not known here. */}
               <dd className="text-muted-foreground">
-                Calculated after ordering
+                {t('cart.shippingLater')}
               </dd>
             </div>
           </dl>
 
           <div className="mt-4 flex justify-between border-t border-border pt-4 text-base font-semibold">
-            <span>Total</span>
+            <span>{t('cart.total')}</span>
             <span className="text-primary">{formatBaht(cart.totalMinor)}</span>
           </div>
 
           {cart.brandCount > 1 ? (
             <p className="mt-3 rounded-md bg-secondary p-3 text-xs text-muted-foreground">
-              Your cart spans {cart.brandCount} brands, so it will be placed as{' '}
-              {cart.brandCount} separate orders — one per brand, each tracked
-              and delivered on its own.
+              {t('cart.splitNotice', { n: cart.brandCount })}
             </p>
           ) : null}
 
           {missing.length > 0 ? (
             <div className="mt-4 flex flex-col gap-2 rounded-md bg-secondary p-3">
               <p className="text-xs text-muted-foreground">
-                Before your first order we need a few details about your shop so
-                we can arrange delivery:{' '}
-                {missing.map((m) => m.label).join(', ')}.
+                {/* The field labels come from the API, which still names them
+                    in English. See the note on server errors in the plan. */}
+                {t('cart.profileNeeded', {
+                  fields: missing.map((m) => m.label).join(', '),
+                })}
               </p>
               <Button asChild size="lg" className="w-full">
-                <Link href="/settings#shop">Complete your shop profile</Link>
+                <Link href="/settings#shop">{t('cart.completeProfile')}</Link>
               </Button>
             </div>
           ) : (
             <Button asChild size="lg" className="mt-4 w-full">
-              <Link href="/checkout">Check Out</Link>
+              <Link href="/checkout">{t('cart.checkout')}</Link>
             </Button>
           )}
 
           <Button asChild variant="ghost" className="mt-2 w-full">
-            <Link href="/explore">Continue shopping</Link>
+            <Link href="/explore">{t('cart.continue')}</Link>
           </Button>
         </aside>
       </div>

@@ -4,11 +4,18 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { EmptyState } from '@/components/ui/empty-state'
 import { api } from '@/lib/api'
+import { getT } from '@/lib/i18n/server'
+import type { Translate } from '@/lib/i18n'
 import type { BrandListItem, FollowedBrand } from '@/lib/types'
 
-export const metadata: Metadata = { title: 'Stores' }
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT()
+  return { title: t('stores.title') }
+}
 
 export default async function StoresPage() {
+  const t = await getT()
+
   // Brands come from the catalog, not GET /stores — that route is the brand's
   // own preview of its storefront and is BRAND-only.
   const [brands, following] = await Promise.all([
@@ -20,26 +27,30 @@ export default async function StoresPage() {
 
   return (
     <div className="container-page py-8 md:py-12">
-      <h1 className="text-[20px] font-bold md:text-[36px]">Stores</h1>
+      <h1 className="text-[20px] font-bold md:text-[36px]">
+        {t('stores.title')}
+      </h1>
 
       {following.length > 0 ? (
         <section className="mt-8">
-          <h2 className="mb-4 text-base font-semibold">Brands you follow</h2>
+          <h2 className="mb-4 text-base font-semibold">
+            {t('stores.following')}
+          </h2>
           <div className="grid grid-cols-2 gap-[16px] md:grid-cols-4 md:gap-[26px]">
             {following.map((brand) => (
-              <BrandTile key={brand.id} brand={brand} following />
+              <BrandTile key={brand.id} brand={brand} following t={t} />
             ))}
           </div>
         </section>
       ) : null}
 
       <section className="mt-10">
-        <h2 className="mb-4 text-base font-semibold">All brands</h2>
+        <h2 className="mb-4 text-base font-semibold">{t('stores.all')}</h2>
         {brands.length === 0 ? (
           <EmptyState
             icon={Store}
-            title="No brands yet"
-            description="Brands appear here once they list their first product."
+            title={t('stores.emptyTitle')}
+            description={t('stores.emptyBody')}
           />
         ) : (
           <div className="grid grid-cols-2 gap-[16px] md:grid-cols-4 md:gap-[26px]">
@@ -48,6 +59,7 @@ export default async function StoresPage() {
                 key={brand.id}
                 brand={brand}
                 following={followedIds.has(brand.id)}
+                t={t}
               />
             ))}
           </div>
@@ -57,9 +69,13 @@ export default async function StoresPage() {
   )
 }
 
+// `t` is threaded in rather than fetched again: this renders once per brand,
+// and a cookie read per tile is a needless cost for a value the page already
+// has.
 function BrandTile({
   brand,
   following,
+  t,
 }: {
   brand: {
     id: string
@@ -70,6 +86,7 @@ function BrandTile({
     rating?: { average: number | null; count: number }
   }
   following?: boolean
+  t: Translate
 }) {
   return (
     <Link
@@ -105,7 +122,9 @@ function BrandTile({
           </p>
         ) : null}
         {following ? (
-          <span className="text-xs font-medium text-primary">Following</span>
+          <span className="text-xs font-medium text-primary">
+            {t('stores.isFollowing')}
+          </span>
         ) : null}
       </div>
     </Link>

@@ -8,7 +8,8 @@ COMPOSE := docker compose
 
 .DEFAULT_GOAL := help
 .PHONY: help env install dev dev-backend dev-frontend \
-        db-generate db-migrate db-deploy db-seed db-demo db-studio db-reset \
+        db-generate db-migrate db-deploy db-seed db-demo db-prune db-prune-apply \
+	db-studio db-reset \
         lint format format-check typecheck check \
         up down build logs ps restart sh-backend sh-frontend clean
 
@@ -63,6 +64,12 @@ db-seed: ## Insert the sample rows
 
 db-demo: ## Add realistic trading history for demos (needs db-seed first)
 	cd $(BACKEND) && bun run db:demo
+
+db-prune: ## Show what pruning demo data would remove (dry run)
+	cd $(BACKEND) && bun run prisma/prune-demo-data.ts
+
+db-prune-apply: ## DESTRUCTIVE — remove demo data, keeping only the named accounts
+	cd $(BACKEND) && bun run prisma/prune-demo-data.ts --apply
 
 db-studio: ## Browse the database in Prisma Studio
 	cd $(BACKEND) && bun run db:studio

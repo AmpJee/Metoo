@@ -1,8 +1,10 @@
 import { ArrowRight, PackageCheck, Store, Truck } from 'lucide-react'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import { LanguageToggle } from '@/components/language-toggle'
 import { Button } from '@/components/ui/button'
 import { ApiError, api } from '@/lib/api'
+import { getT } from '@/lib/i18n/server'
 import { homeForUser } from '@/lib/roles'
 import { readTokens } from '@/lib/session'
 import type { Me } from '@/lib/types'
@@ -37,7 +39,27 @@ export default async function LandingPage() {
   return <Landing />
 }
 
-function Landing() {
+async function Landing() {
+  const t = await getT()
+
+  const features = [
+    {
+      icon: Store,
+      title: t('landing.browseTitle'),
+      body: t('landing.browseBody'),
+    },
+    {
+      icon: PackageCheck,
+      title: t('landing.cartTitle'),
+      body: t('landing.cartBody'),
+    },
+    {
+      icon: Truck,
+      title: t('landing.trackTitle'),
+      body: t('landing.trackBody'),
+    },
+  ]
+
   return (
     <div className="flex min-h-screen flex-col">
       <header className="border-b border-border">
@@ -49,14 +71,18 @@ function Landing() {
             metoo
           </Link>
           <div className="flex items-center gap-3">
+            {/* The one screen a signed-out shopkeeper always reaches, so it is
+                also the only place they can switch language before signing
+                in. Without it the toggle would live entirely behind auth. */}
+            <LanguageToggle />
             <Button asChild variant="ghost" size="sm">
-              <Link href="/login">Log in</Link>
+              <Link href="/login">{t('auth.login')}</Link>
             </Button>
             <Button asChild variant="outline" size="sm">
-              <Link href="/register/seller">Sign up as a brand</Link>
+              <Link href="/register/seller">{t('landing.signUpAsBrand')}</Link>
             </Button>
             <Button asChild size="sm">
-              <Link href="/register">Sign up to buy</Link>
+              <Link href="/register">{t('landing.signUpToBuy')}</Link>
             </Button>
           </div>
         </div>
@@ -66,25 +92,25 @@ function Landing() {
         <section className="container-page py-16 md:py-28">
           <div className="mx-auto flex max-w-[685px] flex-col items-center gap-[26px] text-center">
             <h1 className="text-[28px] leading-tight font-bold md:text-[48px]">
-              The best selection of brands for your store,{' '}
-              <span className="text-primary">all in one place</span>
+              {t('landing.heroLead')}{' '}
+              <span className="text-primary">{t('landing.heroAccent')}</span>
             </h1>
             <p className="text-base text-muted-foreground md:text-lg">
-              Sign up to unlock wholesale pricing with over 5 brands. Order
-              across multiple brands in one cart, track every delivery, and pay
-              on your terms.
+              {t('landing.heroBody')}
             </p>
             <div className="flex flex-wrap items-center justify-center gap-3">
               <Button asChild size="lg">
                 <Link href="/register">
-                  Sign up to buy <ArrowRight className="size-4" />
+                  {t('landing.signUpToBuy')} <ArrowRight className="size-4" />
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline">
-                <Link href="/register/seller">Sign up as a brand</Link>
+                <Link href="/register/seller">
+                  {t('landing.signUpAsBrand')}
+                </Link>
               </Button>
               <Button asChild size="lg" variant="ghost">
-                <Link href="/login">I already have an account</Link>
+                <Link href="/login">{t('landing.haveAccount')}</Link>
               </Button>
             </div>
           </div>
@@ -92,23 +118,7 @@ function Landing() {
 
         <section className="container-page pb-20">
           <div className="grid gap-[26px] md:grid-cols-3">
-            {[
-              {
-                icon: Store,
-                title: 'Browse local brands',
-                body: 'Food & beverage, health & beauty, home & living and fashion — every brand vetted and อย.-checked before it can sell.',
-              },
-              {
-                icon: PackageCheck,
-                title: 'One cart, many brands',
-                body: 'Fill a single cart across brands. At checkout it splits into one order per brand, so a delay at one never holds up another.',
-              },
-              {
-                icon: Truck,
-                title: 'Track every order',
-                body: 'From confirmed through preparing, pickup and delivery — you always know where a shipment is.',
-              },
-            ].map(({ icon: Icon, title, body }) => (
+            {features.map(({ icon: Icon, title, body }) => (
               <div
                 key={title}
                 className="flex flex-col gap-2 rounded-[9px] border border-border p-6"
@@ -126,12 +136,12 @@ function Landing() {
         <div className="container-page flex flex-col gap-2 py-8 text-sm text-muted-foreground md:flex-row md:items-center md:justify-between">
           <p>© {new Date().getFullYear()} Metoo</p>
           <p>
-            Are you a brand?{' '}
+            {t('landing.areYouBrand')}{' '}
             <Link
               href="/register/seller"
               className="font-medium text-primary hover:underline"
             >
-              Sign up as a brand
+              {t('landing.signUpAsBrand')}
             </Link>
           </p>
         </div>
