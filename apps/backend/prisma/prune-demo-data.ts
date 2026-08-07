@@ -24,6 +24,8 @@ const KEEP = [
   'admin@metoo.test',
   'klakawee.sk@gmail.com',
   'ahowbanyapon@gmail.com',
+  'enerpheregroup@gmail.com',
+  'yajaaofficial@gmail.com',
 ]
 
 const apply = process.argv.includes('--apply')
