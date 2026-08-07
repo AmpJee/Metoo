@@ -19,7 +19,7 @@ import {
  */
 const HAPPY_PATH: Array<{ from: OrderStatus; to: OrderStatus; by: Actor }> = [
   { from: 'PENDING', to: 'CONFIRMED', by: 'BRAND' },
-  { from: 'CONFIRMED', to: 'READY_FOR_PICKUP', by: 'ADMIN' },
+  { from: 'CONFIRMED', to: 'READY_FOR_PICKUP', by: 'BRAND' },
   { from: 'READY_FOR_PICKUP', to: 'PICKED_UP', by: 'ADMIN' },
   { from: 'PICKED_UP', to: 'DELIVERED', by: 'ADMIN' },
   { from: 'DELIVERED', to: 'SETTLED', by: 'RETAILER' },
@@ -59,16 +59,26 @@ describe('who may move an order', () => {
     })
   })
 
-  test('a brand cannot drive logistics', () => {
-    // A seller must not be able to claim their own parcel was collected or
-    // delivered — that is admin's to record.
-    for (const { from, to } of HAPPY_PATH.slice(1, 4)) {
+  test('a brand marks its own parcel ready', () => {
+    // They are the ones who packed it; waiting on admin to notice is a delay
+    // with no purpose.
+    expect(canTransition('CONFIRMED', 'READY_FOR_PICKUP', 'BRAND')).toEqual({
+      ok: true,
+    })
+  })
+
+  test('a brand cannot claim collection or delivery', () => {
+    // "It is ready" is a claim about their own premises. "A courier took it"
+    // and "it arrived" are claims about someone else's, and both move the
+    // order towards the money.
+    for (const { from, to } of HAPPY_PATH.slice(2, 4)) {
       expect(canTransition(from, to, 'BRAND')).toMatchObject({
         ok: false,
         code: 'FORBIDDEN_TRANSITION',
       })
     }
     expect(availableTransitions('READY_FOR_PICKUP', 'BRAND')).toEqual([])
+    expect(availableTransitions('PICKED_UP', 'BRAND')).toEqual([])
   })
 
   test('a brand cannot settle its own order', () => {

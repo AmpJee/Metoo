@@ -384,3 +384,139 @@ environment problems will bite anyone starting it:
 
 Also outstanding: `gh` is not authenticated on this machine, so PRs are opened
 by hand.
+
+---
+
+## Session log — 6 to 8 Aug 2026
+
+Everything below shipped after the log above was written. **The platform is
+live at `metoo.up.railway.app`** (API at `metoobackend-production.up.railway.app`)
+and carries real accounts. Read the deployment and data sections before
+touching anything.
+
+### Merged since PR #33
+
+| PR | What |
+| --- | --- |
+| #33 | `feature/admin-table-parity` — brand category, pipeline search, derived order columns |
+| #34 | `fix/frontend-build` — the build was broken for every path containing a space |
+| #35 | `feature/admin-and-seller-side-page-` — the seller and admin frontends |
+| #36 | `feature/order-state-rework` — six states, per-role actors, retailer confirms delivery |
+| #37 | `feature/account-and-login-pages` — split login, account settings, password change |
+| #38–#46 | Approval fix, seller signup, retailer shop profile, Thai buyer site |
+
+### The order lifecycle changed — six states, not seven
+
+`PREPARING` is **gone**. Its 12 orders became `CONFIRMED`. The ladder is now:
+
+    1 PENDING          To pay              created at checkout
+    2 CONFIRMED        Confirmed order     BRAND
+    3 READY_FOR_PICKUP Package pickup      ADMIN
+    4 PICKED_UP        Out for delivery    ADMIN
+    5 DELIVERED        Delivered           ADMIN
+    6 SETTLED          Confirm delivered   RETAILER or ADMIN
+
+Two rules worth keeping: **a brand cannot settle its own order** (that writes
+the wallet credit, so it would be crediting itself), and the retailer holds
+step 6 because confirming receipt is what should release the seller's money.
+`PATCH /orders/:id/confirm-delivered` is the buyer's endpoint — no body, always
+to SETTLED.
+
+The retailer's tracker shows five steps, not six: SETTLED is the button they
+press on step 5, not a further stage of their parcel.
+
+### Deployment — Railway, two services
+
+Both build from Dockerfiles. Four things cost hours and will again:
+
+1. **`railway.json` lives at `apps/*/railway.json`, not the repo root.** Each
+   service needs **Settings → Config-as-code → Path** pointed at its file, or
+   Railway ignores the Dockerfile, the healthcheck and the pre-deploy migration.
+2. **A dashboard Custom Start Command overrides the image's `CMD`.** The
+   frontend was set to `bun run start` against a `node:22-slim` image — "The
+   executable `bun` could not be found", with a green build. Leave the field
+   empty.
+3. **`API_URL` on the frontend must include `https://` and no trailing slash.**
+   It was once set as `PUBLIC_API_URL` (wrong name → silent fallback to
+   `localhost:3000` → `ECONNREFUSED`) and once without a scheme
+   (`ERR_INVALID_URL`, surfacing as a blank 500). The name is deliberately not
+   `NEXT_PUBLIC_` — the browser never calls Elysia directly.
+4. `DATABASE_URL` is the pooler (6543); `DIRECT_URL` is direct (5432).
+
+`/health` returns `{"status":"ok","db":"up"}` — check it after every deploy.
+
+### Data — production and dev share ONE Supabase database
+
+**This is the biggest operational risk in the project.** Anything run locally
+writes to the rows real customers see. Two orders were deleted this way by
+mistake. Before real usage grows, split production onto its own Supabase
+project.
+
+Demo data has been pruned. `make db-prune` / `make db-prune-apply` keeps only
+the accounts named in `apps/backend/prisma/prune-demo-data.ts`;
+`prisma/reset-trading.ts` wipes orders, reviews, carts and the wallet ledger
+while leaving accounts and products. Both are dry-run by default and refuse to
+run if a named account is missing.
+
+Live now: 7 accounts, 9 products, 0 orders.
+
+### Thai is the default language
+
+`apps/frontend/lib/i18n/` — a keyed dictionary split into `auth`, `shell`,
+`shop`, `console`, `enums`. **755 keys in each language**, `th` typed against
+`en` so an untranslated string fails the build. Locale is a cookie
+(`metoo_locale`), read by `lib/i18n/server.ts` on the server and carried to
+client components by `components/i18n-provider.tsx`.
+
+Two things that are easy to undo by accident:
+
+- **Inter has no Thai glyphs.** `Noto_Sans_Thai` sits after it in the
+  `--font-sans` stack. Remove it and every Thai string falls back to a system
+  font.
+- **The shared `*_LABELS` maps must not come back into the frontend.** Pipeline
+  status, อย., size bands, shop types, payment preference and reliability,
+  withdrawal status and document types all come from the dictionary. Importing
+  a label map is how English resurfaces inside a Thai screen.
+
+`app/global-error.tsx` is bilingual on purpose — it renders when the root
+layout has failed, which is what supplies the locale.
+
+### Volume pricing
+
+`ProductPriceTier` — `(productId, minPacks, pricePerPackMinor)`, unique on
+`(productId, minPacks)`. At `minPacks` or more, **the whole quantity** gets the
+tier rate. Not cumulative.
+
+The rule lives in **`packages/shared/src/pricing.ts`**, not the backend domain,
+and that placement is load-bearing: the seller's editor previews a price in the
+browser and checkout charges one on the server. `domain/volume-pricing.ts`
+re-exports it so the 18 unit tests stay where CI runs them.
+
+Everywhere that turns a quantity into money uses it — catalog detail, cart,
+checkout. Checkout snapshots the resolved price onto `OrderItem`, so editing a
+ladder never rewrites what someone paid.
+
+The seller's editor works in **bands** ("12 to 47 costs ฿635") while the API
+stores thresholds; a band's `to` and the next band's `from` are one boundary
+shown twice. The first band is the product's own price, not a stored tier.
+
+### Traps hit more than once
+
+- **`t.Optional(t.UnionEnum(...))` emits `default: values[0]`** and Elysia
+  applies it to an ABSENT key. It silently wrote `shopType=MINIMART` and
+  `preferredPayment=PROMPTPAY` into shops that never chose them. Use
+  `optionalEnum()`. This has now bitten twice.
+- **`prisma migrate diff` compares against the live database** and has produced
+  destructive SQL three times. Every migration here is hand-written.
+- **Deleting orders needs `Review` cleared first** — `Review.orderId` does not
+  cascade, and a surviving retailer's review on a doomed order blocks it.
+- **Elysia strips undeclared response fields.** Cart totals were right while
+  the unit price was silently missing.
+
+### Still open
+
+- Chat has a backend (PR #25) and **no frontend at all**
+- No payment gateway — the Pay screen is instructions
+- 5 of 9 products have no photo
+- No password reset flow
+- No error visibility: a 500 exists only in Railway logs

@@ -4,17 +4,19 @@
  * Six steps, and each one names who may make the move:
  *
  *   1 PENDING          "Confirm Order"       BRAND
- *   2 CONFIRMED        "Package Pickup"      ADMIN
+ *   2 CONFIRMED        "Package Pickup"      BRAND or ADMIN
  *   3 READY_FOR_PICKUP "Out for Delivery"    ADMIN
  *   4 PICKED_UP        "Mark Delivered"      ADMIN
  *   5 DELIVERED        "Confirm Delivered"   ADMIN or RETAILER
  *   6 SETTLED          done
  *
- * Logistics is a manual, human-run operation, so admin drives steps 2–5. The
- * two exceptions are the two ends of the deal: the BRAND accepts the order,
- * and the RETAILER confirms they received it. That last one is what releases
- * the brand's money, which is why the buyer is given it — admin can still
- * press it when a retailer goes quiet.
+ * The split follows who can honestly know the thing being claimed. A brand
+ * accepts the order and says when the parcel is packed — both facts about
+ * their own premises. Admin records collection and delivery, which happen
+ * elsewhere. The retailer confirms receipt, and that is what releases the
+ * brand's money, so the seller is deliberately not an actor on it.
+ *
+ * Admin can make every move, as the override for whenever someone goes quiet.
  *
  * Every transition is explicit. A map of what may follow what — rather than
  * an ordered list and an index comparison — is what makes CANCELLED reachable
@@ -56,10 +58,21 @@ const TRANSITIONS: Record<OrderStatus, Transition[]> = {
     { to: 'CONFIRMED', label: 'Confirm Order', actors: ['BRAND', 'ADMIN'] },
     { to: 'CANCELLED', label: 'Cancel Order', actors: ['BRAND', 'ADMIN'] },
   ],
-  // Steps 2 -> 5 are logistics, which is a manual operation admin runs. A
-  // brand cannot claim its own parcel was collected or delivered.
+  // Step 2 -> 3 is the brand's: they are the ones who know when the parcel is
+  // actually packed and sitting by the door, and waiting for an admin to
+  // notice is a delay with no purpose.
+  //
+  // Steps 3 -> 5 stay with admin. The line is drawn there deliberately: a
+  // brand saying "it is ready" is a claim about their own premises, while
+  // "a courier collected it" and "it was delivered" are claims about someone
+  // else's, and a seller must not be able to advance an order towards the
+  // money on the strength of those.
   CONFIRMED: [
-    { to: 'READY_FOR_PICKUP', label: 'Package Pickup', actors: ['ADMIN'] },
+    {
+      to: 'READY_FOR_PICKUP',
+      label: 'Package Pickup',
+      actors: ['BRAND', 'ADMIN'],
+    },
     { to: 'CANCELLED', label: 'Cancel Order', actors: ['BRAND', 'ADMIN'] },
   ],
   READY_FOR_PICKUP: [

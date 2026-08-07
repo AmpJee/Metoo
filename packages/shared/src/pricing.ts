@@ -141,3 +141,29 @@ export function checkPriceTiers(
 
   return { ok: true }
 }
+
+/**
+ * The quantities worth offering as one-tap buttons.
+ *
+ * Derived from the ladder rather than kept as a second list. A seller who has
+ * set price breaks at 12 and 48 has already said which quantities matter;
+ * asking them to maintain the same numbers again as "quick picks" is a way to
+ * get two lists that disagree, and a buyer who never sees a button at 12 has
+ * no reason to discover the discount there.
+ *
+ * The minimum order leads, so the cheapest legal quantity is always one tap
+ * away. `extra` is the product's own packPresets — kept for products priced
+ * flat, and merged rather than replaced so a seller who set both keeps both.
+ */
+export function quickPickQuantities(
+  minPacks: number,
+  tiers: readonly PriceTier[],
+  extra: readonly number[] = []
+): number[] {
+  const quantities = new Set<number>([minPacks])
+
+  for (const tier of tiers) quantities.add(tier.minPacks)
+  for (const n of extra) if (n >= minPacks) quantities.add(n)
+
+  return [...quantities].sort((a, b) => a - b)
+}
