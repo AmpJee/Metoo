@@ -1,6 +1,7 @@
 import { Elysia, t } from 'elysia'
+import { PAYMENT_PREFERENCES, SHOP_TYPES } from '@metoo/shared'
 import { brandIdForUser, retailerIdForUser } from '../../lib/profile.ts'
-import { CONTACT_FIELDS } from '../../lib/schema.ts'
+import { CONTACT_FIELDS, optionalEnum } from '../../lib/schema.ts'
 import { requireAccess } from '../../middleware/auth.ts'
 import * as uploads from '../uploads/service.ts'
 import * as service from './service.ts'
@@ -43,6 +44,21 @@ const retailerProfile = t.Object({
   postalCode: t.String(),
   taxId: t.Union([t.String(), t.Null()]),
   avatarUrl: t.Union([t.String(), t.Null()]),
+
+  // The operational details the console's Retailers table has a column for.
+  // The shop supplies these; paymentReliability stays absent because that is
+  // a track record admin maintains, not a self-declaration.
+  shopType: t.Union([t.UnionEnum(SHOP_TYPES), t.Null()]),
+  zone: t.Union([t.String(), t.Null()]),
+  currentProducts: t.Union([t.String(), t.Null()]),
+  monthlyCapacity: t.Union([t.Integer(), t.Null()]),
+  preferredPayment: t.Union([t.UnionEnum(PAYMENT_PREFERENCES), t.Null()]),
+  deliveryWindow: t.Union([t.String(), t.Null()]),
+
+  /** Which of the above are still blank. Empty means the shop can check out. */
+  missingForCheckout: t.Array(
+    t.Object({ field: t.String(), label: t.String() })
+  ),
   updatedAt: t.Date(),
 })
 
@@ -82,6 +98,22 @@ export const retailerProfileModule = new Elysia({
           shopName: t.Optional(t.String({ minLength: 1, maxLength: 120 })),
           taxId: t.Optional(t.Union([t.String({ maxLength: 20 }), t.Null()])),
           ...t.Partial(t.Object(CONTACT_FIELDS)).properties,
+
+          // Operational details, editable by the shop itself. Admin can still
+          // edit them too, from the pipeline route — onboarding happens over
+          // the phone and someone is often filling these in on the shop's
+          // behalf. adminNotes, referralSource, paymentReliability and the
+          // pipeline status stay admin-only and are absent here.
+          // optionalEnum, never t.Optional(t.UnionEnum(...)): the latter emits
+          // `default: values[0]` and Elysia applies it to an ABSENT key, so a
+          // PATCH of just the zone would silently write shopType=MINIMART and
+          // preferredPayment=PROMPTPAY into this shop's row. See lib/schema.ts.
+          shopType: optionalEnum(SHOP_TYPES),
+          zone: t.Optional(t.String({ maxLength: 200 })),
+          currentProducts: t.Optional(t.String({ maxLength: 500 })),
+          monthlyCapacity: t.Optional(t.Integer({ minimum: 1 })),
+          preferredPayment: optionalEnum(PAYMENT_PREFERENCES),
+          deliveryWindow: t.Optional(t.String({ maxLength: 100 })),
         },
         // An empty patch is a client bug every time. Answering it 200 with an
         // unchanged row hides the bug instead of reporting it.
@@ -93,8 +125,11 @@ export const retailerProfileModule = new Elysia({
           'Partial — send only what changed. The delivery address lives here, ' +
           'and it is where future orders ship; orders already placed keep the ' +
           'address they were placed with, because checkout snapshots it. ' +
-          'Pipeline fields (shop type, zone, admin notes) are not editable ' +
-          'here — an admin maintains those.',
+          'Shop type, zone, what you stock, capacity, preferred payment and ' +
+          'delivery window are all required before checkout — the response ' +
+          'lists whatever is still missing in `missingForCheckout`. ' +
+          'adminNotes, referralSource, payment reliability and pipeline ' +
+          'status remain admin-only and are rejected here.',
         tags: ['Retailer · Profile'],
       },
       response: { 200: retailerProfile },

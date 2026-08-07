@@ -6,13 +6,22 @@ import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { api } from '@/lib/api'
 import { formatBaht } from '@/lib/format'
-import type { Cart } from '@/lib/types'
+import type { Cart, RetailerProfile } from '@/lib/types'
 import { CartLine } from './cart-line'
 
 export const metadata: Metadata = { title: 'Shopping Cart' }
 
 export default async function CartPage() {
   const cart = await api.get<Cart>('/cart')
+
+  // Checked here as well as at checkout. The API refuses an incomplete shop
+  // profile either way, but finding that out on the last screen — after
+  // choosing a payment method — is a worse place to learn it than on the
+  // cart, where there is nothing to lose by leaving.
+  const profile = await api
+    .get<RetailerProfile>('/retailer/profile')
+    .catch(() => null)
+  const missing = profile?.missingForCheckout ?? []
 
   if (cart.itemCount === 0) {
     return (
@@ -104,9 +113,22 @@ export default async function CartPage() {
             </p>
           ) : null}
 
-          <Button asChild size="lg" className="mt-4 w-full">
-            <Link href="/checkout">Check Out</Link>
-          </Button>
+          {missing.length > 0 ? (
+            <div className="mt-4 flex flex-col gap-2 rounded-md bg-secondary p-3">
+              <p className="text-xs text-muted-foreground">
+                Before your first order we need a few details about your shop so
+                we can arrange delivery:{' '}
+                {missing.map((m) => m.label).join(', ')}.
+              </p>
+              <Button asChild size="lg" className="w-full">
+                <Link href="/settings#shop">Complete your shop profile</Link>
+              </Button>
+            </div>
+          ) : (
+            <Button asChild size="lg" className="mt-4 w-full">
+              <Link href="/checkout">Check Out</Link>
+            </Button>
+          )}
 
           <Button asChild variant="ghost" className="mt-2 w-full">
             <Link href="/explore">Continue shopping</Link>

@@ -7,8 +7,10 @@
  * the console owns. A self-edit route that accepted those fields would let a
  * retailer rewrite the notes an admin took about them.
  */
+import type { Prisma } from '../../generated/prisma/client.ts'
 import { prisma } from '../../config/prisma.ts'
 import { accountLast4 } from '../../domain/bank.ts'
+import { missingShopFields } from '../../domain/shop-profile.ts'
 
 /**
  * What a retailer may change about itself, and what it gets back.
@@ -26,10 +28,35 @@ const retailerSelect = {
   postalCode: true,
   taxId: true,
   avatarUrl: true,
+  shopType: true,
+  zone: true,
+  currentProducts: true,
+  monthlyCapacity: true,
+  preferredPayment: true,
+  deliveryWindow: true,
   updatedAt: true,
 }
 
+/**
+ * Attach what the shop still has to answer before it can check out.
+ *
+ * Computed on every read rather than stored, so it can never disagree with
+ * the row it came from — and so the settings form can show the gaps without
+ * a second request.
+ */
+function withGaps<T extends Parameters<typeof missingShopFields>[0]>(
+  profile: T
+) {
+  return { ...profile, missingForCheckout: missingShopFields(profile) }
+}
+
 export interface RetailerProfilePatch {
+  shopType?: string
+  zone?: string
+  currentProducts?: string
+  monthlyCapacity?: number
+  preferredPayment?: string
+  deliveryWindow?: string
   shopName?: string
   phone?: string
   addressLine?: string
@@ -39,11 +66,13 @@ export interface RetailerProfilePatch {
   taxId?: string | null
 }
 
-export function getRetailer(retailerId: string) {
-  return prisma.retailerProfile.findUniqueOrThrow({
-    where: { id: retailerId },
-    select: retailerSelect,
-  })
+export async function getRetailer(retailerId: string) {
+  return withGaps(
+    await prisma.retailerProfile.findUniqueOrThrow({
+      where: { id: retailerId },
+      select: retailerSelect,
+    })
+  )
 }
 
 /**
@@ -51,15 +80,17 @@ export function getRetailer(retailerId: string) {
  * `Order.shippingAddress` is a snapshot taken at checkout precisely so that
  * moving shop cannot rewrite where last month's delivery went.
  */
-export function updateRetailer(
+export async function updateRetailer(
   retailerId: string,
   patch: RetailerProfilePatch
 ) {
-  return prisma.retailerProfile.update({
-    where: { id: retailerId },
-    data: patch,
-    select: retailerSelect,
-  })
+  return withGaps(
+    await prisma.retailerProfile.update({
+      where: { id: retailerId },
+      data: patch as Prisma.RetailerProfileUpdateInput,
+      select: retailerSelect,
+    })
+  )
 }
 
 /**

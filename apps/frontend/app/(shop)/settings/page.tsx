@@ -4,6 +4,7 @@ import { PictureUpload } from '@/components/picture-upload'
 import { api } from '@/lib/api'
 import type { RetailerProfile } from '@/lib/types'
 import { RetailerSettings } from './retailer-settings'
+import { ShopOperationsForm } from './shop-operations-form'
 
 export const metadata: Metadata = { title: 'Account settings' }
 
@@ -33,6 +34,20 @@ export default async function SettingsPage() {
       <section className="flex flex-col gap-4">
         <h2 className="text-base font-semibold">Shop details</h2>
         <RetailerSettings profile={profile} />
+      </section>
+
+      <section
+        id="shop"
+        className="flex flex-col gap-4 scroll-mt-8 border-t border-border pt-8"
+      >
+        <div className="flex flex-col gap-1">
+          <h2 className="text-base font-semibold">How your shop operates</h2>
+          <p className="text-sm text-muted-foreground">
+            Metoo needs these to arrange delivery. They must be filled in before
+            you can place an order.
+          </p>
+        </div>
+        <ShopOperationsForm profile={profile} />
       </section>
 
       <section className="flex flex-col gap-4 border-t border-border pt-8">
