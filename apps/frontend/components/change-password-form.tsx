@@ -3,6 +3,7 @@
 import { Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { PasswordInput } from '@/components/ui/password-input'
 
 /** Matches the API's own minimum, so a short password is refused instantly. */
 const MIN_LENGTH = 8
@@ -80,9 +81,8 @@ export function ChangePasswordForm() {
     <form onSubmit={onSubmit} className="flex max-w-[420px] flex-col gap-4">
       <label className="flex flex-col gap-1.5">
         <span className="text-sm font-medium">Current password</span>
-        <input
+        <PasswordInput
           name="currentPassword"
-          type="password"
           required
           autoComplete="current-password"
           className="h-10 rounded-[9px] border border-border bg-transparent px-3 text-sm outline-none focus:border-primary"
@@ -91,9 +91,8 @@ export function ChangePasswordForm() {
 
       <label className="flex flex-col gap-1.5">
         <span className="text-sm font-medium">New password</span>
-        <input
+        <PasswordInput
           name="newPassword"
-          type="password"
           required
           minLength={MIN_LENGTH}
           autoComplete="new-password"
@@ -106,9 +105,8 @@ export function ChangePasswordForm() {
 
       <label className="flex flex-col gap-1.5">
         <span className="text-sm font-medium">Confirm new password</span>
-        <input
+        <PasswordInput
           name="confirmPassword"
-          type="password"
           required
           autoComplete="new-password"
           className="h-10 rounded-[9px] border border-border bg-transparent px-3 text-sm outline-none focus:border-primary"
