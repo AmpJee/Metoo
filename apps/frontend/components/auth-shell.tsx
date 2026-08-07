@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { LanguageToggle } from '@/components/language-toggle'
 
 /** Shared frame for login, register and pending, so they read as one flow. */
 export function AuthShell({
@@ -22,6 +23,7 @@ export function AuthShell({
           >
             metoo
           </Link>
+          <LanguageToggle className="ml-auto" />
         </div>
       </header>
 
