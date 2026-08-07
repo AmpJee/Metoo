@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { Field } from '@/components/auth-shell'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { PasswordInput } from '@/components/ui/password-input'
 
 /**
  * Retailer signup.
@@ -70,9 +71,8 @@ export function RegisterForm() {
         <Input name="email" type="email" required autoComplete="email" />
       </Field>
       <Field label="Password">
-        <Input
+        <PasswordInput
           name="password"
-          type="password"
           required
           minLength={8}
           autoComplete="new-password"

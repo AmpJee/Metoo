@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { Field } from '@/components/auth-shell'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { PasswordInput } from '@/components/ui/password-input'
 import type { PortalKey } from '@/lib/portals'
 import { homeForUser } from '@/lib/roles'
 
@@ -67,9 +68,8 @@ export function LoginForm({ portal }: { portal: PortalKey }) {
         <Input name="email" type="email" required autoComplete="email" />
       </Field>
       <Field label="Password">
-        <Input
+        <PasswordInput
           name="password"
-          type="password"
           required
           autoComplete="current-password"
         />
