@@ -109,8 +109,9 @@ enum DocumentStatus {
 
 /// The six steps of an order, and who moves it:
 ///
-///   1 PENDING          "To pay"             — created at checkout
-///   2 CONFIRMED        "Confirmed order"    — the BRAND accepts
+///   1 PENDING           "To pay"             — created at checkout
+///   2 PAYMENT_CONFIRMED "Payment received"   — ADMIN confirms the transfer
+///   3 CONFIRMED         "Confirmed order"    — the BRAND accepts
 ///   3 READY_FOR_PICKUP "Package pickup"     — ADMIN
 ///   4 PICKED_UP        "Out for delivery"   — ADMIN
 ///   5 DELIVERED        "Delivered"          — ADMIN
@@ -125,6 +126,7 @@ enum DocumentStatus {
 /// buyer two states that meant the same thing to them.
 enum OrderStatus {
   PENDING
+  PAYMENT_CONFIRMED
   CONFIRMED
   READY_FOR_PICKUP
   PICKED_UP
@@ -581,8 +583,10 @@ model Order {
   /// Copy of the retailer's address at order time.
   shippingAddress Json
 
-  confirmedAt      DateTime?
-  readyForPickupAt DateTime?
+  /// When an admin confirmed the bank transfer landed.
+  paymentConfirmedAt DateTime?
+  confirmedAt        DateTime?
+  readyForPickupAt   DateTime?
   pickedUpAt       DateTime?
   deliveredAt      DateTime?
   settledAt        DateTime?

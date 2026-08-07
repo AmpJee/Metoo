@@ -145,14 +145,19 @@ export const CATEGORY_LABELS: Record<(typeof CATEGORIES)[number], string> = {
 }
 
 /**
- * Order lifecycle — six steps.
+ * Order lifecycle — seven steps.
  *
- *   1 PENDING           To pay
- *   2 CONFIRMED         Confirmed order        <- the brand accepts
- *   3 READY_FOR_PICKUP  Package pickup
- *   4 PICKED_UP         Out for delivery
- *   5 DELIVERED         Delivered
- *   6 SETTLED           Confirm delivered      <- releases the brand's money
+ *   1 PENDING            To pay
+ *   2 PAYMENT_CONFIRMED  Payment received     <- ADMIN confirms the transfer
+ *   3 CONFIRMED          Confirmed order      <- the brand accepts
+ *   4 READY_FOR_PICKUP   Package pickup
+ *   5 PICKED_UP          Out for delivery
+ *   6 DELIVERED          Delivered
+ *   7 SETTLED            Confirm delivered    <- releases the brand's money
+ *
+ * PAYMENT_CONFIRMED exists because payment is a manual bank transfer: nobody
+ * but an admin can see the money arrive, and a brand should not be packing
+ * goods against a transfer that has not landed.
  *
  * SETTLED is financial rather than logistical: it means the sale was credited
  * to the brand's wallet ledger. CANCELLED and CLOSED are terminal, CLOSED
@@ -167,6 +172,7 @@ export const CATEGORY_LABELS: Record<(typeof CATEGORIES)[number], string> = {
  */
 export const ORDER_STATUSES = [
   'PENDING',
+  'PAYMENT_CONFIRMED',
   'CONFIRMED',
   'READY_FOR_PICKUP',
   'PICKED_UP',
@@ -187,7 +193,8 @@ export const ORDER_STATUS_LABELS: Record<
   (typeof ORDER_STATUSES)[number],
   string
 > = {
-  PENDING: 'Incoming',
+  PENDING: 'Awaiting payment',
+  PAYMENT_CONFIRMED: 'Paid — to accept',
   CONFIRMED: 'Confirmed',
   READY_FOR_PICKUP: 'Package Pickup',
   PICKED_UP: 'Out for Delivery',
@@ -213,6 +220,7 @@ export const BUYER_ORDER_STATUS_LABELS: Record<
   string
 > = {
   PENDING: 'To Pay',
+  PAYMENT_CONFIRMED: 'Payment received',
   CONFIRMED: 'Confirmed',
   READY_FOR_PICKUP: 'Package Pickup',
   PICKED_UP: 'Out for Delivery',

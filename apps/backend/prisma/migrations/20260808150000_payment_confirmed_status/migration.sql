@@ -1,0 +1,14 @@
+-- Add PAYMENT_CONFIRMED between PENDING and CONFIRMED.
+--
+-- Payment is a manual bank transfer, so somebody has to say the money landed.
+-- Only an admin can see that, and a brand should not be packing goods against
+-- a transfer that has not arrived — hence a step of its own rather than
+-- folding it into the brand's acceptance.
+--
+-- Written by hand. `prisma migrate diff` compares against the live database
+-- and has produced destructive SQL on this project more than once.
+--
+-- ADD VALUE ... BEFORE places it in the right position for any code that
+-- relies on enum ordering. Purely additive: no existing row changes, and an
+-- order already past this point is unaffected.
+ALTER TYPE "OrderStatus" ADD VALUE IF NOT EXISTS 'PAYMENT_CONFIRMED' BEFORE 'CONFIRMED';

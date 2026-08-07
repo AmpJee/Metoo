@@ -1,20 +1,22 @@
 /**
  * The order lifecycle — pure, no Prisma, no I/O.
  *
- * Six steps, and each one names who may make the move:
+ * Seven steps, and each one names who may make the move out of it:
  *
- *   1 PENDING          "Confirm Order"       BRAND
- *   2 CONFIRMED        "Package Pickup"      BRAND or ADMIN
- *   3 READY_FOR_PICKUP "Out for Delivery"    ADMIN
- *   4 PICKED_UP        "Mark Delivered"      ADMIN
- *   5 DELIVERED        "Confirm Delivered"   ADMIN or RETAILER
- *   6 SETTLED          done
+ *   1 PENDING           "Payment Received"    ADMIN
+ *   2 PAYMENT_CONFIRMED "Confirm Order"       BRAND or ADMIN
+ *   3 CONFIRMED         "Package Pickup"      BRAND or ADMIN
+ *   4 READY_FOR_PICKUP  "Out for Delivery"    ADMIN
+ *   5 PICKED_UP         "Mark Delivered"      ADMIN
+ *   6 DELIVERED         "Confirm Delivered"   RETAILER or ADMIN
+ *   7 SETTLED           done
  *
- * The split follows who can honestly know the thing being claimed. A brand
- * accepts the order and says when the parcel is packed — both facts about
- * their own premises. Admin records collection and delivery, which happen
- * elsewhere. The retailer confirms receipt, and that is what releases the
- * brand's money, so the seller is deliberately not an actor on it.
+ * The split follows who can honestly know the thing being claimed. Payment is
+ * a manual bank transfer, so only admin sees it land. A brand accepts the
+ * order and says when the parcel is packed — both facts about their own
+ * premises. Admin records collection and delivery, which happen elsewhere.
+ * The retailer confirms receipt, and that is what releases the brand's money,
+ * so the seller is deliberately not an actor on it.
  *
  * Admin can make every move, as the override for whenever someone goes quiet.
  *
@@ -51,18 +53,29 @@ interface Transition {
  * would mean unwinding wallet ledger rows that are append-only by design.
  */
 const TRANSITIONS: Record<OrderStatus, Transition[]> = {
-  // Step 1 -> 2. The brand's own decision: it is their stock and their
+  // Step 1 -> 2. Payment is a manual bank transfer, so only an admin can see
+  // it arrive. The brand is not an actor: a seller confirming their own
+  // payment would be marking themselves paid.
+  PENDING: [
+    {
+      to: 'PAYMENT_CONFIRMED',
+      label: 'Payment Received',
+      actors: ['ADMIN'],
+    },
+    { to: 'CANCELLED', label: 'Cancel Order', actors: ['BRAND', 'ADMIN'] },
+  ],
+  // Step 2 -> 3. The brand's own decision: it is their stock and their
   // capacity, so accepting is not admin's to do on their behalf. Admin is
   // still listed as the override for a brand that has gone quiet.
-  PENDING: [
+  PAYMENT_CONFIRMED: [
     { to: 'CONFIRMED', label: 'Confirm Order', actors: ['BRAND', 'ADMIN'] },
     { to: 'CANCELLED', label: 'Cancel Order', actors: ['BRAND', 'ADMIN'] },
   ],
-  // Step 2 -> 3 is the brand's: they are the ones who know when the parcel is
+  // Step 3 -> 4 is the brand's: they are the ones who know when the parcel is
   // actually packed and sitting by the door, and waiting for an admin to
   // notice is a delay with no purpose.
   //
-  // Steps 3 -> 5 stay with admin. The line is drawn there deliberately: a
+  // Steps 4 -> 6 stay with admin. The line is drawn there deliberately: a
   // brand saying "it is ready" is a claim about their own premises, while
   // "a courier collected it" and "it was delivered" are claims about someone
   // else's, and a seller must not be able to advance an order towards the
@@ -80,7 +93,7 @@ const TRANSITIONS: Record<OrderStatus, Transition[]> = {
   ],
   // Once goods are with a courier, cancelling is a return, not a cancellation.
   PICKED_UP: [{ to: 'DELIVERED', label: 'Mark Delivered', actors: ['ADMIN'] }],
-  // Step 5 -> 6. The retailer confirming receipt is what releases the brand's
+  // Step 6 -> 7. The retailer confirming receipt is what releases the brand's
   // money, so the buyer holds this one. The brand is deliberately NOT an
   // actor here: letting the seller declare their own sale complete would let
   // them credit their own wallet.
@@ -98,6 +111,7 @@ const TRANSITIONS: Record<OrderStatus, Transition[]> = {
 
 /** Timestamp column to stamp when an order enters a state, if any. */
 export const TIMESTAMP_FIELD: Partial<Record<OrderStatus, string>> = {
+  PAYMENT_CONFIRMED: 'paymentConfirmedAt',
   CONFIRMED: 'confirmedAt',
   READY_FOR_PICKUP: 'readyForPickupAt',
   PICKED_UP: 'pickedUpAt',
@@ -118,6 +132,10 @@ export const TIMESTAMP_FIELD: Partial<Record<OrderStatus, string>> = {
  * screen eventually disagrees with another about how much money was made.
  */
 export const EARNS_REVENUE = [
+  // PAYMENT_CONFIRMED is deliberately absent. The money has arrived, but the
+  // brand has not accepted the order yet and can still decline it — at which
+  // point the payment is refunded. Counting it would make revenue fall
+  // whenever a brand says no, which is the same reason PENDING is excluded.
   'CONFIRMED',
   'READY_FOR_PICKUP',
   'PICKED_UP',

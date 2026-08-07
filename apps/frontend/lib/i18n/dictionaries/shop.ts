@@ -145,7 +145,8 @@ export const en = {
   'group.title': 'Order placed',
   'group.heading': 'Orders from this checkout',
   'group.placed': 'Order placed! Thank you for shopping with metoo.',
-  'group.oneBrand': 'The brand will confirm your order shortly.',
+  'group.oneBrand':
+    'Once we confirm your payment, the brand will accept your order.',
   'group.manyBrands':
     'Your cart spanned {n} brands, so it was placed as {n} separate orders. Each is confirmed and delivered on its own.',
   'group.noPaymentYet':
@@ -430,10 +431,10 @@ export const th: Record<keyof Dict, string> = {
     'ยืนยันว่าได้รับสินค้าแล้วใช่ไหม? การยืนยันจะปิดคำสั่งซื้อและปล่อยเงินให้แบรนด์ และไม่สามารถย้อนกลับได้',
 
   // --- checkout group / confirmation ---------------------------------------
-  'group.title': 'สั่งซื้อสำเร็จ',
+  'group.title': 'ส่งคำสั่งซื้อแล้ว',
   'group.heading': 'คำสั่งซื้อจากการสั่งครั้งนี้',
-  'group.placed': 'สั่งซื้อสำเร็จ! ขอบคุณที่เลือกซื้อกับ metoo',
-  'group.oneBrand': 'แบรนด์จะยืนยันคำสั่งซื้อของคุณเร็ว ๆ นี้',
+  'group.placed': 'ส่งคำสั่งซื้อเรียบร้อย ขอบคุณที่เลือกซื้อกับ metoo',
+  'group.oneBrand': 'เมื่อเรายืนยันการชำระเงินแล้ว แบรนด์จะรับออร์เดอร์ของคุณ',
   'group.manyBrands':
     'ตะกร้าของคุณมีสินค้าจาก {n} แบรนด์ จึงแยกเป็น {n} คำสั่งซื้อ แต่ละรายการยืนยันและจัดส่งแยกกัน',
   'group.noPaymentYet':
