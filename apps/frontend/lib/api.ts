@@ -34,6 +34,20 @@ export class ApiError extends Error {
   get isForbidden() {
     return this.status === 403
   }
+
+  /**
+   * Blocked because the account has not been onboarded yet, or was declined.
+   *
+   * Distinct from a plain 403: this one is a state the pending screen
+   * explains, not an error. A page that lets it escape renders as a crash.
+   */
+  get isNotOnboarded() {
+    return (
+      this.status === 403 &&
+      (this.code === 'ACCOUNT_NOT_ONBOARDED' ||
+        this.code === 'ACCOUNT_DECLINED')
+    )
+  }
 }
 
 type Options = {
