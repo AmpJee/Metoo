@@ -7,6 +7,7 @@
  */
 import type {
   Category,
+  PriceTier,
   OrderStatus,
   PaymentPreference,
   PipelineStatus,
@@ -74,6 +75,17 @@ export interface CatalogProduct {
   createdAt: string
   brand: BrandStub
   rating: Rating
+}
+
+/**
+ * GET /catalog/products/:id — the browse shape plus everything only the
+ * detail screen renders. Kept apart from CatalogProduct because a 24-item
+ * browse page has no use for a pricing ladder per row.
+ */
+export interface CatalogProductDetail extends CatalogProduct {
+  packPresets: number[]
+  /** Volume pricing, cheapest threshold first. Empty when there is none. */
+  priceTiers: PriceTier[]
 }
 
 export interface CatalogPage {
@@ -401,6 +413,8 @@ export interface BrandOrder {
 }
 
 export interface BrandProduct {
+  /** Volume pricing, cheapest threshold first. Empty when there is none. */
+  priceTiers: PriceTier[]
   id: string
   brandId: string
   name: string

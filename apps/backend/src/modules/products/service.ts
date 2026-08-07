@@ -10,6 +10,8 @@ import type { Category, Prisma } from '../../generated/prisma/client.ts'
 import { prisma } from '../../config/prisma.ts'
 import { checkBarcode } from '../../domain/barcode.ts'
 import { MAX_PRESETS, checkPackPresets } from '../../domain/pack-presets.ts'
+import type { PriceTier } from '../../domain/volume-pricing.ts'
+import { MAX_TIERS, checkPriceTiers } from '../../domain/volume-pricing.ts'
 import { AppError } from '../../middleware/error.ts'
 import type { StagedImage } from '../product-images/service.ts'
 import { attachStagedImages } from '../product-images/service.ts'
@@ -33,6 +35,50 @@ export interface ProductInput {
   ingredients?: string | null
   shelfLifeDays?: number | null
   packPresets?: number[]
+  priceTiers?: PriceTier[]
+}
+
+/** Cheapest threshold first, so the API returns a readable ladder. */
+const tierSelect = {
+  select: { minPacks: true, pricePerPackMinor: true },
+  orderBy: { minPacks: 'asc' },
+} satisfies Prisma.Product$priceTiersArgs
+
+const TIER_MESSAGES: Record<string, (v?: number) => string> = {
+  TIERS_TOO_MANY: () => `At most ${MAX_TIERS} volume prices.`,
+  TIER_BAD_QUANTITY: (v) => `${v} is not a usable quantity.`,
+  TIER_BAD_PRICE: (v) => `${v} is not a usable price.`,
+  TIER_BELOW_MINIMUM: (v) =>
+    `A ${v}-pack tier is below this product’s minimum order, so nobody could ever reach it.`,
+  TIERS_NOT_ASCENDING: (v) =>
+    `Volume quantities must increase; ${v} does not follow the one before it.`,
+  TIERS_NOT_CHEAPER: () =>
+    'Each tier must be cheaper than the one before — buying more should never cost more per pack.',
+  TIER_NOT_A_DISCOUNT: () =>
+    'A volume price must be below the product’s own price, or it is not a discount.',
+}
+
+/**
+ * Validated against the *effective* base price and minimum, not the stored
+ * ones: a single PATCH can change the price, the minimum and the ladder at
+ * once, and checking against the old values would let through a combination
+ * that is invalid the moment it lands.
+ */
+function assertPriceTiers(
+  tiers: PriceTier[] | undefined,
+  basePriceMinor: number,
+  minPacks: number
+) {
+  if (!tiers) return
+
+  const result = checkPriceTiers(tiers, basePriceMinor, minPacks)
+  if (!result.ok) {
+    throw new AppError(
+      422,
+      result.code,
+      TIER_MESSAGES[result.code]!(result.value)
+    )
+  }
 }
 
 const BARCODE_MESSAGES: Record<string, string> = {
@@ -103,6 +149,7 @@ function isDuplicateSku(error: unknown) {
 export function listForBrand(brandId: string) {
   return prisma.product.findMany({
     where: { brandId },
+    include: { priceTiers: tierSelect },
     orderBy: { createdAt: 'desc' },
   })
 }
@@ -111,6 +158,7 @@ export function listForBrand(brandId: string) {
 export async function getForBrand(brandId: string, productId: string) {
   const product = await prisma.product.findFirst({
     where: { id: productId, brandId },
+    include: { priceTiers: tierSelect },
   })
 
   if (!product) {
@@ -136,10 +184,24 @@ export async function create(
   assertBarcode(input.barcode)
   // Mirrors Prisma's @default(1) for the omitted case.
   assertPackPresets(input.packPresets, input.minPacks ?? 1)
+  assertPriceTiers(
+    input.priceTiers,
+    input.pricePerPackMinor,
+    input.minPacks ?? 1
+  )
+
+  const { priceTiers, ...fields } = input
 
   try {
     return await prisma.$transaction(async (tx) => {
-      const product = await tx.product.create({ data: { ...input, brandId } })
+      const product = await tx.product.create({
+        data: {
+          ...fields,
+          brandId,
+          ...(priceTiers?.length ? { priceTiers: { create: priceTiers } } : {}),
+        },
+        include: { priceTiers: tierSelect },
+      })
 
       const cover = await attachStagedImages(tx, {
         brandId,
@@ -153,6 +215,7 @@ export async function create(
         return tx.product.update({
           where: { id: product.id },
           data: { photoUrl: cover },
+          include: { priceTiers: tierSelect },
         })
       }
 
@@ -191,10 +254,33 @@ export async function update(
     assertPackPresets(existing.packPresets, effectiveMinPacks)
   }
 
+  // Same reasoning for the ladder: price, minimum and tiers can all move in
+  // one PATCH, so validate against what the row is about to be.
+  const effectivePrice = input.pricePerPackMinor ?? existing.pricePerPackMinor
+  assertPriceTiers(input.priceTiers, effectivePrice, effectiveMinPacks)
+
+  // Changing the price or the minimum can strand a ladder that was fine
+  // before. Re-check the stored one rather than leave a tier that is now
+  // above the base price quietly overcharging nobody and confusing everybody.
+  if (input.priceTiers === undefined) {
+    assertPriceTiers(existing.priceTiers, effectivePrice, effectiveMinPacks)
+  }
+
+  const { priceTiers, ...fields } = input
+
   try {
     return await prisma.product.update({
       where: { id: productId },
-      data: input as Prisma.ProductUpdateInput,
+      data: {
+        ...(fields as Prisma.ProductUpdateInput),
+        // Replaced wholesale rather than merged: the form submits the ladder
+        // it wants, and a partial merge would make deleting a tier
+        // impossible.
+        ...(priceTiers
+          ? { priceTiers: { deleteMany: {}, create: priceTiers } }
+          : {}),
+      },
+      include: { priceTiers: tierSelect },
     })
   } catch (error) {
     if (isDuplicateSku(error)) {

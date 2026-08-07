@@ -10,7 +10,12 @@ import { Badge } from '@/components/ui/badge'
 import { ApiError, api } from '@/lib/api'
 import { formatBaht, formatDate, formatPackSummary } from '@/lib/format'
 import { getLocale, getT } from '@/lib/i18n/server'
-import type { CatalogProduct, Rating, Review, SavedStatus } from '@/lib/types'
+import type {
+  CatalogProductDetail,
+  Rating,
+  Review,
+  SavedStatus,
+} from '@/lib/types'
 
 export async function generateMetadata({
   params,
@@ -19,7 +24,9 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { id } = await params
   try {
-    const product = await api.get<CatalogProduct>(`/catalog/products/${id}`)
+    const product = await api.get<CatalogProductDetail>(
+      `/catalog/products/${id}`
+    )
     return { title: product.name }
   } catch {
     return { title: (await getT())('product.title') }
@@ -35,9 +42,9 @@ export default async function ProductPage({
   const locale = await getLocale()
   const { id } = await params
 
-  let product: CatalogProduct
+  let product: CatalogProductDetail
   try {
-    product = await api.get<CatalogProduct>(`/catalog/products/${id}`)
+    product = await api.get<CatalogProductDetail>(`/catalog/products/${id}`)
   } catch (error) {
     // The API returns 404 for an inactive product or an unapproved brand,
     // identically to one that never existed — mirror that here.
@@ -167,6 +174,8 @@ export default async function ProductPage({
             productId={product.id}
             minPacks={product.minPacks}
             pricePerPackMinor={product.pricePerPackMinor}
+            priceTiers={product.priceTiers}
+            packPresets={product.packPresets}
             stockPacks={product.stockPacks}
             disabled={outOfStock}
           />

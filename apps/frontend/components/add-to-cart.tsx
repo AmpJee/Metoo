@@ -2,11 +2,18 @@
 
 import { Loader2, Minus, Plus, ShoppingCart } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import {
+  lineTotalMinor,
+  savingsMinor,
+  unitPriceMinor,
+  type PriceTier,
+} from '@metoo/shared'
 import { useState, useTransition } from 'react'
 import { addToCart } from '@/app/actions/cart'
 import { useT } from '@/components/i18n-provider'
 import { Button } from '@/components/ui/button'
 import { formatBaht } from '@/lib/format'
+import { cn } from '@/lib/utils'
 
 /**
  * Quantity stepper + add to cart.
@@ -21,18 +28,32 @@ export function AddToCart({
   productId,
   minPacks,
   pricePerPackMinor,
+  priceTiers = [],
+  packPresets = [],
   stockPacks,
   disabled,
 }: {
   productId: string
   minPacks: number
   pricePerPackMinor: number
+  /** Volume pricing. Empty for a product priced flat. */
+  priceTiers?: PriceTier[]
+  /** The "Amount" quick-picks, in display order. */
+  packPresets?: number[]
   stockPacks: number | null
   disabled?: boolean
 }) {
   const router = useRouter()
   const t = useT()
   const [packs, setPacks] = useState(minPacks)
+  const unit = unitPriceMinor(pricePerPackMinor, priceTiers, packs)
+  const lineTotal = lineTotalMinor(pricePerPackMinor, priceTiers, packs)
+  const saved = savingsMinor(pricePerPackMinor, priceTiers, packs)
+  // Anything unreachable is dropped rather than shown disabled: a button that
+  // cannot be pressed is a worse answer than no button.
+  const presets = packPresets.filter(
+    (n) => n >= minPacks && (stockPacks === null || n <= stockPacks)
+  )
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState(false)
   const [pending, startTransition] = useTransition()
@@ -43,6 +64,31 @@ export function AddToCart({
 
   return (
     <div className="flex flex-col gap-4">
+      {presets.length > 0 ? (
+        <div className="flex flex-col gap-2">
+          <span className="text-sm font-medium">{t('product.amount')}</span>
+          <div className="flex flex-wrap gap-2">
+            {presets.map((preset) => (
+              <button
+                key={preset}
+                type="button"
+                aria-pressed={packs === preset}
+                disabled={pending}
+                onClick={() => setPacks(preset)}
+                className={cn(
+                  'h-11 min-w-[64px] rounded-[9px] border px-4 text-sm font-medium transition-colors',
+                  packs === preset
+                    ? 'border-primary bg-primary text-primary-foreground'
+                    : 'border-primary/40 hover:border-primary'
+                )}
+              >
+                {preset}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
       <div className="flex items-center gap-4">
         <div className="flex items-center rounded-lg border border-neutral-line">
           <button
@@ -68,10 +114,23 @@ export function AddToCart({
           </button>
         </div>
 
+        {/* Priced through the same function checkout uses, so this figure
+            and the invoice cannot disagree. */}
         <div className="text-sm text-muted-foreground">
-          {t(packs === 1 ? 'product.pack' : 'product.packs', { n: packs })} ·{' '}
-          <span className="font-semibold text-foreground">
-            {formatBaht(packs * pricePerPackMinor)}
+          <span className="text-lg font-bold text-primary">
+            {formatBaht(lineTotal)}
+          </span>
+          <span className="mt-0.5 block">
+            {t('product.unitBreakdown', {
+              n: packs,
+              price: formatBaht(unit),
+            })}
+            {saved > 0 ? (
+              <span className="text-success">
+                {' · '}
+                {t('product.saves', { amount: formatBaht(saved) })}
+              </span>
+            ) : null}
           </span>
         </div>
       </div>
