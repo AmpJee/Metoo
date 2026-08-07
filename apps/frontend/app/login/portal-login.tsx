@@ -32,8 +32,8 @@ export function PortalLogin({ portal }: { portal: PortalKey }) {
  * Cross-links between the sites.
  *
  * Someone who lands on the wrong one should be able to leave without knowing
- * the URL. Only the shop offers signup — brands are prospected by an admin
- * and staff accounts are seeded, so neither is self-registerable.
+ * the URL. Both sides of the marketplace can sign themselves up; only admin
+ * cannot, because staff accounts are seeded rather than applied for.
  */
 function PortalFooter({ portal }: { portal: PortalKey }) {
   if (portal === 'retailer') {
@@ -63,15 +63,26 @@ function PortalFooter({ portal }: { portal: PortalKey }) {
 
   if (portal === 'seller') {
     return (
-      <p className="text-muted-foreground">
-        Buying instead?{' '}
-        <Link
-          href={PORTALS.retailer.loginPath}
-          className="font-medium text-primary hover:underline"
-        >
-          Shop sign-in
-        </Link>
-      </p>
+      <div className="flex flex-col gap-2 text-muted-foreground">
+        <p>
+          New to Metoo?{' '}
+          <Link
+            href="/register/seller"
+            className="font-medium text-primary hover:underline"
+          >
+            Sell on Metoo
+          </Link>
+        </p>
+        <p>
+          Buying instead?{' '}
+          <Link
+            href={PORTALS.retailer.loginPath}
+            className="font-medium text-primary hover:underline"
+          >
+            Shop sign-in
+          </Link>
+        </p>
+      </div>
     )
   }
 

@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { accessCookieMaxAge } from './lib/token-lifetime'
-import { LOGIN_PATHS, loginPathFor } from './lib/portals'
+import { LOGIN_PATHS, SIGNUP_PATHS, loginPathFor } from './lib/portals'
 
 /**
  * Session renewal and route gating.
@@ -28,7 +28,7 @@ const REFRESH_COOKIE = 'metoo_rt'
  * ones out would bounce them to the shop login, which is the confusion the
  * split exists to remove.
  */
-const PUBLIC_PATHS = ['/', '/register', ...LOGIN_PATHS]
+const PUBLIC_PATHS = ['/', ...SIGNUP_PATHS, ...LOGIN_PATHS]
 
 function isPublic(pathname: string) {
   return PUBLIC_PATHS.includes(pathname)
@@ -36,7 +36,7 @@ function isPublic(pathname: string) {
 
 /** An auth screen a signed-in user should not be sitting on. */
 function isAuthScreen(pathname: string) {
-  return pathname === '/register' || LOGIN_PATHS.includes(pathname)
+  return SIGNUP_PATHS.includes(pathname) || LOGIN_PATHS.includes(pathname)
 }
 
 async function renew(refreshToken: string) {
