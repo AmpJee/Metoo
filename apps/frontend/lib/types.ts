@@ -5,9 +5,23 @@
  * Enums are imported from @metoo/shared rather than redeclared, so a new
  * order status cannot drift between the two apps.
  */
-import type { Category, OrderStatus, PipelineStatus, Role } from '@metoo/shared'
+import type {
+  Category,
+  OrderStatus,
+  PaymentPreference,
+  PipelineStatus,
+  Role,
+  ShopType,
+} from '@metoo/shared'
 
-export type { Category, OrderStatus, PipelineStatus, Role }
+export type {
+  Category,
+  OrderStatus,
+  PaymentPreference,
+  PipelineStatus,
+  Role,
+  ShopType,
+}
 
 // --- auth ------------------------------------------------------------------
 
@@ -162,6 +176,17 @@ export interface RetailerProfile {
   postalCode: string
   taxId: string | null
   avatarUrl: string | null
+
+  /** The operational details the console's Retailers table shows. */
+  shopType: ShopType | null
+  zone: string | null
+  currentProducts: string | null
+  monthlyCapacity: number | null
+  preferredPayment: PaymentPreference | null
+  deliveryWindow: string | null
+
+  /** Blank required fields. Empty means this shop can check out. */
+  missingForCheckout: Array<{ field: string; label: string }>
   updatedAt: string
 }
 

@@ -34,6 +34,7 @@ import {
 } from '../../domain/commission.ts'
 import { generateOrderNumber } from '../../domain/order-number.ts'
 import { COUNTS_TOWARD_VOLUME } from '../../domain/order-state.ts'
+import { missingShopFields } from '../../domain/shop-profile.ts'
 import { AppError } from '../../middleware/error.ts'
 
 interface CheckoutLine {
@@ -166,6 +167,12 @@ export async function checkout(params: {
       addressLine: true,
       province: true,
       postalCode: true,
+      shopType: true,
+      zone: true,
+      currentProducts: true,
+      monthlyCapacity: true,
+      preferredPayment: true,
+      deliveryWindow: true,
     },
   })
 
@@ -174,6 +181,23 @@ export async function checkout(params: {
       404,
       'RETAILER_PROFILE_MISSING',
       'This account has no retailer profile.'
+    )
+  }
+
+  // Checked here rather than only in the frontend, because these decide
+  // whether the order can physically be fulfilled: the zone and delivery
+  // window determine the courier run, and finding out afterwards means
+  // finding out the order cannot be delivered. Refused before anything is
+  // written, so no half-made order is left behind.
+  const missing = missingShopFields(retailer)
+
+  if (missing.length > 0) {
+    throw new AppError(
+      422,
+      'SHOP_PROFILE_INCOMPLETE',
+      `Complete your shop profile before ordering. Still needed: ${missing
+        .map((m) => m.label)
+        .join(', ')}.`
     )
   }
 
