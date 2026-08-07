@@ -7,7 +7,9 @@ import {
   Store,
 } from 'lucide-react'
 import Link from 'next/link'
+import { LanguageToggle } from '@/components/language-toggle'
 import { LogoutButton } from '@/components/logout-button'
+import { getT } from '@/lib/i18n/server'
 import type { Me } from '@/lib/types'
 
 /**
@@ -16,7 +18,15 @@ import type { Me } from '@/lib/types'
  * Heights follow the design: 44px on mobile, 86px from md up — the file
  * defines exactly those two widths and nothing between.
  */
-export function SiteHeader({ me, cartCount }: { me: Me; cartCount: number }) {
+export async function SiteHeader({
+  me,
+  cartCount,
+}: {
+  me: Me
+  cartCount: number
+}) {
+  const t = await getT()
+
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background">
       <div className="container-page flex h-[44px] items-center gap-[14px] md:h-[86px] md:gap-x-[36px]">
@@ -31,25 +41,26 @@ export function SiteHeader({ me, cartCount }: { me: Me; cartCount: number }) {
           <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
           <input
             name="q"
-            placeholder="Search products and brands"
+            placeholder={t('nav.search')}
             className="h-10 w-full rounded-lg bg-input pr-3 pl-9 text-sm placeholder:text-muted-foreground"
           />
         </form>
 
         <nav className="flex flex-1 items-center justify-end gap-[18px] md:flex-none md:gap-[26px]">
-          <IconLink href="/stores" icon={Store} label="Stores" />
-          <IconLink href="/saved" icon={Heart} label="Saved" />
-          <IconLink href="/orders" icon={Package} label="Orders" />
+          <IconLink href="/stores" icon={Store} label={t('nav.stores')} />
+          <IconLink href="/saved" icon={Heart} label={t('nav.saved')} />
+          <IconLink href="/orders" icon={Package} label={t('nav.orders')} />
           <IconLink
             href="/cart"
             icon={ShoppingCart}
-            label="Cart"
+            label={t('nav.cart')}
             badge={cartCount}
           />
-          <IconLink href="/settings" icon={Settings} label="Account" />
+          <IconLink href="/settings" icon={Settings} label={t('nav.account')} />
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
+          <LanguageToggle />
           <Link
             href="/settings"
             className="max-w-[160px] truncate text-sm text-muted-foreground hover:text-primary"
@@ -66,7 +77,7 @@ export function SiteHeader({ me, cartCount }: { me: Me; cartCount: number }) {
           <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
           <input
             name="q"
-            placeholder="Search products and brands"
+            placeholder={t('nav.search')}
             className="h-9 w-full rounded-lg bg-input pr-3 pl-9 text-sm placeholder:text-muted-foreground"
           />
         </div>

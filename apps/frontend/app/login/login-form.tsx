@@ -7,6 +7,7 @@ import { Field } from '@/components/auth-shell'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/ui/password-input'
+import { useT } from '@/components/i18n-provider'
 import type { PortalKey } from '@/lib/portals'
 import { homeForUser } from '@/lib/roles'
 
@@ -29,6 +30,7 @@ function signInError(error: { code?: string; message?: string } | undefined) {
 }
 
 export function LoginForm({ portal }: { portal: PortalKey }) {
+  const t = useT()
   const router = useRouter()
   const params = useSearchParams()
   const [error, setError] = useState<string | null>(null)
@@ -57,7 +59,12 @@ export function LoginForm({ portal }: { portal: PortalKey }) {
       const payload = await response.json()
 
       if (!response.ok) {
-        setError(signInError(payload?.error))
+        setError(
+          payload?.error?.code === 'WRONG_PORTAL' ||
+            payload?.error?.code === 'INVALID_CREDENTIALS'
+            ? t('auth.badCredentials')
+            : (signInError(payload?.error) ?? t('auth.badCredentials'))
+        )
         return
       }
 
@@ -74,7 +81,7 @@ export function LoginForm({ portal }: { portal: PortalKey }) {
       // so server components re-run with it.
       router.refresh()
     } catch {
-      setError('Cannot reach the server. Check your connection and try again.')
+      setError(t('auth.unreachable'))
     } finally {
       setPending(false)
     }
@@ -82,10 +89,10 @@ export function LoginForm({ portal }: { portal: PortalKey }) {
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-4">
-      <Field label="Email">
+      <Field label={t('auth.email')}>
         <Input name="email" type="email" required autoComplete="email" />
       </Field>
-      <Field label="Password">
+      <Field label={t('auth.password')}>
         <PasswordInput
           name="password"
           required
@@ -104,7 +111,7 @@ export function LoginForm({ portal }: { portal: PortalKey }) {
 
       <Button type="submit" size="lg" disabled={pending}>
         {pending ? <Loader2 className="size-4 animate-spin" /> : null}
-        Log in
+        {t('auth.login')}
       </Button>
     </form>
   )
