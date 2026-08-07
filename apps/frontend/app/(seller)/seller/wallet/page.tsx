@@ -73,6 +73,54 @@ export default async function SellerWalletPage() {
           <div className="flex flex-col gap-8">
             <section className="flex flex-col gap-3">
               <h2 className="text-[16px] font-semibold">
+                {t('wallet.withdrawals')}
+              </h2>
+              {withdrawals.length === 0 ? (
+                <p className="rounded-[9px] bg-white px-4 py-8 text-center text-[15px] text-black/50">
+                  {t('wallet.withdrawalsEmpty')}
+                </p>
+              ) : (
+                <Table>
+                  <THead>
+                    <TR>
+                      <TH>{t('wallet.requested')}</TH>
+                      <TH>{t('wallet.to')}</TH>
+                      <TH>{t('wallet.status')}</TH>
+                      <TH className="text-right">{t('wallet.amount')}</TH>
+                    </TR>
+                  </THead>
+                  <TBody>
+                    {withdrawals.map((item) => (
+                      <TR key={item.id}>
+                        <TD className="whitespace-nowrap text-black/50">
+                          {formatDate(item.createdAt, locale)}
+                        </TD>
+                        <TD>
+                          {item.bankName}
+                          <span className="block text-[13px] text-black/50">
+                            {item.bankAccountName}
+                          </span>
+                        </TD>
+                        <TD>
+                          <Pill tone={WITHDRAWAL_TONE[item.status]}>
+                            {t(`withdrawal.${item.status}`)}
+                          </Pill>
+                          {item.reviewNote ? (
+                            <span className="block max-w-[220px] text-[13px] text-black/50">
+                              {item.reviewNote}
+                            </span>
+                          ) : null}
+                        </TD>
+                        <TD numeric>{formatBaht(item.amountMinor)}</TD>
+                      </TR>
+                    ))}
+                  </TBody>
+                </Table>
+              )}
+            </section>
+
+            <section className="flex flex-col gap-3">
+              <h2 className="text-[16px] font-semibold">
                 {t('wallet.ledger')}
               </h2>
               {transactions.length === 0 ? (
@@ -121,54 +169,6 @@ export default async function SellerWalletPage() {
                           {txn.amountMinor >= 0 ? '+' : '−'}
                           {formatBaht(Math.abs(txn.amountMinor))}
                         </TD>
-                      </TR>
-                    ))}
-                  </TBody>
-                </Table>
-              )}
-            </section>
-
-            <section className="flex flex-col gap-3">
-              <h2 className="text-[16px] font-semibold">
-                {t('wallet.withdrawals')}
-              </h2>
-              {withdrawals.length === 0 ? (
-                <p className="rounded-[9px] bg-white px-4 py-8 text-center text-[15px] text-black/50">
-                  {t('wallet.withdrawalsEmpty')}
-                </p>
-              ) : (
-                <Table>
-                  <THead>
-                    <TR>
-                      <TH>{t('wallet.requested')}</TH>
-                      <TH>{t('wallet.to')}</TH>
-                      <TH>{t('wallet.status')}</TH>
-                      <TH className="text-right">{t('wallet.amount')}</TH>
-                    </TR>
-                  </THead>
-                  <TBody>
-                    {withdrawals.map((item) => (
-                      <TR key={item.id}>
-                        <TD className="whitespace-nowrap text-black/50">
-                          {formatDate(item.createdAt, locale)}
-                        </TD>
-                        <TD>
-                          {item.bankName}
-                          <span className="block text-[13px] text-black/50">
-                            {item.bankAccountName}
-                          </span>
-                        </TD>
-                        <TD>
-                          <Pill tone={WITHDRAWAL_TONE[item.status]}>
-                            {t(`withdrawal.${item.status}`)}
-                          </Pill>
-                          {item.reviewNote ? (
-                            <span className="block max-w-[220px] text-[13px] text-black/50">
-                              {item.reviewNote}
-                            </span>
-                          ) : null}
-                        </TD>
-                        <TD numeric>{formatBaht(item.amountMinor)}</TD>
                       </TR>
                     ))}
                   </TBody>

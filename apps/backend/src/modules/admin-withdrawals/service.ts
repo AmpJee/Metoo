@@ -30,14 +30,30 @@ const withdrawalSelect = {
   brand: { select: { id: true, name: true } },
 }
 
-export function list(filter: { status?: WithdrawalStatus }) {
-  return prisma.withdrawalRequest.findMany({
+/**
+ * Anything still needing a decision sorts above anything already dealt with.
+ *
+ * Plain oldest-first is a fair queue but buries new work: as the paid pile
+ * grows, a fresh request lands at the bottom of the page and an admin has to
+ * scroll to find the one thing that actually needs them.
+ */
+const ATTENTION: Record<WithdrawalStatus, number> = {
+  REQUESTED: 0,
+  APPROVED: 1,
+  PAID: 2,
+  REJECTED: 3,
+}
+
+export async function list(filter: { status?: WithdrawalStatus }) {
+  const requests = await prisma.withdrawalRequest.findMany({
     where: { status: filter.status },
     select: withdrawalSelect,
-    // Oldest first: this is a queue, and the brand who waited longest is paid
-    // first.
+    // Oldest first WITHIN a group: among requests needing the same decision,
+    // the brand who waited longest is still paid first.
     orderBy: { createdAt: 'asc' },
   })
+
+  return requests.sort((a, b) => ATTENTION[a.status] - ATTENTION[b.status])
 }
 
 async function load(withdrawalId: string) {

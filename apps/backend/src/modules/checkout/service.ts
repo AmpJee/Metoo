@@ -43,6 +43,8 @@ interface CheckoutLine {
   productId: string
   productName: string
   pricePerPackMinor: number
+  /** Null when the product is made to order — there is nothing to take. */
+  stockPacks: number | null
   packs: number
   category: Prisma.ProductGetPayload<object>['category']
 }
@@ -122,6 +124,8 @@ async function loadAndValidateCart(
       ),
       packs,
       category: product.category,
+      // Null means "made to order" — nothing to take.
+      stockPacks: product.stockPacks,
     }
   })
 }
@@ -291,6 +295,31 @@ export async function checkout(params: {
       })
 
       orders.push(order)
+    }
+
+    // Take the stock. Until now checkout only CHECKED it, so the same packs
+    // could be sold repeatedly — every order passed the check against a
+    // number that never moved.
+    //
+    // Conditional update rather than read-then-write: `stockPacks: { gte }`
+    // makes the decrement atomic, so two checkouts racing for the last packs
+    // cannot both succeed. A count of 0 means the other one got there first,
+    // and this whole transaction rolls back.
+    for (const line of lines) {
+      if (line.stockPacks === null) continue
+
+      const taken = await tx.product.updateMany({
+        where: { id: line.productId, stockPacks: { gte: line.packs } },
+        data: { stockPacks: { decrement: line.packs } },
+      })
+
+      if (taken.count === 0) {
+        throw new AppError(
+          422,
+          'INSUFFICIENT_STOCK',
+          `${line.productName}: not enough packs left in stock.`
+        )
+      }
     }
 
     // Only once every order exists. Clearing earlier would lose the cart if a
