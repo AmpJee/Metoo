@@ -19,6 +19,8 @@ import { api } from '@/lib/api'
 import { formatBaht, formatDate } from '@/lib/format'
 import { getLocale, getT } from '@/lib/i18n/server'
 import { statusLabel, statusPillTone } from '@/lib/order-status'
+import { transitionOrder } from '@/app/actions/seller'
+import { OrderActions } from '@/components/order-actions'
 import type { BrandOrder } from '@/lib/types'
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -53,6 +55,16 @@ export default async function SellerOrdersPage({
   const status = ORDER_STATUSES.includes(raw as OrderStatus)
     ? (raw as OrderStatus)
     : undefined
+
+  // One bound action per row. Defined here rather than inside the map so the
+  // 'use server' directive sits in a function body, which is where Next
+  // requires it.
+  function transitionFor(orderId: string) {
+    return async (to: OrderStatus) => {
+      'use server'
+      return transitionOrder(orderId, to)
+    }
+  }
 
   const [orders, counts] = await Promise.all([
     api.get<BrandOrder[]>(`/brand/orders${status ? `?status=${status}` : ''}`),
@@ -99,6 +111,7 @@ export default async function SellerOrdersPage({
                 <TH>{t('sellerOrders.status')}</TH>
                 <TH className="text-right">{t('sellerOrders.total')}</TH>
                 <TH className="text-right">{t('sellerOrders.payout')}</TH>
+                <TH>{t('sellerOrders.move')}</TH>
               </TR>
             </THead>
             <TBody>
@@ -140,6 +153,16 @@ export default async function SellerOrdersPage({
                         rate: (order.commissionBps / 100).toFixed(1),
                       })}
                     </TSub>
+                  </TD>
+                  {/* The same buttons as the detail page, from the same
+                      `actions` array — so working through a queue does not
+                      mean opening every order in turn. */}
+                  <TD className="min-w-[190px]">
+                    <OrderActions
+                      actions={order.actions}
+                      status={order.status}
+                      onTransition={transitionFor(order.id)}
+                    />
                   </TD>
                 </TR>
               ))}
