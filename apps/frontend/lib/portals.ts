@@ -51,6 +51,16 @@ export function isPortalKey(value: unknown): value is PortalKey {
 }
 
 /**
+ * Every sign-up URL. Both sides of the marketplace can self-register; admin
+ * accounts are seeded, so there is no third entry.
+ *
+ * Listed here for the same reason as the login paths: the proxy has to treat
+ * them as public, and a page that is unreachable while signed out is exactly
+ * the kind of thing nobody notices until a stranger tries to use it.
+ */
+export const SIGNUP_PATHS: string[] = ['/register', '/register/seller']
+
+/**
  * Every login URL, so the proxy can treat them all as public.
  *
  * Widened to string[]: the literal union inferred from PORTALS would reject
