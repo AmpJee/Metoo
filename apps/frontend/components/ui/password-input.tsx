@@ -2,6 +2,7 @@
 
 import { Eye, EyeOff } from 'lucide-react'
 import { useId, useState } from 'react'
+import { useT } from '@/components/i18n-provider'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 
@@ -24,6 +25,7 @@ export function PasswordInput({
   className,
   ...props
 }: Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'>) {
+  const t = useT()
   const [visible, setVisible] = useState(false)
   const describedBy = useId()
 
@@ -39,7 +41,7 @@ export function PasswordInput({
         type="button"
         tabIndex={-1}
         onClick={() => setVisible((shown) => !shown)}
-        aria-label={visible ? 'Hide password' : 'Show password'}
+        aria-label={visible ? t('auth.hidePassword') : t('auth.showPassword')}
         aria-pressed={visible}
         aria-describedby={describedBy}
         className="absolute top-1/2 right-2 -translate-y-1/2 rounded p-1.5 text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"

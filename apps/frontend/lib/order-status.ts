@@ -3,6 +3,7 @@ import {
   ORDER_STATUS_LABELS,
   type OrderStatus,
 } from '@metoo/shared'
+import type { Translate } from '@/lib/i18n'
 
 /**
  * The "My Purchase" tabs.
@@ -89,8 +90,10 @@ export function statusLabel(status: OrderStatus) {
  * The shop and the consoles describe the same row differently on purpose; see
  * BUYER_ORDER_STATUS_LABELS in @metoo/shared for why.
  */
-export function buyerStatusLabel(status: OrderStatus) {
-  return BUYER_ORDER_STATUS_LABELS[status]
+export function buyerStatusLabel(status: OrderStatus, t?: Translate) {
+  // The translator is optional so the console — which stays English for now —
+  // can keep calling this without one.
+  return t ? t(`status.${status}`) : BUYER_ORDER_STATUS_LABELS[status]
 }
 
 /** An order the buyer still needs to pay for. */

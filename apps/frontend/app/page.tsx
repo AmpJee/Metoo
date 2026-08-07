@@ -52,6 +52,9 @@ function Landing() {
             <Button asChild variant="ghost" size="sm">
               <Link href="/login">Log in</Link>
             </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/register/seller">Sign up as a brand</Link>
+            </Button>
             <Button asChild size="sm">
               <Link href="/register">Sign up to buy</Link>
             </Button>
@@ -78,6 +81,9 @@ function Landing() {
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline">
+                <Link href="/register/seller">Sign up as a brand</Link>
+              </Button>
+              <Button asChild size="lg" variant="ghost">
                 <Link href="/login">I already have an account</Link>
               </Button>
             </div>
@@ -121,7 +127,12 @@ function Landing() {
           <p>© {new Date().getFullYear()} Metoo</p>
           <p>
             Are you a brand?{' '}
-            <span className="text-foreground">Brand sign-up coming soon.</span>
+            <Link
+              href="/register/seller"
+              className="font-medium text-primary hover:underline"
+            >
+              Sign up as a brand
+            </Link>
           </p>
         </div>
       </footer>

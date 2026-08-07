@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { Suspense } from 'react'
 import { AuthShell } from '@/components/auth-shell'
+import type { Translate } from '@/lib/i18n'
+import { getT } from '@/lib/i18n/server'
 import { PORTALS, type PortalKey } from '@/lib/portals'
 import { LoginForm } from './login-form'
 
@@ -11,14 +13,18 @@ import { LoginForm } from './login-form'
  * they share this rather than being three near-copies that drift apart the
  * first time one of them is restyled.
  */
-export function PortalLogin({ portal }: { portal: PortalKey }) {
-  const { title, subtitle } = PORTALS[portal]
+export async function PortalLogin({ portal }: { portal: PortalKey }) {
+  const t = await getT()
 
   return (
     <AuthShell
-      title={title}
-      subtitle={subtitle}
-      footer={<PortalFooter portal={portal} />}
+      title={t(
+        `auth.${portal === 'seller' ? 'seller' : portal === 'admin' ? 'admin' : 'shop'}.title`
+      )}
+      subtitle={t(
+        `auth.${portal === 'seller' ? 'seller' : portal === 'admin' ? 'admin' : 'shop'}.subtitle`
+      )}
+      footer={<PortalFooter portal={portal} t={t} />}
     >
       {/* useSearchParams needs a Suspense boundary to keep the page static. */}
       <Suspense fallback={null}>
@@ -35,26 +41,26 @@ export function PortalLogin({ portal }: { portal: PortalKey }) {
  * the URL. Both sides of the marketplace can sign themselves up; only admin
  * cannot, because staff accounts are seeded rather than applied for.
  */
-function PortalFooter({ portal }: { portal: PortalKey }) {
+function PortalFooter({ portal, t }: { portal: PortalKey; t: Translate }) {
   if (portal === 'retailer') {
     return (
       <div className="flex flex-col gap-2 text-muted-foreground">
         <p>
-          New to Metoo?{' '}
+          {t('auth.newHere')}{' '}
           <Link
             href="/register"
             className="font-medium text-primary hover:underline"
           >
-            Sign up to buy
+            {t('auth.signUpToBuy')}
           </Link>
         </p>
         <p>
-          Selling on Metoo?{' '}
+          {t('auth.sellingHere')}{' '}
           <Link
             href={PORTALS.seller.loginPath}
             className="font-medium text-primary hover:underline"
           >
-            Seller Centre
+            {t('auth.sellerCentre')}
           </Link>
         </p>
       </div>
@@ -65,21 +71,21 @@ function PortalFooter({ portal }: { portal: PortalKey }) {
     return (
       <div className="flex flex-col gap-2 text-muted-foreground">
         <p>
-          New to Metoo?{' '}
+          {t('auth.newHere')}{' '}
           <Link
             href="/register/seller"
             className="font-medium text-primary hover:underline"
           >
-            Sell on Metoo
+            {t('auth.sellOnMetoo')}
           </Link>
         </p>
         <p>
-          Buying instead?{' '}
+          {t('auth.buyingInstead')}{' '}
           <Link
             href={PORTALS.retailer.loginPath}
             className="font-medium text-primary hover:underline"
           >
-            Shop sign-in
+            {t('auth.shopSignIn')}
           </Link>
         </p>
       </div>
