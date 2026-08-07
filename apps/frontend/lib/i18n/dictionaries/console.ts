@@ -456,6 +456,40 @@ export const en = {
   'feedback.resolve': 'Resolve',
   'feedback.notePlaceholder': 'What was done about it (optional, internal).',
   'feedback.markResolved': 'Mark resolved',
+  // --- volume pricing editor -----------------------------------------------
+  'productForm.badTiers': 'Fix the tier pricing below before saving.',
+  'tiers.title': 'Tier pricing',
+  'tiers.hint': 'Set your own price per unit at each order quantity.',
+  'tiers.appliesTo': 'Applies to (units)',
+  'tiers.pricePerUnit': 'Price per unit (฿)',
+  'tiers.rangeTotal': 'Line total at the top of this range',
+  'tiers.from': 'From',
+  'tiers.to': 'to',
+  'tiers.noLimit': 'no limit',
+  'tiers.closedBand': '{from}–{to} units · up to {total}',
+  'tiers.openBand': '{from}+ units · {price}/unit',
+  'tiers.openEndedHint':
+    'Leave a tier’s “to” empty to make it open-ended — that band covers every larger order.',
+  'tiers.add': 'Add tier',
+  'tiers.reset': 'Reset to suggested',
+  'tiers.remove': 'Remove this tier',
+  'tiers.previewLabel': 'A retailer ordering',
+  'tiers.previewPays': 'units pays',
+  'tiers.perUnit': '{price}/unit',
+  'tiers.previewTotal': 'total',
+  'tiers.summary': 'from {price}/unit at {qty}+',
+  'tiers.error.TIERS_TOO_MANY': 'That is more tiers than a product can have.',
+  'tiers.error.TIER_BAD_QUANTITY':
+    'Every quantity must be a whole number of 1 or more.',
+  'tiers.error.TIER_BAD_PRICE': 'Every price must be more than zero.',
+  'tiers.error.TIER_BELOW_MINIMUM':
+    'A tier below the minimum order can never be reached.',
+  'tiers.error.TIERS_NOT_ASCENDING':
+    'Each tier must start above the one before it.',
+  'tiers.error.TIERS_NOT_CHEAPER':
+    'Each tier must be cheaper than the one before — buying more should never cost more per unit.',
+  'tiers.error.TIER_NOT_A_DISCOUNT':
+    'A tier must be cheaper than your base price, or it is not a discount.',
 } as const
 
 export type Dict = typeof en
@@ -903,4 +937,36 @@ export const th: Record<keyof Dict, string> = {
   'feedback.resolve': 'ทำเครื่องหมายว่าจัดการแล้ว',
   'feedback.notePlaceholder': 'สิ่งที่ดำเนินการไป (ไม่บังคับ ใช้ภายใน)',
   'feedback.markResolved': 'ยืนยันว่าจัดการแล้ว',
+  // --- volume pricing editor -----------------------------------------------
+  'productForm.badTiers': 'กรุณาแก้ไขราคาตามจำนวนด้านล่างก่อนบันทึก',
+  'tiers.title': 'ราคาตามจำนวน',
+  'tiers.hint': 'กำหนดราคาต่อชิ้นเองได้ในแต่ละช่วงจำนวนสั่งซื้อ',
+  'tiers.appliesTo': 'ใช้กับจำนวน (ชิ้น)',
+  'tiers.pricePerUnit': 'ราคาต่อชิ้น (฿)',
+  'tiers.rangeTotal': 'ยอดรวมสูงสุดของช่วงนี้',
+  'tiers.from': 'ตั้งแต่',
+  'tiers.to': 'ถึง',
+  'tiers.noLimit': 'ไม่จำกัด',
+  'tiers.closedBand': '{from}–{to} ชิ้น · สูงสุด {total}',
+  'tiers.openBand': '{from} ชิ้นขึ้นไป · {price}/ชิ้น',
+  'tiers.openEndedHint':
+    'เว้นช่อง “ถึง” ของช่วงสุดท้ายไว้ เพื่อให้ครอบคลุมทุกจำนวนที่มากกว่านั้น',
+  'tiers.add': 'เพิ่มช่วงราคา',
+  'tiers.reset': 'กลับไปค่าที่แนะนำ',
+  'tiers.remove': 'ลบช่วงนี้',
+  'tiers.previewLabel': 'ถ้าร้านค้าสั่งซื้อ',
+  'tiers.previewPays': 'ชิ้น จะจ่าย',
+  'tiers.perUnit': '{price}/ชิ้น',
+  'tiers.previewTotal': 'รวมทั้งหมด',
+  'tiers.summary': 'เริ่มต้น {price}/ชิ้น เมื่อสั่ง {qty} ขึ้นไป',
+  'tiers.error.TIERS_TOO_MANY': 'จำนวนช่วงราคามากเกินกำหนด',
+  'tiers.error.TIER_BAD_QUANTITY': 'จำนวนต้องเป็นจำนวนเต็มตั้งแต่ 1 ขึ้นไป',
+  'tiers.error.TIER_BAD_PRICE': 'ราคาต้องมากกว่าศูนย์',
+  'tiers.error.TIER_BELOW_MINIMUM':
+    'ช่วงที่ต่ำกว่าจำนวนสั่งซื้อขั้นต่ำ จะไม่มีวันถูกใช้งาน',
+  'tiers.error.TIERS_NOT_ASCENDING': 'แต่ละช่วงต้องเริ่มมากกว่าช่วงก่อนหน้า',
+  'tiers.error.TIERS_NOT_CHEAPER':
+    'แต่ละช่วงต้องถูกลงกว่าช่วงก่อนหน้า — สั่งมากขึ้นต้องไม่แพงขึ้นต่อชิ้น',
+  'tiers.error.TIER_NOT_A_DISCOUNT':
+    'ราคาช่วงนี้ต้องถูกกว่าราคาปกติ ไม่เช่นนั้นจะไม่ถือเป็นส่วนลด',
 }

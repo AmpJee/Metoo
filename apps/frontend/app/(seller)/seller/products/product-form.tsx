@@ -14,6 +14,7 @@ import { CButton } from '@/components/console/button'
 import { CField, CSelect, CTextarea } from '@/components/console/field'
 import { CInput } from '@/components/console/field'
 import { useT } from '@/components/i18n-provider'
+import { TierPricing } from './tier-pricing'
 import type { BrandProduct } from '@/lib/types'
 
 /**
@@ -24,9 +25,18 @@ import type { BrandProduct } from '@/lib/types'
  * which is what keeps commission arithmetic exact.
  */
 export function ProductForm({ product }: { product?: BrandProduct }) {
+  // null while the ladder is invalid, so the form can refuse to submit a
+  // price the API would reject anyway.
   const router = useRouter()
   const t = useT()
   const [error, setError] = useState<string | null>(null)
+  const [tiers, setTiers] = useState<{
+    pricePerPackMinor: number
+    priceTiers: { minPacks: number; pricePerPackMinor: number }[]
+  } | null>({
+    pricePerPackMinor: product?.pricePerPackMinor ?? 0,
+    priceTiers: product?.priceTiers ?? [],
+  })
   const [pending, startTransition] = useTransition()
 
   const editing = Boolean(product)
@@ -44,12 +54,24 @@ export function ProductForm({ product }: { product?: BrandProduct }) {
       return
     }
 
+    if (tiers === null) {
+      setError(t('productForm.badTiers'))
+      return
+    }
+
     const input: ProductInput = {
       name: String(form.get('name')),
       description: String(form.get('description') ?? '').trim() || undefined,
       // Round rather than truncate: 45.005 baht should not silently lose a
       // satang, and the API rejects a non-integer outright.
-      pricePerPackMinor: Math.round(baht * 100),
+      //
+      // The tier editor owns the base price when a ladder is set, since its
+      // first band IS that price — two inputs for one number would let them
+      // disagree.
+      pricePerPackMinor: tiers.priceTiers.length
+        ? tiers.pricePerPackMinor
+        : Math.round(baht * 100),
+      priceTiers: tiers.priceTiers,
       minPacks: Number(form.get('minPacks')),
       unitsPerPack: Number(form.get('unitsPerPack')),
       category: String(form.get('category')),
@@ -158,6 +180,13 @@ export function ProductForm({ product }: { product?: BrandProduct }) {
           />
         </CField>
       </div>
+
+      <TierPricing
+        basePriceMinor={product?.pricePerPackMinor ?? 0}
+        minPacks={product?.minPacks ?? 1}
+        tiers={product?.priceTiers ?? []}
+        onChange={setTiers}
+      />
 
       <label className="flex items-center gap-2 text-[15px]">
         <input
