@@ -26,6 +26,9 @@ export default async function ShopLayout({
     me = await api.get<Me>('/auth/me')
   } catch (error) {
     if (error instanceof ApiError && error.isUnauthorized) redirect('/login')
+    // An account still in the pipeline gets the screen that explains why,
+    // not an error boundary.
+    if (error instanceof ApiError && error.isNotOnboarded) redirect('/pending')
     throw error
   }
 
