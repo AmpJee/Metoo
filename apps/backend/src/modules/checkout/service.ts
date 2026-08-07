@@ -33,6 +33,7 @@ import {
   splitAmount,
 } from '../../domain/commission.ts'
 import { generateOrderNumber } from '../../domain/order-number.ts'
+import { unitPriceMinor } from '../../domain/volume-pricing.ts'
 import { COUNTS_TOWARD_VOLUME } from '../../domain/order-state.ts'
 import { missingShopFields } from '../../domain/shop-profile.ts'
 import { AppError } from '../../middleware/error.ts'
@@ -70,6 +71,10 @@ async function loadAndValidateCart(
           category: true,
           isActive: true,
           stockPacks: true,
+          priceTiers: {
+            select: { minPacks: true, pricePerPackMinor: true },
+            orderBy: { minPacks: 'asc' },
+          },
           brandId: true,
           brand: { select: { user: { select: { status: true } } } },
         },
@@ -107,7 +112,14 @@ async function loadAndValidateCart(
       brandId: product.brandId,
       productId: product.id,
       productName: product.name,
-      pricePerPackMinor: product.pricePerPackMinor,
+      // Resolved here, once, and snapshotted onto OrderItem below. The tier
+      // the shop qualified for at checkout is the price they pay, and editing
+      // the ladder afterwards must not rewrite what they were charged.
+      pricePerPackMinor: unitPriceMinor(
+        product.pricePerPackMinor,
+        product.priceTiers,
+        packs
+      ),
       packs,
       category: product.category,
     }

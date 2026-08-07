@@ -11,6 +11,7 @@
  * waiting to fail.
  */
 import { prisma } from '../../config/prisma.ts'
+import { unitPriceMinor } from '../../domain/volume-pricing.ts'
 import { checkQuantity, groupByBrand } from '../../domain/cart.ts'
 import { AppError } from '../../middleware/error.ts'
 
@@ -90,20 +91,36 @@ export async function getCart(cartId: string) {
           minPacks: true,
           unitsPerPack: true,
           isActive: true,
+          priceTiers: {
+            select: { minPacks: true, pricePerPackMinor: true },
+            orderBy: { minPacks: 'asc' },
+          },
           brand: { select: { id: true, name: true } },
         },
       },
     },
   })
 
-  const lines = items.map((item) => ({
-    id: item.id,
-    packs: item.packs,
-    brandId: item.product.brand.id,
-    pricePerPackMinor: item.product.pricePerPackMinor,
-    lineTotalMinor: item.product.pricePerPackMinor * item.packs,
-    product: item.product,
-  }))
+  // Priced through the domain rule, not by multiplying the base price: a line
+  // that qualifies for a volume tier must cost the tier rate here, on the
+  // product page and on the invoice, or the platform quotes one number and
+  // charges another.
+  const lines = items.map((item) => {
+    const unit = unitPriceMinor(
+      item.product.pricePerPackMinor,
+      item.product.priceTiers,
+      item.packs
+    )
+
+    return {
+      id: item.id,
+      packs: item.packs,
+      brandId: item.product.brand.id,
+      pricePerPackMinor: unit,
+      lineTotalMinor: unit * item.packs,
+      product: item.product,
+    }
+  })
 
   const groups = groupByBrand(lines).map((group) => ({
     brand: group.items[0]!.product.brand,
@@ -111,6 +128,9 @@ export async function getCart(cartId: string) {
       id: line.id,
       packs: line.packs,
       lineTotalMinor: line.lineTotalMinor,
+      // The unit actually charged, so the cart row's arithmetic is visibly
+      // its own: packs × this = the line total beside it.
+      pricePerPackMinor: line.pricePerPackMinor,
       product: {
         id: line.product.id,
         name: line.product.name,

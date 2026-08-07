@@ -58,6 +58,13 @@ const catalogProductDetail = t.Composite([
     ),
     /** The "Amount" quick-pick buttons, in display order. */
     packPresets: t.Array(t.Integer()),
+    /**
+     * Volume pricing, cheapest threshold first. At `minPacks` or more, every
+     * pack costs `pricePerPackMinor` — the whole quantity, not a blend.
+     */
+    priceTiers: t.Array(
+      t.Object({ minPacks: t.Integer(), pricePerPackMinor: t.Integer() })
+    ),
     sku: t.Union([t.String(), t.Null()]),
     barcode: t.Union([t.String(), t.Null()]),
     packWeightGrams: t.Union([t.Integer(), t.Null()]),

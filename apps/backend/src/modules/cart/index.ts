@@ -14,6 +14,15 @@ const cartResponse = t.Object({
         t.Object({
           id: t.String(),
           packs: t.Integer(),
+          /**
+           * What one pack costs on THIS line, after volume pricing.
+           *
+           * Distinct from product.pricePerPackMinor, which is the list price:
+           * a line that reached a tier is charged less, and the cart has to
+           * show the number it is actually charging or its own arithmetic
+           * does not add up.
+           */
+          pricePerPackMinor: t.Integer(),
           lineTotalMinor: t.Integer(),
           product: t.Object({
             id: t.String(),
