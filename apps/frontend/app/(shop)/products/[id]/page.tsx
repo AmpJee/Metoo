@@ -1,4 +1,3 @@
-import { CATEGORY_LABELS } from '@metoo/shared'
 import { MapPin, Star } from 'lucide-react'
 import type { Metadata } from 'next'
 import Image from 'next/image'
@@ -10,6 +9,7 @@ import { StarDisplay } from '@/components/star-rating'
 import { Badge } from '@/components/ui/badge'
 import { ApiError, api } from '@/lib/api'
 import { formatBaht, formatDate, formatPackSummary } from '@/lib/format'
+import { getLocale, getT } from '@/lib/i18n/server'
 import type { CatalogProduct, Rating, Review, SavedStatus } from '@/lib/types'
 
 export async function generateMetadata({
@@ -22,7 +22,7 @@ export async function generateMetadata({
     const product = await api.get<CatalogProduct>(`/catalog/products/${id}`)
     return { title: product.name }
   } catch {
-    return { title: 'Product' }
+    return { title: (await getT())('product.title') }
   }
 }
 
@@ -31,6 +31,8 @@ export default async function ProductPage({
 }: {
   params: Promise<{ id: string }>
 }) {
+  const t = await getT()
+  const locale = await getLocale()
   const { id } = await params
 
   let product: CatalogProduct
@@ -80,7 +82,7 @@ export default async function ProductPage({
             />
           ) : (
             <div className="flex size-full items-center justify-center text-sm text-muted-foreground">
-              No photo
+              {t('explore.noPhoto')}
             </div>
           )}
 
@@ -101,7 +103,7 @@ export default async function ProductPage({
         <div className="flex flex-col gap-[16px]">
           <div className="flex flex-col gap-2">
             <Badge tone="primary" className="w-fit">
-              {CATEGORY_LABELS[product.category]}
+              {t(`category.${product.category}`)}
             </Badge>
 
             <h1 className="text-[20px] font-bold md:text-[36px]">
@@ -132,10 +134,14 @@ export default async function ProductPage({
               <p className="flex items-center gap-1 text-sm text-muted-foreground">
                 <Star className="size-4 fill-warning text-warning" />
                 {product.rating.average.toFixed(1)}
-                <span>({product.rating.count} reviews)</span>
+                <span>
+                  {t('product.reviewCount', { n: product.rating.count })}
+                </span>
               </p>
             ) : (
-              <p className="text-sm text-muted-foreground">No reviews yet</p>
+              <p className="text-sm text-muted-foreground">
+                {t('product.noReviews')}
+              </p>
             )}
           </div>
 
@@ -143,17 +149,17 @@ export default async function ProductPage({
             <p className="text-[24px] font-bold text-primary md:text-[32px]">
               {formatBaht(product.pricePerPackMinor)}
               <span className="ml-2 text-sm font-normal text-muted-foreground">
-                per pack
+                {t('product.perPack')}
               </span>
             </p>
             <p className="text-sm text-muted-foreground">
-              {formatPackSummary(product.unitsPerPack, product.minPacks)}
+              {formatPackSummary(product.unitsPerPack, product.minPacks, t)}
             </p>
             <p className="text-sm text-muted-foreground">
-              Stock:{' '}
+              {t('product.stock')}:{' '}
               {product.stockPacks === null
-                ? 'Made to order'
-                : `${product.stockPacks} packs`}
+                ? t('product.madeToOrder')
+                : t('product.stockPacks', { n: product.stockPacks })}
             </p>
           </div>
 
@@ -167,7 +173,9 @@ export default async function ProductPage({
 
           {product.description ? (
             <div className="flex flex-col gap-2 pt-4">
-              <h2 className="text-base font-semibold">Description</h2>
+              <h2 className="text-base font-semibold">
+                {t('product.description')}
+              </h2>
               <p className="text-sm whitespace-pre-line text-muted-foreground">
                 {product.description}
               </p>
@@ -179,7 +187,7 @@ export default async function ProductPage({
       {reviews.length > 0 ? (
         <section className="mt-12 flex flex-col gap-4">
           <h2 className="text-base font-semibold">
-            Reviews ({product.rating.count})
+            {t('product.reviews', { n: product.rating.count })}
           </h2>
           <ul className="flex flex-col divide-y divide-border rounded-[9px] border border-border px-4">
             {reviews.map((review) => (
@@ -190,7 +198,8 @@ export default async function ProductPage({
                     {review.retailer.shopName}
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    {review.retailer.province} · {formatDate(review.createdAt)}
+                    {review.retailer.province} ·{' '}
+                    {formatDate(review.createdAt, locale)}
                   </span>
                 </div>
                 {review.comment ? (

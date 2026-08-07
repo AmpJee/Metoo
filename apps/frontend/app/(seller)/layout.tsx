@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { DashboardShell } from '@/components/dashboard-shell'
 import { ApiError, api } from '@/lib/api'
+import { getT } from '@/lib/i18n/server'
 import { homeForRole } from '@/lib/roles'
 import type { Me } from '@/lib/types'
 import { PORTALS } from '@/lib/portals'
@@ -17,6 +18,8 @@ export default async function SellerLayout({
 }: {
   children: React.ReactNode
 }) {
+  const t = await getT()
+
   let me: Me
   try {
     me = await api.get<Me>('/auth/me')
@@ -34,7 +37,7 @@ export default async function SellerLayout({
 
   return (
     <DashboardShell
-      title="Seller"
+      title={t('console.seller')}
       console="seller"
       accountName={me.brand?.name ?? me.email}
       accountSubtitle={me.email}

@@ -3,6 +3,7 @@
 import { Bookmark, Heart } from 'lucide-react'
 import { useState, useTransition } from 'react'
 import { toggleSaved } from '@/app/actions/saved'
+import { useT } from '@/components/i18n-provider'
 import type { SavedKind } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
@@ -23,16 +24,30 @@ export function SaveToggle({
   initial: boolean
   className?: string
 }) {
+  const t = useT()
   const [saved, setSaved] = useState(initial)
   const [pending, startTransition] = useTransition()
 
-  const Icon = kind === 'FAVOURITE' ? Heart : Bookmark
-  const label = kind === 'FAVOURITE' ? 'favorites' : 'saved'
+  const favourite = kind === 'FAVOURITE'
+  const Icon = favourite ? Heart : Bookmark
+
+  // Four whole labels rather than "{verb} {list}". Thai does not build the
+  // phrase from those parts, and the English "Add to saved" was never right
+  // either — the list is called "Saved for Later".
+  const label = t(
+    favourite
+      ? saved
+        ? 'saved.removeFavourite'
+        : 'saved.addFavourite'
+      : saved
+        ? 'saved.removeLater'
+        : 'saved.addLater'
+  )
 
   return (
     <button
       type="button"
-      aria-label={saved ? `Remove from ${label}` : `Add to ${label}`}
+      aria-label={label}
       aria-pressed={saved}
       disabled={pending}
       onClick={() => {

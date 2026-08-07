@@ -6,10 +6,14 @@ import { ReturnReview } from '@/components/return-review'
 import { Pill } from '@/components/console/pill'
 import { Card, CardEmpty } from '@/components/console/card'
 import { api } from '@/lib/api'
+import { getT } from '@/lib/i18n/server'
 import { formatBaht, formatDate } from '@/lib/format'
 import type { ReturnRequest, ReturnStatus } from '@/lib/types'
 
-export const metadata: Metadata = { title: 'Returns' }
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT()
+  return { title: t('adminReturns.title') }
+}
 
 const TONE: Record<ReturnStatus, 'warning' | 'success' | 'danger'> = {
   REQUESTED: 'warning',
@@ -31,17 +35,18 @@ const LABEL: Record<ReturnStatus, string> = {
  * brand's wallet and closes the order.
  */
 export default async function AdminReturnsPage() {
+  const t = await getT()
   const returns = await api.get<ReturnRequest[]>('/admin/returns')
   const open = returns.filter((item) => item.status === 'REQUESTED')
 
   return (
     <>
       <PageHeader
-        title="Returns"
+        title={t('adminReturns.title')}
         description={
           open.length > 0
-            ? `${open.length} awaiting a decision`
-            : 'Every return request across the platform.'
+            ? t('adminReturns.awaiting', { n: open.length })
+            : t('adminReturns.subtitle')
         }
       />
 
@@ -50,8 +55,8 @@ export default async function AdminReturnsPage() {
           <Card>
             <CardEmpty
               icon={RotateCcw}
-              title="No return requests"
-              description="Returns can only be raised after delivery."
+              title={t('adminReturns.emptyTitle')}
+              description={t('adminReturns.emptyBody')}
             />
           </Card>
         ) : (
@@ -108,7 +113,7 @@ export default async function AdminReturnsPage() {
                 </div>
 
                 <footer className="flex justify-between border-t border-black/10 px-4 py-3 text-[13px] text-black/50">
-                  <span>Order total</span>
+                  <span>{t('orders.orderTotal')}</span>
                   <span className="tabular-nums">
                     {formatBaht(request.order.totalMinor)}
                   </span>

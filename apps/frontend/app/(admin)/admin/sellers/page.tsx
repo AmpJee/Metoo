@@ -1,8 +1,5 @@
 import {
-  FDA_STATUS_LABELS,
   PIPELINE_STATUSES,
-  PIPELINE_STATUS_LABELS,
-  SIZE_BAND_LABELS,
   type PipelineStatus,
   type SizeBand,
 } from '@metoo/shared'
@@ -16,10 +13,14 @@ import { Card, CardEmpty } from '@/components/console/card'
 import { Table, TBody, TD, TH, THead, TR } from '@/components/console/table'
 import { api } from '@/lib/api'
 import { formatDate } from '@/lib/format'
+import { getLocale, getT } from '@/lib/i18n/server'
 import type { Applicant } from '@/lib/types'
 import { PipelineStatusControl } from '../pipeline-status'
 
-export const metadata: Metadata = { title: 'Sellers' }
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT()
+  return { title: t('adminSellers.title') }
+}
 
 const TONE: Record<
   PipelineStatus,
@@ -37,6 +38,8 @@ export default async function AdminSellersPage({
 }: {
   searchParams: Promise<{ status?: string }>
 }) {
+  const t = await getT()
+  const locale = await getLocale()
   const { status: raw } = await searchParams
   const status = PIPELINE_STATUSES.includes(raw as PipelineStatus)
     ? (raw as PipelineStatus)
@@ -49,17 +52,21 @@ export default async function AdminSellersPage({
   return (
     <>
       <PageHeader
-        title="Sellers"
-        description="Brand pipeline, verification, and onboarding status."
+        title={t('adminSellers.title')}
+        description={t('adminSellers.subtitle')}
       />
 
       <div>
         <FilterTabs
           items={[
-            { href: '/admin/sellers', label: 'All', active: !status },
+            {
+              href: '/admin/sellers',
+              label: t('adminSellers.all'),
+              active: !status,
+            },
             ...PIPELINE_STATUSES.map((value) => ({
               href: `/admin/sellers?status=${value}`,
-              label: PIPELINE_STATUS_LABELS[value],
+              label: t(`pipeline.${value}`),
               active: status === value,
             })),
           ]}
@@ -69,21 +76,21 @@ export default async function AdminSellersPage({
           {applicants.length === 0 ? (
             <CardEmpty
               icon={Store}
-              title="No brands here"
-              description="Applicants appear as they sign up."
+              title={t('adminSellers.emptyTitle')}
+              description={t('adminSellers.emptyBody')}
             />
           ) : (
             <Table>
               <THead>
                 <TR>
-                  <TH>Brand</TH>
-                  <TH>Contact</TH>
-                  <TH>อย.</TH>
-                  <TH>Size</TH>
-                  <TH className="text-right">Products</TH>
-                  <TH>Referral</TH>
-                  <TH>Status</TH>
-                  <TH>Docs</TH>
+                  <TH>{t('adminSellers.brand')}</TH>
+                  <TH>{t('adminSellers.contact')}</TH>
+                  <TH>{t('adminSellers.fda')}</TH>
+                  <TH>{t('adminSellers.size')}</TH>
+                  <TH className="text-right">{t('adminSellers.products')}</TH>
+                  <TH>{t('adminSellers.referral')}</TH>
+                  <TH>{t('adminSellers.status')}</TH>
+                  <TH>{t('adminSellers.docs')}</TH>
                 </TR>
               </THead>
               <TBody>
@@ -96,7 +103,9 @@ export default async function AdminSellersPage({
                           {brand?.name ?? applicant.email}
                         </span>
                         <span className="block text-[13px] text-black/50">
-                          Signed up {formatDate(applicant.createdAt)}
+                          {t('adminSellers.signedUp', {
+                            date: formatDate(applicant.createdAt, locale),
+                          })}
                         </span>
                         {/* Internal outreach notes — never shown to the
                             applicant, unlike reviewNote. */}
@@ -123,7 +132,7 @@ export default async function AdminSellersPage({
                                   : 'neutral'
                             }
                           >
-                            {FDA_STATUS_LABELS[brand.fdaStatus]}
+                            {t(`fda.${brand.fdaStatus}`)}
                           </Pill>
                         ) : (
                           '—'
@@ -131,7 +140,7 @@ export default async function AdminSellersPage({
                       </TD>
                       <TD className="text-black/50">
                         {brand?.sizeBand
-                          ? SIZE_BAND_LABELS[brand.sizeBand as SizeBand]
+                          ? t(`sizeBand.${brand.sizeBand as SizeBand}`)
                           : '—'}
                       </TD>
                       <TD numeric>{brand?._count.products ?? 0}</TD>
@@ -140,7 +149,7 @@ export default async function AdminSellersPage({
                       </TD>
                       <TD className="min-w-[180px]">
                         <Pill tone={TONE[applicant.status]} className="mb-2">
-                          {PIPELINE_STATUS_LABELS[applicant.status]}
+                          {t(`pipeline.${applicant.status}`)}
                         </Pill>
                         <PipelineStatusControl
                           userId={applicant.id}
@@ -152,7 +161,8 @@ export default async function AdminSellersPage({
                           href={`/admin/sellers/${applicant.id}`}
                           className="inline-flex items-center gap-1 text-[15px] text-[#cb2957] hover:underline"
                         >
-                          <FileText className="size-3.5" /> View
+                          <FileText className="size-3.5" />{' '}
+                          {t('adminSellers.view')}
                         </Link>
                       </TD>
                     </TR>

@@ -5,12 +5,17 @@ import { redirect } from 'next/navigation'
 import { EmptyState } from '@/components/ui/empty-state'
 import { api } from '@/lib/api'
 import { formatBaht } from '@/lib/format'
+import { getT } from '@/lib/i18n/server'
 import type { Cart, Me } from '@/lib/types'
 import { CheckoutForm } from './checkout-form'
 
-export const metadata: Metadata = { title: 'Checkout' }
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT()
+  return { title: t('checkout.title') }
+}
 
 export default async function CheckoutPage() {
+  const t = await getT()
   const [cart, me] = await Promise.all([
     api.get<Cart>('/cart'),
     api.get<Me>('/auth/me'),
@@ -20,13 +25,15 @@ export default async function CheckoutPage() {
   if (cart.itemCount === 0) {
     return (
       <div className="container-page py-8 md:py-12">
-        <h1 className="text-[20px] font-bold md:text-[36px]">Checkout</h1>
+        <h1 className="text-[20px] font-bold md:text-[36px]">
+          {t('checkout.title')}
+        </h1>
         <div className="mt-8">
           <EmptyState
             icon={ShoppingCart}
-            title="Your cart is empty"
-            description="Add something to your cart before checking out."
-            action={{ label: 'Start shopping', href: '/explore' }}
+            title={t('cart.emptyTitle')}
+            description={t('checkout.emptyBody')}
+            action={{ label: t('cart.startShopping'), href: '/explore' }}
           />
         </div>
       </div>
@@ -42,12 +49,16 @@ export default async function CheckoutPage() {
 
   return (
     <div className="container-page py-8 md:py-12">
-      <h1 className="text-[20px] font-bold md:text-[36px]">Checkout</h1>
+      <h1 className="text-[20px] font-bold md:text-[36px]">
+        {t('checkout.title')}
+      </h1>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_340px]">
         <div className="flex flex-col gap-8">
           <section className="flex flex-col gap-3">
-            <h2 className="text-base font-semibold">Delivery Address</h2>
+            <h2 className="text-base font-semibold">
+              {t('checkout.deliveryAddress')}
+            </h2>
             <div className="flex items-start gap-3 rounded-[9px] border border-border p-4">
               <MapPin className="mt-0.5 size-4 shrink-0 text-neutral-mid" />
               <div className="text-sm">
@@ -59,15 +70,16 @@ export default async function CheckoutPage() {
                     edit the real address. The order snapshots it server-side
                     regardless, so delivery is unaffected. */}
                 <p className="text-muted-foreground">
-                  Delivered to the address registered to your shop. To change
-                  it, contact support.
+                  {t('checkout.addressNote')}
                 </p>
               </div>
             </div>
           </section>
 
           <section className="flex flex-col gap-3">
-            <h2 className="text-base font-semibold">Products Ordered</h2>
+            <h2 className="text-base font-semibold">
+              {t('checkout.productsOrdered')}
+            </h2>
             {cart.groups.map((group) => (
               <div
                 key={group.brand.id}
@@ -97,7 +109,9 @@ export default async function CheckoutPage() {
                   ))}
                 </ul>
                 <footer className="flex justify-between border-t border-border px-4 py-3 text-sm">
-                  <span className="text-muted-foreground">Subtotal</span>
+                  <span className="text-muted-foreground">
+                    {t('checkout.subtotal')}
+                  </span>
                   <span className="font-medium">
                     {formatBaht(group.subtotalMinor)}
                   </span>
@@ -110,29 +124,35 @@ export default async function CheckoutPage() {
         </div>
 
         <aside className="h-fit rounded-[9px] border border-border p-5 lg:sticky lg:top-[100px]">
-          <h2 className="text-base font-semibold">Total Payment</h2>
+          <h2 className="text-base font-semibold">
+            {t('checkout.totalPayment')}
+          </h2>
 
           <dl className="mt-4 flex flex-col gap-2 text-sm">
             <div className="flex justify-between">
-              <dt className="text-muted-foreground">Merchandise subtotal</dt>
+              <dt className="text-muted-foreground">
+                {t('checkout.merchandiseSubtotal')}
+              </dt>
               <dd>{formatBaht(cart.totalMinor)}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-muted-foreground">Shipping subtotal</dt>
-              <dd className="text-muted-foreground">Set after confirmation</dd>
+              <dt className="text-muted-foreground">
+                {t('checkout.shippingSubtotal')}
+              </dt>
+              <dd className="text-muted-foreground">
+                {t('checkout.shippingLater')}
+              </dd>
             </div>
           </dl>
 
           <div className="mt-4 flex justify-between border-t border-border pt-4 text-base font-semibold">
-            <span>Order Total</span>
+            <span>{t('checkout.orderTotal')}</span>
             <span className="text-primary">{formatBaht(cart.totalMinor)}</span>
           </div>
 
           {cart.brandCount > 1 ? (
             <p className="mt-3 rounded-md bg-secondary p-3 text-xs text-muted-foreground">
-              This becomes {cart.brandCount} orders, one per brand. Each is
-              confirmed and delivered separately, so a delay at one brand never
-              holds up another.
+              {t('checkout.splitNotice', { n: cart.brandCount })}
             </p>
           ) : null}
 
@@ -140,7 +160,7 @@ export default async function CheckoutPage() {
             href="/cart"
             className="mt-4 block text-center text-sm text-muted-foreground hover:text-primary"
           >
-            Back to cart
+            {t('checkout.backToCart')}
           </Link>
         </aside>
       </div>

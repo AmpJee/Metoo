@@ -5,11 +5,15 @@ import { PageHeader } from '@/components/dashboard-shell'
 import { Pill } from '@/components/console/pill'
 import { Card, CardEmpty } from '@/components/console/card'
 import { api } from '@/lib/api'
+import { getT } from '@/lib/i18n/server'
 import { formatDate } from '@/lib/format'
 import type { Feedback, FeedbackStatus } from '@/lib/types'
 import { ResolveButton } from './resolve-button'
 
-export const metadata: Metadata = { title: 'Feedback Log' }
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT()
+  return { title: t('feedback.title') }
+}
 
 const STATUSES: FeedbackStatus[] = ['OPEN', 'RESOLVED']
 
@@ -18,6 +22,7 @@ export default async function AdminFeedbackPage({
 }: {
   searchParams: Promise<{ status?: string }>
 }) {
+  const t = await getT()
   const { status: raw } = await searchParams
   const status = STATUSES.includes(raw as FeedbackStatus)
     ? (raw as FeedbackStatus)
@@ -30,8 +35,8 @@ export default async function AdminFeedbackPage({
   return (
     <>
       <PageHeader
-        title="Feedback Log"
-        description="Compliments, complaints, declines, and churn notes."
+        title={t('feedback.title')}
+        description={t('feedback.subtitle')}
       />
 
       <FilterTabs
@@ -55,8 +60,8 @@ export default async function AdminFeedbackPage({
           <Card>
             <CardEmpty
               icon={MessageSquare}
-              title="No feedback matches your filters."
-              description="Brands and retailers can send feedback from their own screens."
+              title={t('feedback.emptyTitle')}
+              description={t('feedback.emptyBody')}
             />
           </Card>
         ) : (

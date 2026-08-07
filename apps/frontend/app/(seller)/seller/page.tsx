@@ -17,6 +17,7 @@ import { ChartCard } from '@/components/console/chart-card'
 import { HeroTile, StatTile } from '@/components/console/stat-tile'
 import { api } from '@/lib/api'
 import { formatBaht, formatDate } from '@/lib/format'
+import { getLocale, getT } from '@/lib/i18n/server'
 import { statusLabel, statusPillTone } from '@/lib/order-status'
 import type {
   BrandDashboard,
@@ -24,7 +25,10 @@ import type {
   WalletBalance,
 } from '@/lib/types'
 
-export const metadata: Metadata = { title: 'Seller dashboard' }
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT()
+  return { title: t('sellerHome.title') }
+}
 
 const PERIODS = ['day', 'week', 'month', 'year'] as const
 
@@ -33,6 +37,8 @@ export default async function SellerDashboard({
 }: {
   searchParams: Promise<{ period?: string }>
 }) {
+  const t = await getT()
+  const locale = await getLocale()
   const { period: raw } = await searchParams
   const period = (
     PERIODS.includes(raw as DashboardPeriod) ? raw : 'week'
@@ -51,10 +57,13 @@ export default async function SellerDashboard({
   return (
     <>
       <PageHeader
-        title="Dashboard"
+        title={t('sellerHome.title')}
         description={
           data.store.memberSince
-            ? `${data.store.name} · member since ${formatDate(data.store.memberSince)}`
+            ? t('sellerHome.memberSince', {
+                name: data.store.name,
+                date: formatDate(data.store.memberSince, locale),
+              })
             : data.store.name
         }
         actions={<PeriodTabs basePath="/seller" active={period} />}
@@ -63,14 +72,14 @@ export default async function SellerDashboard({
       {/* Wallet — the crimson headline card beside pending clearance. */}
       <section className="grid grid-cols-1 gap-[20px] md:grid-cols-3">
         <HeroTile
-          label="Available balance"
+          label={t('sellerHome.availableBalance')}
           value={formatBaht(wallet.availableMinor)}
           action={
             <Link
               href="/seller/wallet"
               className="rounded-[6px] bg-white px-[28px] py-[12px] text-[16px] font-bold text-[#cb2957] transition-opacity hover:opacity-90"
             >
-              Withdraw
+              {t('sellerHome.withdraw')}
             </Link>
           }
           footnote={
@@ -82,16 +91,16 @@ export default async function SellerDashboard({
             ) : (
               <>
                 <AlertTriangle className="size-[18px]" />
-                No bank account on file
+                {t('sellerHome.noBankAccount')}
               </>
             )
           }
         />
 
         <StatTile
-          label="Pending clearance"
+          label={t('sellerHome.pendingClearance')}
           value={formatBaht(wallet.pendingClearanceMinor)}
-          hint="Delivered, awaiting Money Received"
+          hint={t('sellerHome.pendingClearanceHint')}
           icon={Clock}
           tint="warning"
         />
@@ -100,28 +109,33 @@ export default async function SellerDashboard({
       {/* Trading metrics. */}
       <section className="grid grid-cols-1 gap-[20px] sm:grid-cols-2 lg:grid-cols-4">
         <StatTile
-          label="Average Order Value"
+          label={t('sellerHome.aov')}
           value={formatBaht(data.averageOrderValueMinor)}
           icon={Receipt}
         />
         <StatTile
-          label="New orders"
+          label={t('sellerHome.newOrders')}
           value={String(data.store.newOrders)}
-          hint="Waiting for you to confirm"
+          hint={t('sellerHome.newOrdersHint')}
           icon={ShoppingBag}
           tint={data.store.newOrders > 0 ? 'warning' : 'primary'}
         />
         <StatTile
-          label="Active products"
+          label={t('sellerHome.activeProducts')}
           value={String(data.store.activeProducts)}
-          hint={`${data.store.totalProducts} listed in total`}
+          hint={t('sellerHome.activeProductsHint', {
+            n: data.store.totalProducts,
+          })}
           icon={Package}
           tint="success"
         />
         <StatTile
-          label="Repeat order rate"
+          label={t('sellerHome.repeatRate')}
           value={`${data.repeatOrderRate.percent}%`}
-          hint={`${data.repeatOrderRate.repeatOrders} of ${data.repeatOrderRate.totalOrders} · trailing 12 months`}
+          hint={t('sellerHome.repeatRateHint', {
+            repeat: data.repeatOrderRate.repeatOrders,
+            total: data.repeatOrderRate.totalOrders,
+          })}
           icon={Repeat}
           tint="info"
         />
@@ -130,23 +144,21 @@ export default async function SellerDashboard({
       {/* Two measures, two plots — never two y-axes on one. */}
       <section className="grid grid-cols-1 gap-[20px] lg:grid-cols-2">
         <ChartCard
-          title="Revenue"
+          title={t('sellerHome.revenue')}
           total={formatBaht(data.revenueMinor)}
           empty={
-            data.chart.length < 2
-              ? 'Not enough history to plot — a trend needs more than one period.'
-              : undefined
+            data.chart.length < 2 ? t('sellerHome.revenueEmpty') : undefined
           }
         >
           <RevenueChart data={data.chart} />
         </ChartCard>
 
         <ChartCard
-          title="Order Quantities"
+          title={t('sellerHome.orderQuantities')}
           total={String(totalOrders)}
           empty={
             data.chart.length < 2
-              ? 'Not enough history to plot yet.'
+              ? t('sellerHome.orderQuantitiesEmpty')
               : undefined
           }
         >
@@ -158,18 +170,20 @@ export default async function SellerDashboard({
       <section className="grid grid-cols-1 gap-[20px] lg:grid-cols-2">
         <div className="flex flex-col gap-[16px] rounded-[9px] bg-white p-[24px]">
           <div className="flex items-baseline justify-between">
-            <h2 className="text-[20px] font-bold text-black">New orders</h2>
+            <h2 className="text-[20px] font-bold text-black">
+              {t('sellerHome.newOrders')}
+            </h2>
             <Link
               href="/seller/orders"
               className="text-[15px] text-[#cb2957] hover:underline"
             >
-              All orders
+              {t('sellerHome.allOrders')}
             </Link>
           </div>
 
           {data.recentOrders.length === 0 ? (
             <p className="py-[24px] text-center text-[15px] text-black/50">
-              No orders yet.
+              {t('sellerHome.noOrders')}
             </p>
           ) : (
             <ul className="flex flex-col">
@@ -186,12 +200,12 @@ export default async function SellerDashboard({
                       {order.orderNumber}
                     </Link>
                     <p className="text-[14px] text-black/50">
-                      {formatDate(order.createdAt)}
+                      {formatDate(order.createdAt, locale)}
                     </p>
                   </div>
                   <div className="flex shrink-0 items-center gap-[12px]">
                     <Pill tone={statusPillTone(order.status)}>
-                      {statusLabel(order.status)}
+                      {statusLabel(order.status, t)}
                     </Pill>
                     <span className="text-[16px] font-bold tabular-nums">
                       {formatBaht(order.totalMinor)}
@@ -205,12 +219,14 @@ export default async function SellerDashboard({
 
         <div className="flex flex-col gap-[16px] rounded-[9px] bg-white p-[24px]">
           <div className="flex items-baseline justify-between">
-            <h2 className="text-[20px] font-bold text-black">Stock</h2>
+            <h2 className="text-[20px] font-bold text-black">
+              {t('sellerHome.stock')}
+            </h2>
             <Link
               href="/seller/products"
               className="text-[15px] text-[#cb2957] hover:underline"
             >
-              All products
+              {t('sellerHome.allProducts')}
             </Link>
           </div>
 
@@ -218,7 +234,7 @@ export default async function SellerDashboard({
               re-derive a threshold the backend already owns. */}
           {needsAttention.length === 0 ? (
             <p className="py-[24px] text-center text-[15px] text-black/50">
-              Every product is in stock.
+              {t('sellerHome.stockOk')}
             </p>
           ) : (
             <ul className="flex flex-col">
@@ -235,8 +251,8 @@ export default async function SellerDashboard({
                   </Link>
                   <span className="shrink-0 text-[15px] text-[#c47f00] tabular-nums">
                     {item.stockPacks === null
-                      ? 'Made to order'
-                      : `${item.stockPacks} packs`}
+                      ? t('product.madeToOrder')
+                      : t('product.stockPacks', { n: item.stockPacks })}
                   </span>
                 </li>
               ))}

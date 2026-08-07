@@ -4,7 +4,9 @@ import { CreditCard, Loader2, QrCode } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { placeOrder } from '@/app/actions/checkout'
+import { useT } from '@/components/i18n-provider'
 import { Button } from '@/components/ui/button'
+import type { MessageKey } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
 
 /**
@@ -19,21 +21,21 @@ type PaymentPreference = 'PROMPTPAY' | 'CARD'
 
 const OPTIONS: {
   value: PaymentPreference
-  label: string
-  hint: string
+  labelKey: MessageKey
+  hintKey: MessageKey
   icon: typeof QrCode
   disabled?: boolean
 }[] = [
   {
     value: 'PROMPTPAY',
-    label: 'QR PromptPay',
-    hint: 'Scan and transfer once the order is placed',
+    labelKey: 'checkout.promptpay',
+    hintKey: 'checkout.promptpayHint',
     icon: QrCode,
   },
   {
     value: 'CARD',
-    label: 'Credit / Debit Card',
-    hint: 'Coming soon',
+    labelKey: 'checkout.card',
+    hintKey: 'checkout.cardHint',
     icon: CreditCard,
     disabled: true,
   },
@@ -41,6 +43,7 @@ const OPTIONS: {
 
 export function CheckoutForm({ brandCount }: { brandCount: number }) {
   const router = useRouter()
+  const t = useT()
   const [method, setMethod] = useState<PaymentPreference>('PROMPTPAY')
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
@@ -48,7 +51,9 @@ export function CheckoutForm({ brandCount }: { brandCount: number }) {
   return (
     <div className="flex flex-col gap-6">
       <section className="flex flex-col gap-3">
-        <h2 className="text-base font-semibold">Payment Method</h2>
+        <h2 className="text-base font-semibold">
+          {t('checkout.paymentMethod')}
+        </h2>
         <div className="flex flex-col gap-2">
           {OPTIONS.map((option) => (
             <label
@@ -77,9 +82,11 @@ export function CheckoutForm({ brandCount }: { brandCount: number }) {
               />
               <option.icon className="size-5 shrink-0 text-neutral-dark" />
               <span className="flex flex-col">
-                <span className="text-sm font-medium">{option.label}</span>
+                <span className="text-sm font-medium">
+                  {t(option.labelKey)}
+                </span>
                 <span className="text-xs text-muted-foreground">
-                  {option.hint}
+                  {t(option.hintKey)}
                 </span>
               </span>
             </label>
@@ -90,8 +97,7 @@ export function CheckoutForm({ brandCount }: { brandCount: number }) {
             the API yet, so nothing is charged — the QR comes after the order
             is placed, and the seller confirms the transfer arrived. */}
         <p className="rounded-md bg-secondary p-3 text-xs text-muted-foreground">
-          No payment is taken now. Once the order is placed you will get a
-          PromptPay QR to transfer to; the seller confirms when it arrives.
+          {t('checkout.noPaymentNow')}
         </p>
       </section>
 
@@ -123,8 +129,9 @@ export function CheckoutForm({ brandCount }: { brandCount: number }) {
         }}
       >
         {pending ? <Loader2 className="size-4 animate-spin" /> : null}
-        Place Order
-        {brandCount > 1 ? ` (${brandCount} orders)` : ''}
+        {brandCount > 1
+          ? t('checkout.placeOrderSplit', { n: brandCount })
+          : t('checkout.placeOrder')}
       </Button>
     </div>
   )

@@ -1,4 +1,3 @@
-import { CATEGORY_LABELS } from '@metoo/shared'
 import { Package, Plus } from 'lucide-react'
 import type { Metadata } from 'next'
 import Image from 'next/image'
@@ -10,23 +9,28 @@ import { Table, TBody, TD, TH, THead, TR } from '@/components/console/table'
 import { PageHeader } from '@/components/dashboard-shell'
 import { api } from '@/lib/api'
 import { formatBaht } from '@/lib/format'
+import { getT } from '@/lib/i18n/server'
 import type { BrandProduct } from '@/lib/types'
 
-export const metadata: Metadata = { title: 'Products' }
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT()
+  return { title: t('nav.seller.products') }
+}
 
 export default async function SellerProductsPage() {
+  const t = await getT()
   const products = await api.get<BrandProduct[]>('/brand/products')
   const active = products.filter((product) => product.isActive).length
 
   return (
     <>
       <PageHeader
-        title={`My Products (${products.length})`}
-        description={`${active} visible in the catalog`}
+        title={t('sellerProducts.title', { n: products.length })}
+        description={t('sellerProducts.subtitle', { n: active })}
         actions={
           <CButton asChild>
             <Link href="/seller/products/new">
-              <Plus className="size-[18px]" /> New Product
+              <Plus className="size-[18px]" /> {t('sellerProducts.new')}
             </Link>
           </CButton>
         }
@@ -36,20 +40,25 @@ export default async function SellerProductsPage() {
         {products.length === 0 ? (
           <CardEmpty
             icon={Package}
-            title="No products yet"
-            description="List your first product to start selling."
-            action={{ label: 'New Product', href: '/seller/products/new' }}
+            title={t('sellerProducts.emptyTitle')}
+            description={t('sellerProducts.emptyBody')}
+            action={{
+              label: t('sellerProducts.new'),
+              href: '/seller/products/new',
+            }}
           />
         ) : (
           <Table>
             <THead>
               <TR>
-                <TH>Product</TH>
-                <TH>Category</TH>
-                <TH className="text-right">Price / pack</TH>
-                <TH className="text-right">MOQ</TH>
-                <TH className="text-right">Stock</TH>
-                <TH>Status</TH>
+                <TH>{t('sellerProducts.product')}</TH>
+                <TH>{t('sellerProducts.category')}</TH>
+                <TH className="text-right">
+                  {t('sellerProducts.pricePerPack')}
+                </TH>
+                <TH className="text-right">{t('sellerProducts.moq')}</TH>
+                <TH className="text-right">{t('sellerProducts.stock')}</TH>
+                <TH>{t('sellerProducts.status')}</TH>
               </TR>
             </THead>
             <TBody>
@@ -75,13 +84,15 @@ export default async function SellerProductsPage() {
                     </Link>
                   </TD>
                   <TD className="text-black/50">
-                    {CATEGORY_LABELS[product.category]}
+                    {t(`category.${product.category}`)}
                   </TD>
                   <TD numeric>{formatBaht(product.pricePerPackMinor)}</TD>
                   <TD numeric>{product.minPacks}</TD>
                   <TD numeric>
                     {product.stockPacks === null ? (
-                      <span className="text-black/50">To order</span>
+                      <span className="text-black/50">
+                        {t('sellerProducts.toOrder')}
+                      </span>
                     ) : (
                       product.stockPacks
                     )}
@@ -90,11 +101,13 @@ export default async function SellerProductsPage() {
                     {/* Three states, not two: a product can be listed but out
                         of stock, which is different from being hidden. */}
                     {!product.isActive ? (
-                      <Pill>Hidden</Pill>
+                      <Pill>{t('sellerProducts.hidden')}</Pill>
                     ) : product.stockPacks === 0 ? (
-                      <Pill tone="warning">Out of stock</Pill>
+                      <Pill tone="warning">
+                        {t('sellerProducts.outOfStock')}
+                      </Pill>
                     ) : (
-                      <Pill tone="success">Active</Pill>
+                      <Pill tone="success">{t('sellerProducts.active')}</Pill>
                     )}
                   </TD>
                 </TR>

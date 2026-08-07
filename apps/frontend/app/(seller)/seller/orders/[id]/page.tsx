@@ -10,6 +10,7 @@ import { Pill } from '@/components/console/pill'
 import { Table, TBody, TD, TH, THead, TR } from '@/components/console/table'
 import { ApiError, api } from '@/lib/api'
 import { formatBaht, formatDate } from '@/lib/format'
+import { getLocale, getT } from '@/lib/i18n/server'
 import { statusLabel, statusPillTone } from '@/lib/order-status'
 import type { BrandOrder, OrderStatus } from '@/lib/types'
 
@@ -18,12 +19,13 @@ export async function generateMetadata({
 }: {
   params: Promise<{ id: string }>
 }): Promise<Metadata> {
+  const t = await getT()
   const { id } = await params
   try {
     const order = await api.get<BrandOrder>(`/brand/orders/${id}`)
-    return { title: `Order ${order.orderNumber}` }
+    return { title: t('sellerOrder.title', { number: order.orderNumber }) }
   } catch {
-    return { title: 'Order' }
+    return { title: t('sellerOrder.fallbackTitle') }
   }
 }
 
@@ -32,6 +34,8 @@ export default async function SellerOrderPage({
 }: {
   params: Promise<{ id: string }>
 }) {
+  const t = await getT()
+  const locale = await getLocale()
   const { id } = await params
 
   let order: BrandOrder
@@ -54,11 +58,14 @@ export default async function SellerOrderPage({
   return (
     <>
       <PageHeader
-        title={`Order ${order.orderNumber}`}
-        description={`Placed ${formatDate(order.createdAt)} · ${order.retailer.shopName}`}
+        title={t('sellerOrder.title', { number: order.orderNumber })}
+        description={t('sellerOrder.subtitle', {
+          date: formatDate(order.createdAt, locale),
+          shop: order.retailer.shopName,
+        })}
         actions={
           <Pill tone={statusPillTone(order.status)}>
-            {statusLabel(order.status)}
+            {statusLabel(order.status, t)}
           </Pill>
         }
       />
@@ -68,14 +75,14 @@ export default async function SellerOrderPage({
           href="/seller/orders"
           className="mb-6 inline-flex items-center gap-1 text-[15px] text-black/50 hover:text-[#cb2957]"
         >
-          <ArrowLeft className="size-4" /> All orders
+          <ArrowLeft className="size-4" /> {t('sellerOrder.backToOrders')}
         </Link>
 
         <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
           <div className="flex flex-col gap-8">
             <section className="rounded-[9px] bg-white p-[24px]">
               <h2 className="mb-4 text-[16px] font-semibold">
-                What happens next
+                {t('sellerOrder.whatNext')}
               </h2>
               <OrderActions
                 actions={order.actions}
@@ -85,14 +92,16 @@ export default async function SellerOrderPage({
             </section>
 
             <section className="flex flex-col gap-3">
-              <h2 className="text-[16px] font-semibold">Items</h2>
+              <h2 className="text-[16px] font-semibold">
+                {t('sellerOrder.items')}
+              </h2>
               <Table>
                 <THead>
                   <TR>
-                    <TH>Product</TH>
-                    <TH className="text-right">Packs</TH>
-                    <TH className="text-right">Unit price</TH>
-                    <TH className="text-right">Line total</TH>
+                    <TH>{t('sellerOrder.product')}</TH>
+                    <TH className="text-right">{t('sellerOrder.packs')}</TH>
+                    <TH className="text-right">{t('sellerOrder.unitPrice')}</TH>
+                    <TH className="text-right">{t('sellerOrder.lineTotal')}</TH>
                   </TR>
                 </THead>
                 <TBody>
@@ -101,7 +110,9 @@ export default async function SellerOrderPage({
                       <TD>
                         {item.productName}
                         <span className="block text-[13px] text-black/50">
-                          {item.unitsPerPack} units/pack
+                          {t('sellerOrder.unitsPerPack', {
+                            n: item.unitsPerPack,
+                          })}
                         </span>
                       </TD>
                       <TD numeric>{item.packs}</TD>
@@ -114,29 +125,37 @@ export default async function SellerOrderPage({
               {/* Names and prices are the snapshot taken at checkout, so this
                   stays truthful after the product is edited. */}
               <p className="text-[13px] text-black/50">
-                Prices are those at the time the order was placed.
+                {t('sellerOrder.priceNote')}
               </p>
             </section>
 
             <section className="flex flex-col gap-4">
-              <h2 className="text-[16px] font-semibold">Tracking</h2>
+              <h2 className="text-[16px] font-semibold">
+                {t('sellerOrder.tracking')}
+              </h2>
               <OrderTracker status={order.status} />
             </section>
           </div>
 
           <aside className="flex flex-col gap-4">
             <div className="rounded-[9px] bg-white p-[24px]">
-              <h2 className="text-[16px] font-semibold">Your payout</h2>
+              <h2 className="text-[16px] font-semibold">
+                {t('sellerOrder.payout')}
+              </h2>
               <dl className="mt-4 flex flex-col gap-2 text-[15px]">
                 <div className="flex justify-between">
-                  <dt className="text-black/50">Order total</dt>
+                  <dt className="text-black/50">
+                    {t('sellerOrder.orderTotal')}
+                  </dt>
                   <dd className="tabular-nums">
                     {formatBaht(order.totalMinor)}
                   </dd>
                 </div>
                 <div className="flex justify-between">
                   <dt className="text-black/50">
-                    Commission ({(order.commissionBps / 100).toFixed(1)}%)
+                    {t('sellerOrder.commission', {
+                      rate: (order.commissionBps / 100).toFixed(1),
+                    })}
                   </dt>
                   <dd className="tabular-nums text-black/50">
                     −{formatBaht(order.commissionMinor)}
@@ -144,7 +163,7 @@ export default async function SellerOrderPage({
                 </div>
               </dl>
               <div className="mt-4 flex justify-between border-t border-black/10 pt-4 font-semibold">
-                <span>You receive</span>
+                <span>{t('sellerOrder.youReceive')}</span>
                 <span className="tabular-nums text-[#cb2957]">
                   {formatBaht(order.payoutMinor)}
                 </span>
@@ -152,13 +171,13 @@ export default async function SellerOrderPage({
               {/* The rate is snapshotted at checkout and never recomputed, so
                   a later tier change cannot rewrite this order's economics. */}
               <p className="mt-3 text-[13px] text-black/50">
-                Credited to your wallet when you confirm money received.
+                {t('sellerOrder.payoutNote')}
               </p>
             </div>
 
             <div className="rounded-[9px] bg-white p-[24px]">
               <h2 className="flex items-center gap-2 text-[16px] font-semibold">
-                <MapPin className="size-4" /> Deliver to
+                <MapPin className="size-4" /> {t('sellerOrder.deliverTo')}
               </h2>
               <address className="mt-3 text-[15px] not-italic text-black/50">
                 <p className="font-bold text-foreground">
@@ -175,13 +194,13 @@ export default async function SellerOrderPage({
             </div>
 
             <div className="rounded-[9px] bg-white p-[24px] text-[15px]">
-              <h2 className="mb-2 text-[16px] font-semibold">Payment</h2>
+              <h2 className="mb-2 text-[16px] font-semibold">
+                {t('sellerOrder.payment')}
+              </h2>
+              {/* The payment enum already has translated labels — no need to
+                  restate the three cases here. */}
               <p className="text-black/50">
-                {order.paymentMethod === 'PROMPTPAY'
-                  ? 'PromptPay'
-                  : order.paymentMethod === 'CASH'
-                    ? 'Cash on delivery'
-                    : 'Card'}
+                {t(`payment.${order.paymentMethod}`)}
               </p>
             </div>
           </aside>

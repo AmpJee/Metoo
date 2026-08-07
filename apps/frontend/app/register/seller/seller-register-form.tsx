@@ -4,6 +4,7 @@ import { Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { Field } from '@/components/auth-shell'
+import { useT } from '@/components/i18n-provider'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/ui/password-input'
@@ -24,6 +25,7 @@ import { PasswordInput } from '@/components/ui/password-input'
  */
 export function SellerRegisterForm() {
   const router = useRouter()
+  const t = useT()
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
 
@@ -56,7 +58,7 @@ export function SellerRegisterForm() {
       const payload = await response.json()
 
       if (!response.ok) {
-        setError(payload?.error?.message ?? 'Could not create your account.')
+        setError(payload?.error?.message ?? t('signup.failed'))
         return
       }
 
@@ -64,7 +66,7 @@ export function SellerRegisterForm() {
       router.replace('/pending')
       router.refresh()
     } catch {
-      setError('Cannot reach the server. Check your connection and try again.')
+      setError(t('auth.unreachable'))
     } finally {
       setPending(false)
     }
@@ -72,13 +74,13 @@ export function SellerRegisterForm() {
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-4">
-      <Field label="Brand name">
+      <Field label={t('signup.brand.name')}>
         <Input name="name" required maxLength={120} />
       </Field>
-      <Field label="Email">
+      <Field label={t('auth.email')}>
         <Input name="email" type="email" required autoComplete="email" />
       </Field>
-      <Field label="Password">
+      <Field label={t('auth.password')}>
         <PasswordInput
           name="password"
           required
@@ -87,31 +89,31 @@ export function SellerRegisterForm() {
         />
       </Field>
       <p className="-mt-2 text-xs text-muted-foreground">
-        At least 8 characters.
+        {t('signup.passwordHint')}
       </p>
 
-      <Field label="Phone number">
+      <Field label={t('signup.phone')}>
         <Input name="phone" required minLength={6} maxLength={20} />
       </Field>
-      <Field label="Street name, building, house no.">
+      <Field label={t('signup.addressLine')}>
         <Input name="addressLine" required maxLength={200} />
       </Field>
 
       <div className="grid grid-cols-2 gap-4">
-        <Field label="Province">
+        <Field label={t('signup.province')}>
           <Input name="province" required maxLength={100} />
         </Field>
-        <Field label="Postal code">
+        <Field label={t('signup.postalCode')}>
           <Input name="postalCode" required minLength={4} maxLength={10} />
         </Field>
       </div>
 
-      <Field label="About your brand (optional)">
+      <Field label={t('signup.brand.about')}>
         <textarea
           name="description"
           rows={3}
           maxLength={1000}
-          placeholder="What you make, and who buys it today."
+          placeholder={t('signup.brand.aboutPlaceholder')}
           className="w-full rounded-lg bg-input px-3 py-2 text-sm placeholder:text-muted-foreground"
         />
       </Field>
@@ -127,7 +129,7 @@ export function SellerRegisterForm() {
 
       <Button type="submit" size="lg" disabled={pending}>
         {pending ? <Loader2 className="size-4 animate-spin" /> : null}
-        Create account
+        {t('signup.create')}
       </Button>
     </form>
   )

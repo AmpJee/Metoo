@@ -4,6 +4,7 @@ import { Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { confirmDelivered } from '@/app/actions/orders'
+import { useT } from '@/components/i18n-provider'
 import { Button } from '@/components/ui/button'
 
 /**
@@ -22,17 +23,12 @@ export function ConfirmDeliveredButton({
   className?: string
 }) {
   const router = useRouter()
+  const t = useT()
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
 
   const run = () => {
-    if (
-      !window.confirm(
-        'Confirm you received this order? This completes it and releases payment to the brand. It cannot be undone.'
-      )
-    ) {
-      return
-    }
+    if (!window.confirm(t('order.confirmDeliveredAsk'))) return
 
     setError(null)
     startTransition(async () => {
@@ -49,10 +45,10 @@ export function ConfirmDeliveredButton({
     <div className={className}>
       <Button className="w-full" disabled={pending} onClick={run}>
         {pending ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
-        Confirm Delivered
+        {t('order.confirmDelivered')}
       </Button>
       <p className="mt-2 text-xs text-muted-foreground">
-        Confirms you received the goods and releases payment to the brand.
+        {t('order.confirmDeliveredHint')}
       </p>
       {error ? (
         <p

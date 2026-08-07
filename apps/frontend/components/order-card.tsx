@@ -4,6 +4,7 @@ import { ConfirmDeliveredButton } from '@/components/confirm-delivered-button'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { formatBaht, formatDate } from '@/lib/format'
+import { getLocale, getT } from '@/lib/i18n/server'
 import {
   awaitingBuyerConfirmation,
   awaitingPayment,
@@ -19,7 +20,9 @@ import type { Order } from '@/lib/types'
  * button, and a link cannot be nested inside another link. The header and body
  * are the link; the footer holds the actions.
  */
-export function OrderCard({ order }: { order: Order }) {
+export async function OrderCard({ order }: { order: Order }) {
+  const t = await getT()
+  const locale = await getLocale()
   const toPay = awaitingPayment(order.status)
   const toConfirm = awaitingBuyerConfirmation(order.status)
 
@@ -32,7 +35,7 @@ export function OrderCard({ order }: { order: Order }) {
             {order.brand.name}
           </span>
           <Badge tone={statusTone(order.status)}>
-            {buyerStatusLabel(order.status)}
+            {buyerStatusLabel(order.status, t)}
           </Badge>
         </header>
 
@@ -51,7 +54,7 @@ export function OrderCard({ order }: { order: Order }) {
             ))}
             {order.items.length > 3 ? (
               <li className="text-xs text-muted-foreground">
-                +{order.items.length - 3} more
+                {t('orders.more', { n: order.items.length - 3 })}
               </li>
             ) : null}
           </ul>
@@ -60,12 +63,14 @@ export function OrderCard({ order }: { order: Order }) {
 
       <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3">
         <span className="text-xs text-muted-foreground">
-          {order.orderNumber} · {formatDate(order.createdAt)}
+          {order.orderNumber} · {formatDate(order.createdAt, locale)}
         </span>
 
         <span className="flex items-center gap-3 text-sm">
           <span className="flex items-center gap-1">
-            <span className="text-muted-foreground">Order Total:</span>
+            <span className="text-muted-foreground">
+              {t('orders.orderTotal')}:
+            </span>
             <span className="font-semibold text-primary">
               {formatBaht(order.totalMinor)}
             </span>
@@ -73,14 +78,16 @@ export function OrderCard({ order }: { order: Order }) {
 
           {toPay ? (
             <Button asChild size="sm">
-              <Link href={`/orders/${order.id}/pay`}>Pay</Link>
+              <Link href={`/orders/${order.id}/pay`}>{t('orders.pay')}</Link>
             </Button>
           ) : toConfirm ? (
-            <ConfirmDeliveredButton orderId={order.id} className="w-[190px]" />
+            // No fixed width: "ยืนยันรับสินค้า" and "Confirm Delivered" are
+            // different lengths, and a 190px box clipped one of them.
+            <ConfirmDeliveredButton orderId={order.id} />
           ) : (
             <Link
               href={`/orders/${order.id}`}
-              aria-label="Open order"
+              aria-label={t('orders.open')}
               className="text-muted-foreground hover:text-primary"
             >
               <ChevronRight className="size-4" />

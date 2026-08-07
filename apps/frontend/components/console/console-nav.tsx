@@ -16,7 +16,9 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useT } from '@/components/i18n-provider'
 import { LogoutButton } from '@/components/logout-button'
+import type { MessageKey } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
 
 /**
@@ -33,27 +35,59 @@ import { cn } from '@/lib/utils'
  * boundary as props.
  */
 
-type NavItem = { href: string; label: string; icon: LucideIcon }
+type NavItem = { href: string; labelKey: MessageKey; icon: LucideIcon }
 
 const NAV: Record<'seller' | 'admin', NavItem[]> = {
   seller: [
-    { href: '/seller', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/seller/orders', label: 'Orders', icon: ShoppingBag },
-    { href: '/seller/products', label: 'Products', icon: Package },
-    { href: '/seller/wallet', label: 'Wallet', icon: Wallet },
-    { href: '/seller/customers', label: 'Customers', icon: Users },
-    { href: '/seller/returns', label: 'Returns', icon: RotateCcw },
-    { href: '/seller/preview', label: 'Preview Store', icon: Store },
-    { href: '/seller/settings', label: 'Settings', icon: Settings },
+    {
+      href: '/seller',
+      labelKey: 'nav.seller.dashboard',
+      icon: LayoutDashboard,
+    },
+    {
+      href: '/seller/orders',
+      labelKey: 'nav.seller.orders',
+      icon: ShoppingBag,
+    },
+    {
+      href: '/seller/products',
+      labelKey: 'nav.seller.products',
+      icon: Package,
+    },
+    { href: '/seller/wallet', labelKey: 'nav.seller.wallet', icon: Wallet },
+    {
+      href: '/seller/customers',
+      labelKey: 'nav.seller.customers',
+      icon: Users,
+    },
+    {
+      href: '/seller/returns',
+      labelKey: 'nav.seller.returns',
+      icon: RotateCcw,
+    },
+    { href: '/seller/preview', labelKey: 'nav.seller.preview', icon: Store },
+    {
+      href: '/seller/settings',
+      labelKey: 'nav.seller.settings',
+      icon: Settings,
+    },
   ],
   admin: [
-    { href: '/admin', label: 'Weekly Summary', icon: BarChart3 },
-    { href: '/admin/sellers', label: 'Sellers', icon: Store },
-    { href: '/admin/retailers', label: 'Retailers', icon: Users },
-    { href: '/admin/orders', label: 'Orders', icon: ShoppingBag },
-    { href: '/admin/withdrawals', label: 'Withdrawals', icon: Banknote },
-    { href: '/admin/returns', label: 'Returns', icon: RotateCcw },
-    { href: '/admin/feedback', label: 'Feedback Log', icon: MessageSquare },
+    { href: '/admin', labelKey: 'nav.admin.summary', icon: BarChart3 },
+    { href: '/admin/sellers', labelKey: 'nav.admin.sellers', icon: Store },
+    { href: '/admin/retailers', labelKey: 'nav.admin.retailers', icon: Users },
+    { href: '/admin/orders', labelKey: 'nav.admin.orders', icon: ShoppingBag },
+    {
+      href: '/admin/withdrawals',
+      labelKey: 'nav.admin.withdrawals',
+      icon: Banknote,
+    },
+    { href: '/admin/returns', labelKey: 'nav.admin.returns', icon: RotateCcw },
+    {
+      href: '/admin/feedback',
+      labelKey: 'nav.admin.feedback',
+      icon: MessageSquare,
+    },
   ],
 }
 
@@ -63,6 +97,7 @@ export function ConsoleNav({
   console: 'seller' | 'admin'
 }) {
   const pathname = usePathname()
+  const t = useT()
   const root = which === 'seller' ? '/seller' : '/admin'
 
   return (
@@ -94,7 +129,7 @@ export function ConsoleNav({
               )}
               strokeWidth={1.75}
             />
-            <span className="text-[18px]">{item.label}</span>
+            <span className="text-[18px]">{t(item.labelKey)}</span>
           </Link>
         )
       })}

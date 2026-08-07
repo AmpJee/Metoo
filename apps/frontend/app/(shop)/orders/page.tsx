@@ -4,17 +4,22 @@ import Link from 'next/link'
 import { OrderCard } from '@/components/order-card'
 import { EmptyState } from '@/components/ui/empty-state'
 import { api } from '@/lib/api'
+import { getT } from '@/lib/i18n/server'
 import { PURCHASE_TABS, tabFor } from '@/lib/order-status'
 import type { Order } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
-export const metadata: Metadata = { title: 'My Purchase' }
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT()
+  return { title: t('orders.title') }
+}
 
 export default async function OrdersPage({
   searchParams,
 }: {
   searchParams: Promise<{ tab?: string }>
 }) {
+  const t = await getT()
   const { tab: tabKey } = await searchParams
   const tab = tabFor(tabKey)
 
@@ -36,7 +41,9 @@ export default async function OrdersPage({
 
   return (
     <div className="container-page py-8 md:py-12">
-      <h1 className="text-[20px] font-bold md:text-[36px]">My Purchase</h1>
+      <h1 className="text-[20px] font-bold md:text-[36px]">
+        {t('orders.title')}
+      </h1>
 
       <nav className="mt-6 flex gap-1 overflow-x-auto border-b border-border">
         {PURCHASE_TABS.map((item) => {
@@ -53,7 +60,7 @@ export default async function OrdersPage({
                   : 'border-transparent text-muted-foreground hover:text-foreground'
               )}
             >
-              {item.label}
+              {t(item.labelKey)}
               {count > 0 ? (
                 <span className="text-xs text-muted-foreground">({count})</span>
               ) : null}
@@ -64,7 +71,7 @@ export default async function OrdersPage({
           href="/returns"
           className="flex shrink-0 items-center border-b-2 border-transparent px-4 py-3 text-sm text-muted-foreground transition-colors hover:text-foreground"
         >
-          Return Refund
+          {t('orders.tab.returns')}
         </Link>
       </nav>
 
@@ -72,9 +79,9 @@ export default async function OrdersPage({
         {visible.length === 0 ? (
           <EmptyState
             icon={Package}
-            title="No orders here yet"
-            description="Orders with this status will appear here."
-            action={{ label: 'Start shopping', href: '/explore' }}
+            title={t('orders.emptyTitle')}
+            description={t('orders.emptyBody')}
+            action={{ label: t('orders.startShopping'), href: '/explore' }}
           />
         ) : (
           visible.map((order) => <OrderCard key={order.id} order={order} />)

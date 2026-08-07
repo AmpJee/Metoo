@@ -1,4 +1,4 @@
-import { CATEGORIES, CATEGORY_LABELS } from '@metoo/shared'
+import { CATEGORIES } from '@metoo/shared'
 import { PackageSearch } from 'lucide-react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
@@ -7,9 +7,13 @@ import { ProductCard } from '@/components/product-card'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { api } from '@/lib/api'
+import { getT } from '@/lib/i18n/server'
 import type { CatalogPage, Category } from '@/lib/types'
 
-export const metadata: Metadata = { title: 'Explore' }
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT()
+  return { title: t('explore.title') }
+}
 
 function isCategory(value: string | undefined): value is Category {
   return Boolean(value) && (CATEGORIES as readonly string[]).includes(value!)
@@ -20,6 +24,7 @@ export default async function ExplorePage({
 }: {
   searchParams: Promise<{ category?: string; q?: string; cursor?: string }>
 }) {
+  const t = await getT()
   const { category, q, cursor } = await searchParams
 
   const params = new URLSearchParams()
@@ -34,10 +39,10 @@ export default async function ExplorePage({
   )
 
   const heading = isCategory(category)
-    ? CATEGORY_LABELS[category]
+    ? t(`category.${category}`)
     : q
-      ? `Results for “${q}”`
-      : 'Explore'
+      ? t('explore.results', { q })
+      : t('explore.title')
 
   /** Preserve the current filters when paging forward. */
   const nextHref = () => {
@@ -60,13 +65,11 @@ export default async function ExplorePage({
         {page.items.length === 0 ? (
           <EmptyState
             icon={PackageSearch}
-            title="No products found."
+            title={t('explore.emptyTitle')}
             description={
-              q
-                ? 'Try a different search term, or browse a category.'
-                : 'Nothing is listed in this category yet.'
+              q ? t('explore.emptySearch') : t('explore.emptyCategory')
             }
-            action={{ label: 'Browse everything', href: '/explore' }}
+            action={{ label: t('explore.browseEverything'), href: '/explore' }}
           />
         ) : (
           <div className="grid grid-cols-2 gap-x-[16px] gap-y-[32px] md:grid-cols-4 md:gap-x-[26px]">
@@ -81,7 +84,7 @@ export default async function ExplorePage({
       {page.nextCursor ? (
         <div className="mt-12 flex justify-center">
           <Button asChild variant="outline" size="lg">
-            <Link href={nextHref()}>Load more</Link>
+            <Link href={nextHref()}>{t('explore.loadMore')}</Link>
           </Button>
         </div>
       ) : null}

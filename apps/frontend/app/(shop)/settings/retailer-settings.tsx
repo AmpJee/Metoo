@@ -1,6 +1,7 @@
 'use client'
 
 import { updateRetailerProfile } from '@/app/actions/account'
+import { useT } from '@/components/i18n-provider'
 import { ProfileForm, type ProfileField } from '@/components/profile-form'
 import type { RetailerProfile } from '@/lib/types'
 
@@ -11,38 +12,45 @@ import type { RetailerProfile } from '@/lib/types'
  * An admin maintains those from the console, and the API refuses them here.
  */
 export function RetailerSettings({ profile }: { profile: RetailerProfile }) {
+  const t = useT()
+
   const fields: ProfileField[] = [
     {
       name: 'shopName',
-      label: 'Shop name',
+      label: t('settings.shopName'),
       value: profile.shopName,
       maxLength: 120,
     },
-    { name: 'phone', label: 'Phone', value: profile.phone, maxLength: 20 },
+    {
+      name: 'phone',
+      label: t('settings.phone'),
+      value: profile.phone,
+      maxLength: 20,
+    },
     {
       name: 'addressLine',
-      label: 'Address',
+      label: t('settings.address'),
       value: profile.addressLine,
       maxLength: 200,
       // Worth saying plainly: an order already placed keeps the address it was
       // placed with, because checkout snapshots it.
-      hint: 'Where future orders are delivered. Orders already placed keep the address you gave at checkout.',
+      hint: t('settings.addressHint'),
     },
     {
       name: 'province',
-      label: 'Province',
+      label: t('settings.province'),
       value: profile.province,
       maxLength: 100,
     },
     {
       name: 'postalCode',
-      label: 'Postal code',
+      label: t('settings.postalCode'),
       value: profile.postalCode,
       maxLength: 10,
     },
     {
       name: 'taxId',
-      label: 'Tax ID',
+      label: t('settings.taxId'),
       value: profile.taxId ?? '',
       optional: true,
       maxLength: 20,

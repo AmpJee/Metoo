@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { removeCartItem, updateCartItem } from '@/app/actions/cart'
+import { useT } from '@/components/i18n-provider'
 import { Badge } from '@/components/ui/badge'
 import { formatBaht, formatPackSummary } from '@/lib/format'
 import type { CartItem } from '@/lib/types'
@@ -19,6 +20,7 @@ import type { CartItem } from '@/lib/types'
  */
 export function CartLine({ item }: { item: CartItem }) {
   const router = useRouter()
+  const t = useT()
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
 
@@ -61,20 +63,20 @@ export function CartLine({ item }: { item: CartItem }) {
               {product.name}
             </Link>
             <p className="text-xs text-muted-foreground">
-              {formatPackSummary(product.unitsPerPack, product.minPacks)}
+              {formatPackSummary(product.unitsPerPack, product.minPacks, t)}
             </p>
             {/* A brand can retire a product after it is in a cart. Checkout
                 re-validates every line, so flag it before that happens. */}
             {!product.isActive ? (
               <Badge tone="destructive" className="w-fit">
-                No longer available — remove to check out
+                {t('cart.retired')}
               </Badge>
             ) : null}
           </div>
 
           <button
             type="button"
-            aria-label="Remove"
+            aria-label={t('cart.remove')}
             disabled={pending}
             onClick={() => {
               startTransition(async () => {
@@ -92,7 +94,7 @@ export function CartLine({ item }: { item: CartItem }) {
           <div className="flex items-center rounded-lg border border-neutral-line">
             <button
               type="button"
-              aria-label="Decrease quantity"
+              aria-label={t('product.decreaseQuantity')}
               disabled={pending || item.packs <= min}
               onClick={() => change(item.packs - 1)}
               className="flex size-8 items-center justify-center disabled:opacity-40"
@@ -108,7 +110,7 @@ export function CartLine({ item }: { item: CartItem }) {
             </span>
             <button
               type="button"
-              aria-label="Increase quantity"
+              aria-label={t('product.increaseQuantity')}
               disabled={pending}
               onClick={() => change(item.packs + 1)}
               className="flex size-8 items-center justify-center disabled:opacity-40"
@@ -122,7 +124,7 @@ export function CartLine({ item }: { item: CartItem }) {
               {formatBaht(item.lineTotalMinor)}
             </p>
             <p className="text-xs text-muted-foreground">
-              {formatBaht(product.pricePerPackMinor)} / pack
+              {formatBaht(product.pricePerPackMinor)} {t('cart.perPack')}
             </p>
           </div>
         </div>

@@ -1,16 +1,12 @@
 'use client'
 
-import {
-  PAYMENT_PREFERENCES,
-  PAYMENT_PREFERENCE_LABELS,
-  SHOP_TYPES,
-  SHOP_TYPE_LABELS,
-} from '@metoo/shared'
+import { PAYMENT_PREFERENCES, SHOP_TYPES } from '@metoo/shared'
 import { Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { updateRetailerProfile } from '@/app/actions/account'
 import { Field } from '@/components/auth-shell'
+import { useT } from '@/components/i18n-provider'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import type { RetailerProfile } from '@/lib/types'
@@ -31,6 +27,7 @@ const SELECT_CLASS =
  */
 export function ShopOperationsForm({ profile }: { profile: RetailerProfile }) {
   const router = useRouter()
+  const t = useT()
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
   const [pending, startTransition] = useTransition()
@@ -83,12 +80,13 @@ export function ShopOperationsForm({ profile }: { profile: RetailerProfile }) {
           role="status"
           className="rounded-md bg-warning/10 px-3 py-2 text-sm text-warning-foreground"
         >
-          Complete these before you can place an order. Still needed:{' '}
-          {profile.missingForCheckout.map((m) => m.label).join(', ')}.
+          {t('shopOps.stillNeeded', {
+            fields: profile.missingForCheckout.map((m) => m.label).join(', '),
+          })}
         </p>
       ) : null}
 
-      <Field label="Shop type">
+      <Field label={t('shopOps.shopType')}>
         <select
           name="shopType"
           required
@@ -96,50 +94,50 @@ export function ShopOperationsForm({ profile }: { profile: RetailerProfile }) {
           className={SELECT_CLASS}
         >
           <option value="" disabled>
-            Choose one
+            {t('shopOps.chooseOne')}
           </option>
           {SHOP_TYPES.map((type) => (
             <option key={type} value={type}>
-              {SHOP_TYPE_LABELS[type]}
+              {t(`shopType.${type}`)}
             </option>
           ))}
         </select>
       </Field>
 
-      <Field label="Location or zone">
+      <Field label={t('shopOps.zone')}>
         <Input
           name="zone"
           required
           maxLength={200}
           defaultValue={profile.zone ?? ''}
-          placeholder="e.g. Sukhumvit, Soi 31 area"
+          placeholder={t('shopOps.zonePlaceholder')}
         />
       </Field>
 
-      <Field label="What you currently stock">
+      <Field label={t('shopOps.currentProducts')}>
         <textarea
           name="currentProducts"
           required
           rows={2}
           maxLength={500}
           defaultValue={profile.currentProducts ?? ''}
-          placeholder="Snacks, drinks, household goods…"
+          placeholder={t('shopOps.currentProductsPlaceholder')}
           className="w-full rounded-lg bg-input px-3 py-2 text-sm placeholder:text-muted-foreground"
         />
       </Field>
 
-      <Field label="Monthly capacity (orders you can take)">
+      <Field label={t('shopOps.capacity')}>
         <Input
           name="monthlyCapacity"
           type="number"
           min={1}
           required
           defaultValue={profile.monthlyCapacity ?? ''}
-          placeholder="e.g. 40"
+          placeholder={t('shopOps.capacityPlaceholder')}
         />
       </Field>
 
-      <Field label="Preferred payment">
+      <Field label={t('shopOps.preferredPayment')}>
         <select
           name="preferredPayment"
           required
@@ -147,23 +145,23 @@ export function ShopOperationsForm({ profile }: { profile: RetailerProfile }) {
           className={SELECT_CLASS}
         >
           <option value="" disabled>
-            Choose one
+            {t('shopOps.chooseOne')}
           </option>
           {PAYMENT_PREFERENCES.map((method) => (
             <option key={method} value={method}>
-              {PAYMENT_PREFERENCE_LABELS[method]}
+              {t(`payment.${method}`)}
             </option>
           ))}
         </select>
       </Field>
 
-      <Field label="Delivery window">
+      <Field label={t('shopOps.deliveryWindow')}>
         <Input
           name="deliveryWindow"
           required
           maxLength={100}
           defaultValue={profile.deliveryWindow ?? ''}
-          placeholder="e.g. Weekday mornings, 9am–12pm"
+          placeholder={t('shopOps.deliveryWindowPlaceholder')}
         />
       </Field>
 
@@ -181,13 +179,13 @@ export function ShopOperationsForm({ profile }: { profile: RetailerProfile }) {
           role="status"
           className="rounded-md bg-success/10 px-3 py-2 text-sm text-success"
         >
-          Saved.
+          {t('common.saved')}
         </p>
       ) : null}
 
       <Button type="submit" disabled={pending} className="w-fit">
         {pending ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
-        Save shop details
+        {t('shopOps.save')}
       </Button>
     </form>
   )

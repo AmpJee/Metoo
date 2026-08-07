@@ -3,6 +3,7 @@
 import { Check, Plus } from 'lucide-react'
 import { useState, useTransition } from 'react'
 import { toggleFollow } from '@/app/actions/follow'
+import { useT } from '@/components/i18n-provider'
 import { Button } from '@/components/ui/button'
 
 export function FollowButton({
@@ -14,6 +15,7 @@ export function FollowButton({
   initialFollowing: boolean
   initialCount: number
 }) {
+  const t = useT()
   const [following, setFollowing] = useState(initialFollowing)
   const [count, setCount] = useState(initialCount)
   const [pending, startTransition] = useTransition()
@@ -42,16 +44,18 @@ export function FollowButton({
       >
         {following ? (
           <>
-            <Check className="size-4" /> Following
+            <Check className="size-4" /> {t('stores.isFollowing')}
           </>
         ) : (
           <>
-            <Plus className="size-4" /> Follow
+            <Plus className="size-4" /> {t('stores.follow')}
           </>
         )}
       </Button>
       <span className="text-sm text-muted-foreground">
-        {count} {count === 1 ? 'follower' : 'followers'}
+        {t(count === 1 ? 'stores.followerOne' : 'stores.followerMany', {
+          n: count,
+        })}
       </span>
     </div>
   )

@@ -1,9 +1,4 @@
-import {
-  FDA_STATUS_LABELS,
-  PIPELINE_STATUS_LABELS,
-  SIZE_BAND_LABELS,
-  type SizeBand,
-} from '@metoo/shared'
+import { type SizeBand } from '@metoo/shared'
 import { ArrowLeft, ExternalLink, FileText } from 'lucide-react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
@@ -12,15 +7,13 @@ import { PageHeader } from '@/components/dashboard-shell'
 import { Pill } from '@/components/console/pill'
 import { ApiError, api } from '@/lib/api'
 import { formatDate } from '@/lib/format'
+import { getLocale, getT } from '@/lib/i18n/server'
 import type { Applicant, VerificationDocument } from '@/lib/types'
 import { PipelineStatusControl } from '../../pipeline-status'
 
-export const metadata: Metadata = { title: 'Seller' }
-
-const DOC_LABELS: Record<VerificationDocument['type'], string> = {
-  SME_ID: 'SME registration',
-  NATIONAL_ID: 'National ID',
-  FDA_CERT: 'อย. certificate',
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT()
+  return { title: t('applicant.title') }
 }
 
 /**
@@ -34,6 +27,8 @@ export default async function SellerDetailPage({
 }: {
   params: Promise<{ userId: string }>
 }) {
+  const t = await getT()
+  const locale = await getLocale()
   const { userId } = await params
 
   const applicants = await api.get<Applicant[]>('/admin/pipeline?role=BRAND')
@@ -60,8 +55,11 @@ export default async function SellerDetailPage({
     <>
       <PageHeader
         title={brand?.name ?? applicant.email}
-        description={`${applicant.email} · signed up ${formatDate(applicant.createdAt)}`}
-        actions={<Pill>{PIPELINE_STATUS_LABELS[applicant.status]}</Pill>}
+        description={t('applicant.subtitle', {
+          email: applicant.email,
+          date: formatDate(applicant.createdAt, locale),
+        })}
+        actions={<Pill>{t(`pipeline.${applicant.status}`)}</Pill>}
       />
 
       <div>
@@ -69,27 +67,30 @@ export default async function SellerDetailPage({
           href="/admin/sellers"
           className="mb-6 inline-flex items-center gap-1 text-[15px] text-black/50 hover:text-[#cb2957]"
         >
-          <ArrowLeft className="size-4" /> Sellers
+          <ArrowLeft className="size-4" /> {t('applicant.back')}
         </Link>
 
         <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
           <div className="flex flex-col gap-8">
             <section className="rounded-[9px] bg-white p-[24px]">
-              <h2 className="mb-4 text-[16px] font-semibold">Verification</h2>
+              <h2 className="mb-4 text-[16px] font-semibold">
+                {t('applicant.verification')}
+              </h2>
 
               <div className="mb-4 flex flex-wrap gap-2">
                 <Pill tone={hasId ? 'success' : 'warning'}>
-                  {hasId ? 'ID provided' : 'ID missing'}
+                  {hasId ? t('applicant.idProvided') : t('applicant.idMissing')}
                 </Pill>
                 <Pill tone={hasFda ? 'success' : 'warning'}>
-                  {hasFda ? 'อย. provided' : 'อย. missing'}
+                  {hasFda
+                    ? t('applicant.fdaProvided')
+                    : t('applicant.fdaMissing')}
                 </Pill>
               </div>
 
               {documents.length === 0 ? (
                 <p className="text-[15px] text-black/50">
-                  Nothing uploaded yet. A brand needs an SME or national ID and
-                  an อย. certificate before it can be onboarded.
+                  {t('applicant.noDocuments')}
                 </p>
               ) : (
                 <ul className="flex flex-col gap-2">
@@ -100,9 +101,9 @@ export default async function SellerDetailPage({
                     >
                       <span className="flex items-center gap-2">
                         <FileText className="size-4 text-black/50" />
-                        {DOC_LABELS[doc.type]}
+                        {t(`doc.${doc.type}`)}
                         <span className="text-[13px] text-black/50">
-                          {formatDate(doc.createdAt)}
+                          {formatDate(doc.createdAt, locale)}
                         </span>
                       </span>
                       {/* Signed URLs are short-lived and private. Linked, not
@@ -114,7 +115,8 @@ export default async function SellerDetailPage({
                         rel="noreferrer noopener"
                         className="inline-flex items-center gap-1 text-[#cb2957] hover:underline"
                       >
-                        Open <ExternalLink className="size-3" />
+                        {t('applicant.openDocument')}{' '}
+                        <ExternalLink className="size-3" />
                       </a>
                     </li>
                   ))}
@@ -125,43 +127,56 @@ export default async function SellerDetailPage({
             {brand ? (
               <section className="rounded-[9px] bg-white p-[24px]">
                 <h2 className="mb-4 text-[16px] font-semibold">
-                  Brand details
+                  {t('applicant.brandDetails')}
                 </h2>
                 <dl className="grid gap-x-6 gap-y-3 text-[15px] sm:grid-cols-2">
-                  <Detail label="Phone" value={brand.phone} />
-                  <Detail label="Province" value={brand.province} />
+                  <Detail label={t('applicant.phone')} value={brand.phone} />
                   <Detail
-                    label="อย. status"
-                    value={FDA_STATUS_LABELS[brand.fdaStatus]}
+                    label={t('applicant.province')}
+                    value={brand.province}
                   />
                   <Detail
-                    label="Team size"
+                    label={t('applicant.fdaStatus')}
+                    value={t(`fda.${brand.fdaStatus}`)}
+                  />
+                  <Detail
+                    label={t('applicant.teamSize')}
                     value={
                       brand.sizeBand
-                        ? SIZE_BAND_LABELS[brand.sizeBand as SizeBand]
+                        ? t(`sizeBand.${brand.sizeBand as SizeBand}`)
                         : null
                     }
                   />
-                  <Detail label="Social" value={brand.socialHandle} />
                   <Detail
-                    label="Existing retailers"
+                    label={t('applicant.social')}
+                    value={brand.socialHandle}
+                  />
+                  <Detail
+                    label={t('applicant.existingRetailers')}
                     value={brand.existingRetailerCount?.toString() ?? null}
                   />
                   <Detail
-                    label="Case spec"
+                    label={t('applicant.caseSpec')}
                     value={
                       [
-                        brand.caseWeightKg ? `${brand.caseWeightKg} kg` : null,
+                        brand.caseWeightKg
+                          ? t('applicant.caseWeight', { n: brand.caseWeightKg })
+                          : null,
                         brand.caseDimensionsCm,
-                        brand.caseUnits ? `${brand.caseUnits} units` : null,
+                        brand.caseUnits
+                          ? t('applicant.caseUnits', { n: brand.caseUnits })
+                          : null,
                       ]
                         .filter(Boolean)
                         .join(' · ') || null
                     }
                   />
-                  <Detail label="Referral" value={brand.referralSource} />
                   <Detail
-                    label="Products listed"
+                    label={t('applicant.referral')}
+                    value={brand.referralSource}
+                  />
+                  <Detail
+                    label={t('applicant.productsListed')}
                     value={String(brand._count.products)}
                   />
                 </dl>
@@ -169,7 +184,7 @@ export default async function SellerDetailPage({
                 {brand.adminNotes ? (
                   <div className="mt-4 rounded-md bg-[#f5f5f5] p-3">
                     <p className="text-[13px] text-black/50">
-                      Internal notes — not shown to the applicant
+                      {t('applicant.internalNotes')}
                     </p>
                     <p className="text-[15px]">{brand.adminNotes}</p>
                   </div>
@@ -181,22 +196,21 @@ export default async function SellerDetailPage({
           <aside className="flex flex-col gap-4">
             <div className="rounded-[9px] bg-white p-[24px]">
               <h2 className="mb-3 text-[16px] font-semibold">
-                Pipeline status
+                {t('applicant.pipelineStatus')}
               </h2>
               <PipelineStatusControl
                 userId={applicant.id}
                 current={applicant.status}
               />
               <p className="mt-3 text-[13px] text-black/50">
-                Onboarded is the gate — until then every trading route refuses
-                this account.
+                {t('applicant.pipelineHint')}
               </p>
             </div>
 
             {applicant.reviewNote ? (
               <div className="rounded-[9px] bg-white p-[24px]">
                 <h2 className="mb-2 text-[16px] font-semibold">
-                  Note to applicant
+                  {t('applicant.noteToApplicant')}
                 </h2>
                 <p className="text-[15px] text-black/50">
                   {applicant.reviewNote}
