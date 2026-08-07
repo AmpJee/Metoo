@@ -109,7 +109,24 @@ if (!apply) {
 // either state. Order matters — children before parents.
 await prisma.$transaction(
   async (tx) => {
+    // Reviews first, and by ORDER as well as by retailer.
+    //
+    // Review.orderId is its proof of purchase and does NOT cascade, so a
+    // review written by a retailer who survives, against an order that does
+    // not, holds the order row hostage. That is exactly what failed the first
+    // time this ran: Somchai Minimart had rated a product from a brand being
+    // removed.
+    await tx.review.deleteMany({
+      where: {
+        OR: [
+          { orderId: { in: orderIds } },
+          { retailerId: { notIn: keepRetailerIds } },
+        ],
+      },
+    })
+
     await tx.returnRequest.deleteMany({ where: { orderId: { in: orderIds } } })
+    await tx.refund.deleteMany({ where: { orderId: { in: orderIds } } })
     await tx.walletTransaction.deleteMany({
       where: { orderId: { in: orderIds } },
     })
@@ -117,9 +134,6 @@ await prisma.$transaction(
     await tx.orderItem.deleteMany({ where: { orderId: { in: orderIds } } })
     await tx.order.deleteMany({ where: { id: { in: orderIds } } })
 
-    await tx.review.deleteMany({
-      where: { retailerId: { notIn: keepRetailerIds } },
-    })
     await tx.favourite.deleteMany({
       where: { retailerId: { notIn: keepRetailerIds } },
     })
