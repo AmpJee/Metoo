@@ -17,10 +17,14 @@ import {
 import { PageHeader } from '@/components/dashboard-shell'
 import { api } from '@/lib/api'
 import { formatBaht, formatDate } from '@/lib/format'
+import { getLocale, getT } from '@/lib/i18n/server'
 import { statusLabel, statusPillTone } from '@/lib/order-status'
 import type { BrandOrder } from '@/lib/types'
 
-export const metadata: Metadata = { title: 'Orders' }
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT()
+  return { title: t('sellerOrders.title') }
+}
 
 interface Counts {
   all: number
@@ -43,6 +47,8 @@ export default async function SellerOrdersPage({
 }: {
   searchParams: Promise<{ status?: string }>
 }) {
+  const t = await getT()
+  const locale = await getLocale()
   const { status: raw } = await searchParams
   const status = ORDER_STATUSES.includes(raw as OrderStatus)
     ? (raw as OrderStatus)
@@ -56,21 +62,21 @@ export default async function SellerOrdersPage({
   return (
     <>
       <PageHeader
-        title="Orders"
-        description="Newest first. Accept incoming orders here; delivery and payment release are handled by Metoo and the retailer."
+        title={t('sellerOrders.title')}
+        description={t('sellerOrders.subtitle')}
       />
 
       <FilterTabs
         items={[
           {
             href: '/seller/orders',
-            label: 'All',
+            label: t('sellerOrders.all'),
             active: !status,
             count: counts.all,
           },
           ...ORDER_STATUSES.map((value) => ({
             href: `/seller/orders?status=${value}`,
-            label: statusLabel(value),
+            label: statusLabel(value, t),
             active: status === value,
             count: counts.byStatus[value],
           })),
@@ -81,18 +87,18 @@ export default async function SellerOrdersPage({
         {orders.length === 0 ? (
           <CardEmpty
             icon={ShoppingBag}
-            title="Nothing here"
-            description="Orders at this stage will show up here."
+            title={t('sellerOrders.emptyTitle')}
+            description={t('sellerOrders.emptyBody')}
           />
         ) : (
           <Table>
             <THead>
               <TR>
-                <TH>Order</TH>
-                <TH>Retailer</TH>
-                <TH>Status</TH>
-                <TH className="text-right">Total</TH>
-                <TH className="text-right">Your payout</TH>
+                <TH>{t('sellerOrders.order')}</TH>
+                <TH>{t('sellerOrders.retailer')}</TH>
+                <TH>{t('sellerOrders.status')}</TH>
+                <TH className="text-right">{t('sellerOrders.total')}</TH>
+                <TH className="text-right">{t('sellerOrders.payout')}</TH>
               </TR>
             </THead>
             <TBody>
@@ -106,8 +112,13 @@ export default async function SellerOrdersPage({
                       {order.orderNumber}
                     </Link>
                     <TSub>
-                      {formatDate(order.createdAt)} · {order.items.length}{' '}
-                      {order.items.length === 1 ? 'line' : 'lines'}
+                      {formatDate(order.createdAt, locale)} ·{' '}
+                      {t(
+                        order.items.length === 1
+                          ? 'sellerOrders.lineOne'
+                          : 'sellerOrders.lineMany',
+                        { n: order.items.length }
+                      )}
                     </TSub>
                   </TD>
                   <TD>
@@ -116,7 +127,7 @@ export default async function SellerOrdersPage({
                   </TD>
                   <TD>
                     <Pill tone={statusPillTone(order.status)}>
-                      {statusLabel(order.status)}
+                      {statusLabel(order.status, t)}
                     </Pill>
                   </TD>
                   <TD numeric>{formatBaht(order.totalMinor)}</TD>
@@ -124,7 +135,11 @@ export default async function SellerOrdersPage({
                     <span className="font-bold">
                       {formatBaht(order.payoutMinor)}
                     </span>
-                    <TSub>after {(order.commissionBps / 100).toFixed(1)}%</TSub>
+                    <TSub>
+                      {t('sellerOrders.afterCommission', {
+                        rate: (order.commissionBps / 100).toFixed(1),
+                      })}
+                    </TSub>
                   </TD>
                 </TR>
               ))}

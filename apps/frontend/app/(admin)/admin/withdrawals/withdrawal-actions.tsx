@@ -3,6 +3,7 @@
 import { Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
+import { useT } from '@/components/i18n-provider'
 import {
   approveWithdrawal,
   markWithdrawalPaid,
@@ -32,6 +33,7 @@ export function WithdrawalActions({
   const [note, setNote] = useState('')
   const [ref, setRef] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const t = useT()
   const [pending, startTransition] = useTransition()
 
   const run = (fn: () => Promise<{ ok: boolean; error?: string }>) => {
@@ -50,7 +52,11 @@ export function WithdrawalActions({
   }
 
   if (status === 'REJECTED' || status === 'PAID') {
-    return <span className="text-[13px] text-black/50">No action</span>
+    return (
+      <span className="text-[13px] text-black/50">
+        {t('adminWithdrawals.noAction')}
+      </span>
+    )
   }
 
   return (
@@ -63,7 +69,7 @@ export function WithdrawalActions({
             onClick={() => run(() => approveWithdrawal(id))}
           >
             {pending ? <Loader2 className="size-3 animate-spin" /> : null}
-            Approve
+            {t('adminWithdrawals.approve')}
           </CButton>
           <CButton
             size="sm"
@@ -72,14 +78,14 @@ export function WithdrawalActions({
             disabled={pending}
             onClick={() => setMode('reject')}
           >
-            Reject
+            {t('adminWithdrawals.reject')}
           </CButton>
         </div>
       ) : null}
 
       {status === 'APPROVED' && mode === 'idle' ? (
         <CButton size="sm" disabled={pending} onClick={() => setMode('paid')}>
-          Mark paid
+          {t('adminWithdrawals.markPaid')}
         </CButton>
       ) : null}
 
@@ -90,7 +96,7 @@ export function WithdrawalActions({
             onChange={(event) => setNote(event.target.value)}
             rows={2}
             maxLength={1000}
-            placeholder="Why — the brand sees this."
+            placeholder={t('adminWithdrawals.rejectPlaceholder')}
             className="min-h-0 text-[15px]"
           />
           <div className="flex gap-2">
@@ -101,10 +107,10 @@ export function WithdrawalActions({
               disabled={pending || !note.trim()}
               onClick={() => run(() => rejectWithdrawal(id, note.trim()))}
             >
-              Confirm reject
+              {t('adminWithdrawals.confirmReject')}
             </CButton>
             <CButton size="sm" variant="ghost" onClick={() => setMode('idle')}>
-              Cancel
+              {t('common.cancel')}
             </CButton>
           </div>
         </>
@@ -116,7 +122,7 @@ export function WithdrawalActions({
             value={ref}
             onChange={(event) => setRef(event.target.value)}
             maxLength={200}
-            placeholder="Bank transfer reference"
+            placeholder={t('adminWithdrawals.refPlaceholder')}
             className="h-9 text-[15px]"
           />
           <div className="flex gap-2">
@@ -125,10 +131,10 @@ export function WithdrawalActions({
               disabled={pending || !ref.trim()}
               onClick={() => run(() => markWithdrawalPaid(id, ref.trim()))}
             >
-              Confirm paid
+              {t('adminWithdrawals.confirmPaid')}
             </CButton>
             <CButton size="sm" variant="ghost" onClick={() => setMode('idle')}>
-              Cancel
+              {t('common.cancel')}
             </CButton>
           </div>
         </>

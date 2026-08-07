@@ -1,4 +1,3 @@
-import { WITHDRAWAL_STATUS_LABELS } from '@metoo/shared'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { PageHeader } from '@/components/dashboard-shell'
@@ -7,23 +6,18 @@ import { StatTile } from '@/components/console/stat-tile'
 import { Table, TBody, TD, TH, THead, TR } from '@/components/console/table'
 import { api } from '@/lib/api'
 import { formatBaht, formatDate } from '@/lib/format'
+import { getLocale, getT } from '@/lib/i18n/server'
 import type {
   WalletBalance,
   WalletTransaction,
-  WalletTxnType,
   Withdrawal,
   WithdrawalStatus,
 } from '@/lib/types'
 import { WithdrawForm } from './withdraw-form'
 
-export const metadata: Metadata = { title: 'Wallet' }
-
-const TXN_LABELS: Record<WalletTxnType, string> = {
-  SALE_CREDIT: 'Sale',
-  COMMISSION_DEBIT: 'Commission',
-  REFUND_DEBIT: 'Refund',
-  WITHDRAWAL_DEBIT: 'Withdrawal',
-  ADJUSTMENT: 'Adjustment',
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT()
+  return { title: t('wallet.title') }
 }
 
 const WITHDRAWAL_TONE: Record<
@@ -37,6 +31,8 @@ const WITHDRAWAL_TONE: Record<
 }
 
 export default async function SellerWalletPage() {
+  const t = await getT()
+  const locale = await getLocale()
   const [balance, transactions, withdrawals] = await Promise.all([
     api.get<WalletBalance>('/wallet'),
     api.get<WalletTransaction[]>('/wallet/transactions'),
@@ -46,59 +42,60 @@ export default async function SellerWalletPage() {
   return (
     <>
       <PageHeader
-        title="Wallet"
-        description="Your balance is the sum of the ledger below — every sale, commission and payout."
+        title={t('wallet.title')}
+        description={t('wallet.subtitle')}
       />
 
       <div className="flex flex-col gap-[20px]">
         <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           <StatTile
-            label="Available balance"
+            label={t('wallet.available')}
             value={formatBaht(balance.availableMinor)}
             tint="primary"
           />
           <StatTile
-            label="Pending clearance"
+            label={t('wallet.pending')}
             value={formatBaht(balance.pendingClearanceMinor)}
-            hint="Delivered, not yet confirmed as Money Received"
+            hint={t('wallet.pendingHint')}
           />
           <StatTile
-            label="Bank account"
+            label={t('wallet.bankAccount')}
             value={
               balance.bankAccountLast4
                 ? `····${balance.bankAccountLast4}`
-                : 'Not set'
+                : t('wallet.bankNotSet')
             }
-            hint={balance.bankName ?? 'Contact support to add one'}
+            hint={balance.bankName ?? t('wallet.bankAddHint')}
           />
         </section>
 
         <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
           <div className="flex flex-col gap-8">
             <section className="flex flex-col gap-3">
-              <h2 className="text-[16px] font-semibold">Ledger</h2>
+              <h2 className="text-[16px] font-semibold">
+                {t('wallet.ledger')}
+              </h2>
               {transactions.length === 0 ? (
                 <p className="rounded-[9px] bg-white px-4 py-8 text-center text-[15px] text-black/50">
-                  Nothing yet. Sales appear here when an order reaches Money
-                  Received.
+                  {t('wallet.ledgerEmpty')}
                 </p>
               ) : (
                 <Table>
                   <THead>
                     <TR>
-                      <TH>Date</TH>
-                      <TH>Type</TH>
-                      <TH>Reference</TH>
-                      <TH className="text-right">Amount</TH>
+                      <TH>{t('wallet.date')}</TH>
+                      <TH>{t('wallet.type')}</TH>
+                      <TH>{t('wallet.reference')}</TH>
+                      <TH className="text-right">{t('wallet.amount')}</TH>
                     </TR>
                   </THead>
                   <TBody>
                     {transactions.map((txn) => (
                       <TR key={txn.id}>
                         <TD className="whitespace-nowrap text-black/50">
-                          {formatDate(txn.createdAt)}
+                          {formatDate(txn.createdAt, locale)}
                         </TD>
-                        <TD>{TXN_LABELS[txn.type]}</TD>
+                        <TD>{t(`txn.${txn.type}`)}</TD>
                         <TD className="text-black/50">
                           {txn.order ? (
                             <Link
@@ -132,26 +129,28 @@ export default async function SellerWalletPage() {
             </section>
 
             <section className="flex flex-col gap-3">
-              <h2 className="text-[16px] font-semibold">Withdrawals</h2>
+              <h2 className="text-[16px] font-semibold">
+                {t('wallet.withdrawals')}
+              </h2>
               {withdrawals.length === 0 ? (
                 <p className="rounded-[9px] bg-white px-4 py-8 text-center text-[15px] text-black/50">
-                  No withdrawal requests yet.
+                  {t('wallet.withdrawalsEmpty')}
                 </p>
               ) : (
                 <Table>
                   <THead>
                     <TR>
-                      <TH>Requested</TH>
-                      <TH>To</TH>
-                      <TH>Status</TH>
-                      <TH className="text-right">Amount</TH>
+                      <TH>{t('wallet.requested')}</TH>
+                      <TH>{t('wallet.to')}</TH>
+                      <TH>{t('wallet.status')}</TH>
+                      <TH className="text-right">{t('wallet.amount')}</TH>
                     </TR>
                   </THead>
                   <TBody>
                     {withdrawals.map((item) => (
                       <TR key={item.id}>
                         <TD className="whitespace-nowrap text-black/50">
-                          {formatDate(item.createdAt)}
+                          {formatDate(item.createdAt, locale)}
                         </TD>
                         <TD>
                           {item.bankName}
@@ -161,7 +160,7 @@ export default async function SellerWalletPage() {
                         </TD>
                         <TD>
                           <Pill tone={WITHDRAWAL_TONE[item.status]}>
-                            {WITHDRAWAL_STATUS_LABELS[item.status]}
+                            {t(`withdrawal.${item.status}`)}
                           </Pill>
                           {item.reviewNote ? (
                             <span className="block max-w-[220px] text-[13px] text-black/50">
@@ -179,7 +178,9 @@ export default async function SellerWalletPage() {
           </div>
 
           <aside className="h-fit rounded-[9px] bg-white p-[24px]">
-            <h2 className="mb-4 text-[16px] font-semibold">Withdraw</h2>
+            <h2 className="mb-4 text-[16px] font-semibold">
+              {t('wallet.withdraw')}
+            </h2>
             <WithdrawForm
               availableMinor={balance.availableMinor}
               minWithdrawalMinor={balance.minWithdrawalMinor}

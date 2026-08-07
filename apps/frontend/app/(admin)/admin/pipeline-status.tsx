@@ -1,9 +1,10 @@
 'use client'
 
-import { PIPELINE_STATUSES, PIPELINE_STATUS_LABELS } from '@metoo/shared'
+import { PIPELINE_STATUSES } from '@metoo/shared'
 import { Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
+import { useT } from '@/components/i18n-provider'
 import { setPipelineStatus } from '@/app/actions/admin'
 import { CButton } from '@/components/console/button'
 import { CSelect, CTextarea } from '@/components/console/field'
@@ -30,6 +31,7 @@ export function PipelineStatusControl({
   const [status, setStatus] = useState<PipelineStatus>(current)
   const [note, setNote] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const t = useT()
   const [pending, startTransition] = useTransition()
 
   const changed = status !== current
@@ -45,7 +47,7 @@ export function PipelineStatusControl({
       >
         {PIPELINE_STATUSES.map((value) => (
           <option key={value} value={value}>
-            {PIPELINE_STATUS_LABELS[value]}
+            {t(`pipeline.${value}`)}
           </option>
         ))}
       </CSelect>
@@ -56,7 +58,7 @@ export function PipelineStatusControl({
           onChange={(event) => setNote(event.target.value)}
           rows={2}
           maxLength={1000}
-          placeholder="Why — the applicant sees this."
+          placeholder={t('pipelineControl.notePlaceholder')}
           className="min-h-0 text-[15px]"
         />
       ) : null}
@@ -97,7 +99,7 @@ export function PipelineStatusControl({
               setError(null)
             }}
           >
-            Cancel
+            {t('common.cancel')}
           </CButton>
         </div>
       ) : null}

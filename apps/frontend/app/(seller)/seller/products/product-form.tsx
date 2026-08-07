@@ -1,6 +1,6 @@
 'use client'
 
-import { CATEGORIES, CATEGORY_LABELS } from '@metoo/shared'
+import { CATEGORIES } from '@metoo/shared'
 import { Loader2, Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
@@ -13,6 +13,7 @@ import {
 import { CButton } from '@/components/console/button'
 import { CField, CSelect, CTextarea } from '@/components/console/field'
 import { CInput } from '@/components/console/field'
+import { useT } from '@/components/i18n-provider'
 import type { BrandProduct } from '@/lib/types'
 
 /**
@@ -24,6 +25,7 @@ import type { BrandProduct } from '@/lib/types'
  */
 export function ProductForm({ product }: { product?: BrandProduct }) {
   const router = useRouter()
+  const t = useT()
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
 
@@ -38,7 +40,7 @@ export function ProductForm({ product }: { product?: BrandProduct }) {
     const stock = String(form.get('stockPacks') ?? '').trim()
 
     if (!Number.isFinite(baht) || baht <= 0) {
-      setError('Enter a price greater than zero.')
+      setError(t('productForm.badPrice'))
       return
     }
 
@@ -72,7 +74,7 @@ export function ProductForm({ product }: { product?: BrandProduct }) {
 
   return (
     <form onSubmit={onSubmit} className="flex max-w-[640px] flex-col gap-5">
-      <CField label="Product name">
+      <CField label={t('productForm.name')}>
         <CInput
           name="name"
           required
@@ -81,20 +83,20 @@ export function ProductForm({ product }: { product?: BrandProduct }) {
         />
       </CField>
 
-      <CField label="Description">
+      <CField label={t('productForm.description')}>
         <CTextarea
           name="description"
           maxLength={2000}
-          placeholder="Describe your product..."
+          placeholder={t('productForm.descriptionPlaceholder')}
           defaultValue={product?.description ?? ''}
         />
       </CField>
 
-      <CField label="Category">
+      <CField label={t('productForm.category')}>
         <CSelect name="category" required defaultValue={product?.category}>
           {CATEGORIES.map((category) => (
             <option key={category} value={category}>
-              {CATEGORY_LABELS[category]}
+              {t(`category.${category}`)}
             </option>
           ))}
         </CSelect>
@@ -102,8 +104,8 @@ export function ProductForm({ product }: { product?: BrandProduct }) {
 
       <div className="grid gap-5 sm:grid-cols-2">
         <CField
-          label="Price per pack (฿)"
-          hint="Wholesale price a retailer pays."
+          label={t('productForm.price')}
+          hint={t('productForm.priceHint')}
         >
           <CInput
             name="priceBaht"
@@ -117,7 +119,7 @@ export function ProductForm({ product }: { product?: BrandProduct }) {
           />
         </CField>
 
-        <CField label="Units per pack">
+        <CField label={t('productForm.unitsPerPack')}>
           <CInput
             name="unitsPerPack"
             type="number"
@@ -127,9 +129,13 @@ export function ProductForm({ product }: { product?: BrandProduct }) {
           />
         </CField>
 
+        {/* The old hint said orders must be a multiple of this. They must not:
+            `checkQuantity` in the backend's domain layer enforces only
+            `packs >= minPacks`, and its comment records that the multiples
+            rule was deliberately removed. Corrected while translating. */}
         <CField
-          label="Minimum order (packs)"
-          hint="Orders must be a multiple of this."
+          label={t('productForm.minPacks')}
+          hint={t('productForm.minPacksHint')}
         >
           <CInput
             name="minPacks"
@@ -140,7 +146,10 @@ export function ProductForm({ product }: { product?: BrandProduct }) {
           />
         </CField>
 
-        <CField label="Stock (packs)" hint="Leave blank for made to order.">
+        <CField
+          label={t('productForm.stock')}
+          hint={t('productForm.stockHint')}
+        >
           <CInput
             name="stockPacks"
             type="number"
@@ -157,7 +166,7 @@ export function ProductForm({ product }: { product?: BrandProduct }) {
           defaultChecked={product?.isActive ?? true}
           className="size-4"
         />
-        Visible in the catalog
+        {t('productForm.visible')}
       </label>
 
       {error ? (
@@ -172,7 +181,7 @@ export function ProductForm({ product }: { product?: BrandProduct }) {
       <div className="flex flex-wrap items-center gap-3">
         <CButton type="submit" size="wide" disabled={pending}>
           {pending ? <Loader2 className="size-4 animate-spin" /> : null}
-          {editing ? 'Save changes' : 'Create product'}
+          {t(editing ? 'productForm.save' : 'productForm.create')}
         </CButton>
 
         {product ? (
@@ -184,7 +193,7 @@ export function ProductForm({ product }: { product?: BrandProduct }) {
             onClick={() => {
               if (
                 !window.confirm(
-                  `Delete "${product.name}"? Past orders keep their own copy of the name and price, so history is unaffected.`
+                  t('productForm.deleteAsk', { name: product.name })
                 )
               ) {
                 return
@@ -200,7 +209,7 @@ export function ProductForm({ product }: { product?: BrandProduct }) {
               })
             }}
           >
-            <Trash2 className="size-4" /> Delete
+            <Trash2 className="size-4" /> {t('productForm.delete')}
           </CButton>
         ) : null}
       </div>

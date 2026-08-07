@@ -7,9 +7,13 @@ import { Pill } from '@/components/console/pill'
 import { Card, CardEmpty } from '@/components/console/card'
 import { api } from '@/lib/api'
 import { formatBaht, formatDate } from '@/lib/format'
+import { getLocale, getT } from '@/lib/i18n/server'
 import type { ReturnRequest, ReturnStatus } from '@/lib/types'
 
-export const metadata: Metadata = { title: 'Returns' }
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT()
+  return { title: t('sellerReturns.title') }
+}
 
 const TONE: Record<ReturnStatus, 'warning' | 'success' | 'danger'> = {
   REQUESTED: 'warning',
@@ -17,24 +21,20 @@ const TONE: Record<ReturnStatus, 'warning' | 'success' | 'danger'> = {
   REJECTED: 'danger',
 }
 
-const LABEL: Record<ReturnStatus, string> = {
-  REQUESTED: 'Awaiting your decision',
-  ACCEPTED: 'Refunded',
-  REJECTED: 'Declined',
-}
-
 export default async function SellerReturnsPage() {
+  const t = await getT()
+  const locale = await getLocale()
   const returns = await api.get<ReturnRequest[]>('/brand/returns')
   const open = returns.filter((item) => item.status === 'REQUESTED')
 
   return (
     <>
       <PageHeader
-        title="Returns"
+        title={t('sellerReturns.title')}
         description={
           open.length > 0
-            ? `${open.length} awaiting your decision`
-            : 'Requests raised against your delivered orders.'
+            ? t('sellerReturns.awaiting', { n: open.length })
+            : t('sellerReturns.subtitle')
         }
       />
 
@@ -43,8 +43,8 @@ export default async function SellerReturnsPage() {
           <Card>
             <CardEmpty
               icon={RotateCcw}
-              title="No return requests"
-              description="A buyer can raise one once an order has been delivered."
+              title={t('sellerReturns.emptyTitle')}
+              description={t('sellerReturns.emptyBody')}
             />
           </Card>
         ) : (
@@ -66,14 +66,16 @@ export default async function SellerReturnsPage() {
                     {request.order.retailer.shopName}
                   </span>
                   <Pill tone={TONE[request.status]}>
-                    {LABEL[request.status]}
+                    {t(`sellerReturns.${request.status}`)}
                   </Pill>
                 </header>
 
                 <div className="flex flex-col gap-4 px-4 py-4">
                   <div>
                     <p className="text-[13px] text-black/50">
-                      Reason · raised {formatDate(request.createdAt)}
+                      {t('sellerReturns.reasonRaised', {
+                        date: formatDate(request.createdAt, locale),
+                      })}
                     </p>
                     <p className="text-[15px] whitespace-pre-line">
                       {request.reason}
@@ -85,9 +87,9 @@ export default async function SellerReturnsPage() {
                   ) : request.reviewNote ? (
                     <div className="rounded-md bg-[#f5f5f5] p-3">
                       <p className="text-[13px] text-black/50">
-                        Your response
+                        {t('sellerReturns.yourResponse')}
                         {request.reviewedAt
-                          ? ` · ${formatDate(request.reviewedAt)}`
+                          ? ` · ${formatDate(request.reviewedAt, locale)}`
                           : ''}
                       </p>
                       <p className="text-[15px]">{request.reviewNote}</p>
@@ -96,7 +98,7 @@ export default async function SellerReturnsPage() {
                 </div>
 
                 <footer className="flex justify-between border-t border-black/10 px-4 py-3 text-[13px] text-black/50">
-                  <span>Order total</span>
+                  <span>{t('sellerReturns.orderTotal')}</span>
                   <span className="tabular-nums">
                     {formatBaht(request.order.totalMinor)}
                   </span>

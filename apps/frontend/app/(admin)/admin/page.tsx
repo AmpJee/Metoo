@@ -19,9 +19,13 @@ import { ChartCard } from '@/components/console/chart-card'
 import { HeroTile, StatTile } from '@/components/console/stat-tile'
 import { api } from '@/lib/api'
 import { formatBaht } from '@/lib/format'
+import { getT } from '@/lib/i18n/server'
 import type { AdminSummary, DashboardPeriod } from '@/lib/types'
 
-export const metadata: Metadata = { title: 'Weekly Summary' }
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT()
+  return { title: t('adminHome.title') }
+}
 
 const PERIODS = ['day', 'week', 'month', 'year'] as const
 
@@ -30,6 +34,7 @@ export default async function AdminSummaryPage({
 }: {
   searchParams: Promise<{ period?: string }>
 }) {
+  const t = await getT()
   const { period: raw } = await searchParams
   const period = (
     PERIODS.includes(raw as DashboardPeriod) ? raw : 'week'
@@ -40,25 +45,30 @@ export default async function AdminSummaryPage({
   return (
     <>
       <PageHeader
-        title="Weekly Summary"
-        description="GMV counts confirmed orders onward — a pending order is a request, not a sale."
+        title={t('adminHome.title')}
+        description={t('adminHome.subtitle')}
         actions={<PeriodTabs basePath="/admin" active={period} />}
       />
 
       {/* Money. GMV leads as the headline card. */}
       <section className="grid grid-cols-1 gap-[20px] md:grid-cols-3">
         <HeroTile
-          label="GMV processed"
+          label={t('adminHome.gmv')}
           value={formatBaht(data.gmvMinor)}
           footnote={
             <>
               <ShoppingBag className="size-[18px]" />
-              {data.orderCount} {data.orderCount === 1 ? 'order' : 'orders'}
+              {t(
+                data.orderCount === 1
+                  ? 'adminHome.orderOne'
+                  : 'adminHome.orderMany',
+                { n: data.orderCount }
+              )}
             </>
           }
         />
         <StatTile
-          label="Commission earned"
+          label={t('adminHome.commission')}
           value={formatBaht(data.commissionMinor)}
           icon={Percent}
           tint="success"
@@ -67,28 +77,31 @@ export default async function AdminSummaryPage({
 
       <section className="grid grid-cols-1 gap-[20px] sm:grid-cols-2 xl:grid-cols-4">
         <StatTile
-          label="Logistics cost"
+          label={t('adminHome.logistics')}
           value={formatBaht(data.logisticsCostMinor)}
-          hint="Entered per order as invoices arrive"
+          hint={t('adminHome.logisticsHint')}
           icon={Truck}
           tint="warning"
         />
         <StatTile
-          label="Contribution margin"
+          label={t('adminHome.margin')}
           value={formatBaht(data.contributionMarginMinor)}
-          hint="Commission minus logistics"
+          hint={t('adminHome.marginHint')}
           icon={TrendingUp}
           tint={data.contributionMarginMinor >= 0 ? 'success' : 'warning'}
         />
         <StatTile
-          label="Average order value"
+          label={t('adminHome.aov')}
           value={formatBaht(data.averageOrderValueMinor)}
           icon={Receipt}
         />
         <StatTile
-          label="Repeat order rate"
+          label={t('adminHome.repeatRate')}
           value={`${data.repeatOrderRate.percent}%`}
-          hint={`${data.repeatOrderRate.repeatOrders} of ${data.repeatOrderRate.totalOrders}`}
+          hint={t('adminHome.repeatRateHint', {
+            repeat: data.repeatOrderRate.repeatOrders,
+            total: data.repeatOrderRate.totalOrders,
+          })}
           icon={Repeat}
           tint="info"
         />
@@ -97,45 +110,53 @@ export default async function AdminSummaryPage({
       {/* Operations and onboarding. */}
       <section className="grid grid-cols-1 gap-[20px] sm:grid-cols-2 xl:grid-cols-4">
         <StatTile
-          label="Avg. fulfilment time"
+          label={t('adminHome.fulfilment')}
           value={
             data.averageFulfilmentHours === null
               ? '—'
-              : `${data.averageFulfilmentHours}h`
+              : t('adminHome.fulfilmentValue', {
+                  n: data.averageFulfilmentHours,
+                })
           }
-          hint={
+          hint={t(
             data.averageFulfilmentHours === null
-              ? 'Nothing delivered yet'
-              : 'Confirmed to delivered'
-          }
+              ? 'adminHome.fulfilmentNone'
+              : 'adminHome.fulfilmentHint'
+          )}
           icon={Timer}
         />
         <StatTile
-          label="Signup to first order"
+          label={t('adminHome.toFirstOrder')}
           value={
             data.averageDaysToFirstOrder === null
               ? '—'
-              : `${data.averageDaysToFirstOrder} days`
+              : t('adminHome.toFirstOrderValue', {
+                  n: data.averageDaysToFirstOrder,
+                })
           }
-          hint={
+          hint={t(
             data.averageDaysToFirstOrder === null
-              ? 'No first orders yet'
-              : 'Average across retailers'
-          }
+              ? 'adminHome.toFirstOrderNone'
+              : 'adminHome.toFirstOrderHint'
+          )}
           icon={Clock}
           tint="warning"
         />
         <StatTile
-          label="Brands onboarded"
+          label={t('adminHome.brandsOnboarded')}
           value={String(data.onboarding.brandsOnboarded)}
-          hint={`${data.onboarding.brandsInPipeline} still in the pipeline`}
+          hint={t('adminHome.brandsPipeline', {
+            n: data.onboarding.brandsInPipeline,
+          })}
           icon={Store}
           tint="success"
         />
         <StatTile
-          label="Retailers onboarded"
+          label={t('adminHome.retailersOnboarded')}
           value={String(data.onboarding.retailersOnboarded)}
-          hint={`${data.onboarding.retailersInPipeline} still in the pipeline`}
+          hint={t('adminHome.retailersPipeline', {
+            n: data.onboarding.retailersInPipeline,
+          })}
           icon={Users}
           tint="info"
         />
@@ -146,20 +167,20 @@ export default async function AdminSummaryPage({
           // One bar is not a comparison — the number says it better.
           <div className="grid grid-cols-1 gap-[20px] sm:grid-cols-2 xl:grid-cols-4">
             <StatTile
-              label={`GMV · ${data.gmvByBrand[0]!.name}`}
+              label={t('adminHome.gmvForBrand', {
+                name: data.gmvByBrand[0]!.name,
+              })}
               value={formatBaht(data.gmvByBrand[0]!.gmvMinor)}
-              hint="The only brand with sales this period"
+              hint={t('adminHome.onlyBrand')}
               icon={Banknote}
             />
           </div>
         ) : (
           <ChartCard
-            title="GMV by brand"
+            title={t('adminHome.gmvByBrand')}
             total={formatBaht(data.gmvMinor)}
             empty={
-              data.gmvByBrand.length === 0
-                ? 'No sales in this period.'
-                : undefined
+              data.gmvByBrand.length === 0 ? t('adminHome.noSales') : undefined
             }
           >
             <GmvByBrandChart data={data.gmvByBrand} />

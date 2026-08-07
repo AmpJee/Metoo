@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useRef, useState, useTransition } from 'react'
 import { confirmPhotoUpload, requestPhotoUpload } from '@/app/actions/seller'
 import { CButton } from '@/components/console/button'
+import { useT } from '@/components/i18n-provider'
 
 /** Matches MAX_PHOTO_BYTES on the API. */
 const MAX_BYTES = 5 * 1024 * 1024
@@ -31,6 +32,7 @@ export function PhotoUpload({
   photoUrl: string | null
 }) {
   const router = useRouter()
+  const t = useT()
   const inputRef = useRef<HTMLInputElement>(null)
   const [preview, setPreview] = useState(photoUrl)
   const [error, setError] = useState<string | null>(null)
@@ -44,11 +46,11 @@ export function PhotoUpload({
     // Check locally first so an oversized file is refused instantly rather
     // than after a round-trip. The API enforces the same limits regardless.
     if (!ACCEPTED.includes(file.type)) {
-      setError('Use a JPEG, PNG or WebP image.')
+      setError(t('picture.badType'))
       return
     }
     if (file.size > MAX_BYTES) {
-      setError('That image is larger than 5 MB.')
+      setError(t('picture.tooLarge'))
       return
     }
 
@@ -66,7 +68,7 @@ export function PhotoUpload({
       }).catch(() => null)
 
       if (!put?.ok) {
-        setError('The upload did not complete. Please try again.')
+        setError(t('picture.failed'))
         return
       }
 
@@ -97,7 +99,7 @@ export function PhotoUpload({
           />
         ) : (
           <span className="flex size-full items-center justify-center text-[13px] text-black/50">
-            No photo
+            {t('photo.none')}
           </span>
         )}
       </div>
@@ -121,11 +123,9 @@ export function PhotoUpload({
           ) : (
             <ImageUp className="size-4" />
           )}
-          {preview ? 'Replace photo' : 'Upload photo'}
+          {t(preview ? 'photo.replace' : 'photo.upload')}
         </CButton>
-        <p className="text-[13px] text-black/50">
-          JPEG, PNG or WebP, up to 5 MB.
-        </p>
+        <p className="text-[13px] text-black/50">{t('picture.limits')}</p>
         {error ? (
           <p role="alert" className="text-[13px] text-[#d4183d]">
             {error}

@@ -3,6 +3,7 @@
 import { Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
+import { useT } from '@/components/i18n-provider'
 import { setDeliveryCost } from '@/app/actions/admin'
 import { CButton } from '@/components/console/button'
 import { CInput } from '@/components/console/field'
@@ -24,6 +25,7 @@ export function DeliveryCostField({
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
+  const t = useT()
   const [pending, startTransition] = useTransition()
 
   return (
@@ -59,14 +61,16 @@ export function DeliveryCostField({
           min="0"
           defaultValue={(currentMinor / 100).toFixed(2)}
           className="h-9 w-28 text-[15px]"
-          aria-label="Delivery cost in baht"
+          aria-label={t('deliveryCost.label')}
         />
         {error ? (
           <span role="alert" className="text-[13px] text-[#d4183d]">
             {error}
           </span>
         ) : saved ? (
-          <span className="text-[13px] text-[#1f7a4d]">Saved</span>
+          <span className="text-[13px] text-[#1f7a4d]">
+            {t('deliveryCost.saved')}
+          </span>
         ) : null}
       </div>
 
