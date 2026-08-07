@@ -14,6 +14,7 @@ export {
   MAX_TIERS,
   checkPriceTiers,
   lineTotalMinor,
+  quickPickQuantities,
   savingsMinor,
   unitPriceMinor,
   type PriceTier,
