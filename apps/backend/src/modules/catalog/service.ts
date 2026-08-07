@@ -46,6 +46,13 @@ const catalogSelect = {
  */
 const catalogDetailSelect = {
   ...catalogSelect,
+  // Detail only, like the rest of the spec: a product card shows one price,
+  // and shipping a ladder with every row of a 24-item browse page would be
+  // bytes nobody renders.
+  priceTiers: {
+    select: { minPacks: true, pricePerPackMinor: true },
+    orderBy: { minPacks: 'asc' },
+  },
   images: {
     orderBy: { position: 'asc' },
     select: { id: true, url: true, position: true, altText: true },

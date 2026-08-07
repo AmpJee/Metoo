@@ -63,6 +63,7 @@ export type ProductInput = {
   category: string
   stockPacks?: number
   isActive?: boolean
+  priceTiers?: { minPacks: number; pricePerPackMinor: number }[]
 }
 
 export async function createProduct(

@@ -9,6 +9,7 @@ import { Elysia, t } from 'elysia'
 import { CATEGORIES } from '@metoo/shared'
 import { MAX_PRESETS } from '../../domain/pack-presets.ts'
 import { MAX_PRODUCT_IMAGES } from '../../domain/product-images.ts'
+import { MAX_TIERS } from '../../domain/volume-pricing.ts'
 import { requireAccess } from '../../middleware/auth.ts'
 import * as service from './service.ts'
 
@@ -24,6 +25,10 @@ const productResponse = t.Object({
   minPacks: t.Integer(),
   unitsPerPack: t.Integer(),
   packPresets: t.Array(t.Integer()),
+  /** Volume pricing ladder, cheapest threshold first. */
+  priceTiers: t.Array(
+    t.Object({ minPacks: t.Integer(), pricePerPackMinor: t.Integer() })
+  ),
   category: categorySchema,
   stockPacks: t.Union([t.Integer(), t.Null()]),
   isActive: t.Boolean(),
@@ -55,6 +60,18 @@ const productBody = t.Object({
   // can see minPacks. The bound here only caps the row length.
   packPresets: t.Optional(
     t.Array(t.Integer({ minimum: 1 }), { maxItems: MAX_PRESETS })
+  ),
+  // Volume pricing. Thresholds ascending, prices descending, every one below
+  // the base price and above minPacks — the domain layer enforces all of that,
+  // because "buying more must never cost more" is a rule, not a shape.
+  priceTiers: t.Optional(
+    t.Array(
+      t.Object({
+        minPacks: t.Integer({ minimum: 1 }),
+        pricePerPackMinor: t.Integer({ minimum: 1 }),
+      }),
+      { maxItems: MAX_TIERS }
+    )
   ),
   category: categorySchema,
   stockPacks: t.Optional(t.Integer({ minimum: 0 })),
@@ -141,6 +158,11 @@ export const productsModule = new Elysia({
           'collide with another brand’s. barcode is checked against its GTIN ' +
           'check digit, so a mistyped or transposed digit is rejected here ' +
           'rather than at the retailer’s till. ' +
+          'priceTiers is volume pricing: at minPacks or more, every pack ' +
+          'costs pricePerPackMinor instead of the product price — the whole ' +
+          'quantity, not a blend. Thresholds must ascend, prices must ' +
+          'descend, and each must sit above minPacks and below the base ' +
+          'price, so a bigger basket can never cost more per pack. ' +
           'Photos: upload each one via POST /brand/product-images/upload-url ' +
           'first, then send the storageKeys in `images`. Product and images ' +
           'are written in one transaction, so a bad key fails the whole ' +
