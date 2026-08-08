@@ -32,7 +32,8 @@ export default function OpengraphImage() {
         background: '#ffffff',
       }}
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
+      {/* A plain img, not next/image: this renders inside satori, which has
+          no Next runtime and understands only basic elements. */}
       <img src={LOGO_WORDMARK_DATA_URI} width={720} alt="" />
       <div style={{ fontSize: 38, color: '#5b5b5b' }}>
         Wholesale marketplace for Thai brands and shops
