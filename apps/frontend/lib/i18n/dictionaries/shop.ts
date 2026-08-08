@@ -101,8 +101,6 @@ export const en = {
   'checkout.paymentMethod': 'Payment Method',
   'checkout.promptpay': 'QR PromptPay',
   'checkout.promptpayHint': 'Scan and transfer once the order is placed',
-  'checkout.card': 'Credit / Debit Card',
-  'checkout.cardHint': 'Coming soon',
   'checkout.noPaymentNow':
     'No payment is taken now. This total, delivery included, is what you transfer once the order is placed — scan the PromptPay QR, send us the slip, and the brand accepts your order once we confirm it.',
   'checkout.placeOrder': 'Place Order',
@@ -273,7 +271,6 @@ export const en = {
   'shopOps.currentProductsPlaceholder': 'Snacks, drinks, household goods…',
   'shopOps.capacity': 'Monthly capacity (orders you can take)',
   'shopOps.capacityPlaceholder': 'e.g. 40',
-  'shopOps.preferredPayment': 'Preferred payment',
   'shopOps.deliveryWindow': 'Delivery window',
   'shopOps.deliveryWindowPlaceholder': 'e.g. Weekday mornings, 9am–12pm',
   'shopOps.save': 'Save shop details',
@@ -408,8 +405,6 @@ export const th: Record<keyof Dict, string> = {
   'checkout.paymentMethod': 'วิธีชำระเงิน',
   'checkout.promptpay': 'PromptPay QR',
   'checkout.promptpayHint': 'สแกนและโอนเงินหลังสั่งซื้อ',
-  'checkout.card': 'บัตรเครดิต / เดบิต',
-  'checkout.cardHint': 'เร็ว ๆ นี้',
   'checkout.noPaymentNow':
     'ยังไม่มีการเรียกเก็บเงินตอนนี้ ยอดรวมนี้รวมค่าจัดส่งแล้ว และเป็นยอดที่คุณจะโอนหลังสั่งซื้อ สแกน PromptPay QR แล้วส่งสลิปให้เรา เมื่อเรายืนยันแล้ว แบรนด์จะรับออร์เดอร์ของคุณ',
   'checkout.placeOrder': 'ยืนยันสั่งซื้อ',
@@ -577,7 +572,6 @@ export const th: Record<keyof Dict, string> = {
   'shopOps.currentProductsPlaceholder': 'ขนม เครื่องดื่ม ของใช้ในบ้าน…',
   'shopOps.capacity': 'จำนวนออร์เดอร์ที่รับได้ต่อเดือน',
   'shopOps.capacityPlaceholder': 'เช่น 40',
-  'shopOps.preferredPayment': 'วิธีชำระเงินที่สะดวก',
   'shopOps.deliveryWindow': 'ช่วงเวลาที่สะดวกรับสินค้า',
   'shopOps.deliveryWindowPlaceholder': 'เช่น วันธรรมดาช่วงเช้า 9:00–12:00 น.',
   'shopOps.save': 'บันทึกข้อมูลร้าน',

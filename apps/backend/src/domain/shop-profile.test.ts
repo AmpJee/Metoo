@@ -34,6 +34,14 @@ describe('shopProfileComplete', () => {
     expect(missingShopFields(empty)).toHaveLength(REQUIRED_SHOP_FIELDS.length)
   })
 
+  test('a payment preference is not required', () => {
+    // Only PromptPay is offered, so there is nothing to prefer. Blocking
+    // checkout on it made a shop answer a question with one option.
+    const noPreference: ShopProfile = { ...complete, preferredPayment: null }
+    expect(shopProfileComplete(noPreference)).toBe(true)
+    expect(missingShopFields(noPreference)).toEqual([])
+  })
+
   test('each required field on its own blocks checkout', () => {
     for (const [field] of REQUIRED_SHOP_FIELDS) {
       const profile = { ...complete, [field]: null }
