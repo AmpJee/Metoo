@@ -82,3 +82,16 @@ export function loginPathFor(pathname: string): string {
   if (pathname.startsWith('/admin')) return PORTALS.admin.loginPath
   return PORTALS.retailer.loginPath
 }
+
+/**
+ * Sign in, then come back here.
+ *
+ * Lives beside `loginPathFor` rather than with the API helpers because client
+ * components need it: the catalog is public but acting on it is not, so a
+ * visitor pressing Add to Cart is sent through here. Anything importing
+ * `lib/api` would drag `server-only` into the browser bundle and fail the
+ * build — which is exactly how this landed here.
+ */
+export function loginHref(pathname: string): string {
+  return `${loginPathFor(pathname)}?next=${encodeURIComponent(pathname)}`
+}

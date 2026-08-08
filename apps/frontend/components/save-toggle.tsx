@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { toggleSaved } from '@/app/actions/saved'
 import { useT } from '@/components/i18n-provider'
-import { loginHref } from '@/lib/sign-in-required'
+import { loginHref } from '@/lib/portals'
 import type { SavedKind } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
