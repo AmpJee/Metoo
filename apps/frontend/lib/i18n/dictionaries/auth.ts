@@ -25,6 +25,10 @@ export const en = {
   'auth.signUpToBuy': 'Sign up to buy',
   'auth.sellingHere': 'Selling on Metoo?',
   'auth.sellerCentre': 'Seller Centre',
+  'auth.sellerDoorHint': 'Sellers sign in at Seller Centre, not here.',
+  // Its own key rather than reusing the sign-in one: this sits on the signup
+  // form, where "sign in" would be the wrong verb.
+  'auth.brandSignupHint': 'Brands sign up at Seller Centre, not here.',
   'auth.buyingInstead': 'Buying instead?',
   'auth.shopSignIn': 'Shop sign-in',
   'auth.sellOnMetoo': 'Sell on Metoo',
@@ -130,6 +134,8 @@ export const th: Record<keyof Dict, string> = {
   'auth.signUpToBuy': 'สมัครเพื่อสั่งซื้อ',
   'auth.sellingHere': 'ต้องการขายสินค้า?',
   'auth.sellerCentre': 'ศูนย์ผู้ขาย',
+  'auth.sellerDoorHint': 'ผู้ขายเข้าสู่ระบบที่ศูนย์ผู้ขาย ไม่ใช่หน้านี้',
+  'auth.brandSignupHint': 'แบรนด์สมัครที่ศูนย์ผู้ขาย ไม่ใช่หน้านี้',
   'auth.buyingInstead': 'ต้องการสั่งซื้อ?',
   'auth.shopSignIn': 'เข้าสู่ระบบผู้ซื้อ',
   'auth.sellOnMetoo': 'ขายสินค้ากับ Metoo',
