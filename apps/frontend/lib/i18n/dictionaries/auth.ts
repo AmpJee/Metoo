@@ -25,10 +25,24 @@ export const en = {
   'auth.signUpToBuy': 'Sign up to buy',
   'auth.sellingHere': 'Selling on Metoo?',
   'auth.sellerCentre': 'Seller Centre',
+  'auth.sellerDoorHint': 'Sellers sign in at Seller Centre, not here.',
+  // Its own key rather than reusing the sign-in one: this sits on the signup
+  // form, where "sign in" would be the wrong verb.
+  'auth.brandSignupHint': 'Brands sign up at Seller Centre, not here.',
   'auth.buyingInstead': 'Buying instead?',
   'auth.shopSignIn': 'Shop sign-in',
   'auth.sellOnMetoo': 'Sell on Metoo',
   'auth.badCredentials': 'Email or password is incorrect.',
+  // Named per role rather than one sentence with the site interpolated: Thai
+  // does not put the name in the same place, and a translator should see the
+  // whole sentence.
+  'auth.wrongPortal.BRAND':
+    'That is a seller account. Your password is fine — sign in at Seller Centre.',
+  'auth.wrongPortal.RETAILER':
+    'That is a shop account. Your password is fine — sign in on the shop.',
+  'auth.wrongPortal.ADMIN':
+    'That is a staff account. Your password is fine — sign in on the console.',
+  'auth.wrongPortal.go': 'Go to the right sign-in page',
   'auth.unreachable':
     'Cannot reach the server. Check your connection and try again.',
 
@@ -120,10 +134,19 @@ export const th: Record<keyof Dict, string> = {
   'auth.signUpToBuy': 'สมัครเพื่อสั่งซื้อ',
   'auth.sellingHere': 'ต้องการขายสินค้า?',
   'auth.sellerCentre': 'ศูนย์ผู้ขาย',
+  'auth.sellerDoorHint': 'ผู้ขายเข้าสู่ระบบที่ศูนย์ผู้ขาย ไม่ใช่หน้านี้',
+  'auth.brandSignupHint': 'แบรนด์สมัครที่ศูนย์ผู้ขาย ไม่ใช่หน้านี้',
   'auth.buyingInstead': 'ต้องการสั่งซื้อ?',
   'auth.shopSignIn': 'เข้าสู่ระบบผู้ซื้อ',
   'auth.sellOnMetoo': 'ขายสินค้ากับ Metoo',
   'auth.badCredentials': 'อีเมลหรือรหัสผ่านไม่ถูกต้อง',
+  'auth.wrongPortal.BRAND':
+    'นี่เป็นบัญชีผู้ขาย รหัสผ่านของคุณถูกต้อง กรุณาเข้าสู่ระบบที่ Seller Centre',
+  'auth.wrongPortal.RETAILER':
+    'นี่เป็นบัญชีร้านค้าปลีก รหัสผ่านของคุณถูกต้อง กรุณาเข้าสู่ระบบที่หน้าร้าน',
+  'auth.wrongPortal.ADMIN':
+    'นี่เป็นบัญชีเจ้าหน้าที่ รหัสผ่านของคุณถูกต้อง กรุณาเข้าสู่ระบบที่ระบบจัดการหลังบ้าน',
+  'auth.wrongPortal.go': 'ไปที่หน้าเข้าสู่ระบบที่ถูกต้อง',
   'auth.unreachable':
     'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่',
 

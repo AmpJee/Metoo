@@ -1,3 +1,4 @@
+import { ArrowRight, Store } from 'lucide-react'
 import Link from 'next/link'
 import { Suspense } from 'react'
 import { AuthShell } from '@/components/auth-shell'
@@ -44,7 +45,7 @@ export async function PortalLogin({ portal }: { portal: PortalKey }) {
 function PortalFooter({ portal, t }: { portal: PortalKey; t: Translate }) {
   if (portal === 'retailer') {
     return (
-      <div className="flex flex-col gap-2 text-muted-foreground">
+      <div className="flex flex-col gap-4 text-muted-foreground">
         <p>
           {t('auth.newHere')}{' '}
           <Link
@@ -54,15 +55,12 @@ function PortalFooter({ portal, t }: { portal: PortalKey; t: Translate }) {
             {t('auth.signUpToBuy')}
           </Link>
         </p>
-        <p>
-          {t('auth.sellingHere')}{' '}
-          <Link
-            href={PORTALS.seller.loginPath}
-            className="font-medium text-primary hover:underline"
-          >
-            {t('auth.sellerCentre')}
-          </Link>
-        </p>
+
+        {/* A block rather than one more line of muted text. This is the shop's
+            sign-in, and a brand arriving here has correct credentials that
+            will be refused — the seller entrance has to be visible before
+            they start typing, because nobody reads a footnote first. */}
+        <SellerDoor t={t} />
       </div>
     )
   }
@@ -94,4 +92,29 @@ function PortalFooter({ portal, t }: { portal: PortalKey; t: Translate }) {
 
   // Admin: no signup, no cross-link worth advertising on a staff screen.
   return null
+}
+
+/**
+ * The way in to Seller Centre, made obvious.
+ *
+ * Brands and retailers sign in on separate sites deliberately, so the only
+ * way that split does not become a trap is for the other door to be visible
+ * from this one.
+ */
+function SellerDoor({ t }: { t: Translate }) {
+  return (
+    <Link
+      href={PORTALS.seller.loginPath}
+      className="flex items-center gap-3 rounded-[9px] border border-border p-4 transition-colors hover:border-primary"
+    >
+      <Store className="size-5 shrink-0 text-primary" strokeWidth={1.5} />
+      <span className="flex flex-1 flex-col">
+        <span className="text-sm font-medium text-foreground">
+          {t('auth.sellingHere')}
+        </span>
+        <span className="text-xs">{t('auth.sellerDoorHint')}</span>
+      </span>
+      <ArrowRight className="size-4 shrink-0 text-primary" />
+    </Link>
+  )
 }

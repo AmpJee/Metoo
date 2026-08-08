@@ -17,7 +17,7 @@ export default async function StoresPage() {
   // Brands come from the catalog, not GET /stores — that route is the brand's
   // own preview of its storefront and is BRAND-only.
   const [brands, following] = await Promise.all([
-    api.get<BrandListItem[]>('/catalog/brands'),
+    api.get<BrandListItem[]>('/catalog/brands', { optionalAuth: true }),
     api.get<FollowedBrand[]>('/following').catch(() => [] as FollowedBrand[]),
   ])
 
