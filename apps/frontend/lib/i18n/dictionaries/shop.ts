@@ -94,7 +94,7 @@ export const en = {
   'checkout.card': 'Credit / Debit Card',
   'checkout.cardHint': 'Coming soon',
   'checkout.noPaymentNow':
-    'No payment is taken now. Once the order is placed you will get a PromptPay QR to transfer to; the seller confirms when it arrives.',
+    'No payment is taken now. Once the order is placed you will get a PromptPay QR to transfer to, then send us the slip — we confirm it arrived and the brand accepts your order.',
   'checkout.placeOrder': 'Place Order',
   'checkout.placeOrderSplit': 'Place Order ({n} orders)',
 
@@ -150,7 +150,7 @@ export const en = {
   'group.manyBrands':
     'Your cart spanned {n} brands, so it was placed as {n} separate orders. Each is confirmed and delivered on its own.',
   'group.noPaymentYet':
-    'No payment has been taken yet — you will arrange that with the brand once they confirm.',
+    'No payment has been taken yet. Transfer the amount, send us the slip, and the brand accepts your order once we confirm it.',
   'group.countOne': '{n} order total',
   'group.countMany': '{n} orders total',
   'group.goToOrders': 'Go to My Purchase',
@@ -393,7 +393,7 @@ export const th: Record<keyof Dict, string> = {
   'checkout.card': 'บัตรเครดิต / เดบิต',
   'checkout.cardHint': 'เร็ว ๆ นี้',
   'checkout.noPaymentNow':
-    'ยังไม่มีการเรียกเก็บเงินตอนนี้ เมื่อสั่งซื้อแล้วคุณจะได้รับ PromptPay QR เพื่อโอนเงิน และผู้ขายจะยืนยันเมื่อได้รับเงิน',
+    'ยังไม่มีการเรียกเก็บเงินตอนนี้ เมื่อสั่งซื้อแล้วคุณจะได้รับ PromptPay QR เพื่อโอนเงิน จากนั้นส่งสลิปให้เรา เมื่อเรายืนยันแล้ว แบรนด์จะรับออร์เดอร์ของคุณ',
   'checkout.placeOrder': 'ยืนยันสั่งซื้อ',
   'checkout.placeOrderSplit': 'ยืนยันสั่งซื้อ ({n} คำสั่งซื้อ)',
 
@@ -448,7 +448,7 @@ export const th: Record<keyof Dict, string> = {
   'group.manyBrands':
     'ตะกร้าของคุณมีสินค้าจาก {n} แบรนด์ จึงแยกเป็น {n} คำสั่งซื้อ แต่ละรายการยืนยันและจัดส่งแยกกัน',
   'group.noPaymentYet':
-    'ยังไม่มีการเรียกเก็บเงิน คุณจะชำระเงินกับแบรนด์หลังจากที่แบรนด์ยืนยันคำสั่งซื้อ',
+    'ยังไม่มีการเรียกเก็บเงิน กรุณาโอนเงินแล้วส่งสลิปให้เรา เมื่อเรายืนยันแล้ว แบรนด์จะรับออร์เดอร์ของคุณ',
   'group.countOne': 'รวม {n} คำสั่งซื้อ',
   'group.countMany': 'รวม {n} คำสั่งซื้อ',
   'group.goToOrders': 'ไปที่คำสั่งซื้อของฉัน',
