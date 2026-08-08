@@ -110,8 +110,10 @@ export const catalogModule = new Elysia({
       detail: {
         summary: 'Browse the catalog',
         description:
-          'Only active products from approved brands. Paginate by passing the ' +
-          'returned nextCursor; a null nextCursor means the last page.',
+          'Only active products from approved brands. `q` matches the product ' +
+          'name OR its brand’s name, so searching a shop returns its goods. ' +
+          'Paginate by passing the returned nextCursor; a null nextCursor ' +
+          'means the last page.',
         tags: ['Catalog'],
       },
       response: {
@@ -123,12 +125,15 @@ export const catalogModule = new Elysia({
     }
   )
 
-  .get('/brands', () => service.listBrands(), {
+  .get('/brands', ({ query }) => service.listBrands(query.q), {
+    query: t.Object({ q: t.Optional(t.String({ maxLength: 100 })) }),
     detail: {
       summary: 'Brands that currently have products',
       description:
-        'For the brand filter and the storefront header. Each carries its ' +
-        'store rating, aggregated across that brand’s product reviews.',
+        'For the brand filter, the storefront header, and the Brands row on ' +
+        'the search results page — pass the same `q` the product search uses. ' +
+        'Each carries its store rating, aggregated across that brand’s ' +
+        'product reviews.',
       tags: ['Catalog'],
     },
     response: {

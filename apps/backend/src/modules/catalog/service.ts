@@ -88,9 +88,23 @@ export async function browse(filter: BrowseFilter) {
       ...VISIBLE,
       category,
       brandId,
-      // Case-insensitive substring on name. Good enough at MVP scale; if the
+      // Product name OR brand name. Searching the shop you already know is
+      // how a retailer looks for anything — they think "Golden Bee", not
+      // "honey" — and matching only the product name returned nothing for the
+      // one query most likely to be typed.
+      //
+      // Case-insensitive substring on both. Good enough at MVP scale; if the
       // catalog grows this wants a Postgres full-text index instead.
-      name: q ? { contains: q, mode: 'insensitive' } : undefined,
+      ...(q
+        ? {
+            OR: [
+              { name: { contains: q, mode: 'insensitive' as const } },
+              {
+                brand: { name: { contains: q, mode: 'insensitive' as const } },
+              },
+            ],
+          }
+        : {}),
     },
     select: catalogSelect,
     orderBy: { createdAt: 'desc' },
@@ -134,11 +148,17 @@ export async function getVisible(productId: string) {
 }
 
 /** Brands with at least one visible product — for a filter dropdown. */
-export async function listBrands() {
+/**
+ * `q` filters by brand name, for the Brands row on the search results page.
+ * Without it, searching a shop's name showed its goods but never the shop —
+ * and the shop is what was being looked for.
+ */
+export async function listBrands(q?: string) {
   const brands = await prisma.brandProfile.findMany({
     where: {
       user: { status: 'ONBOARDED' },
       products: { some: { isActive: true } },
+      name: q ? { contains: q, mode: 'insensitive' } : undefined,
     },
     select: { id: true, name: true, logoUrl: true, province: true },
     orderBy: { name: 'asc' },
