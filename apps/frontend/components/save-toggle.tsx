@@ -1,9 +1,11 @@
 'use client'
 
 import { Bookmark, Heart } from 'lucide-react'
+import { usePathname, useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { toggleSaved } from '@/app/actions/saved'
 import { useT } from '@/components/i18n-provider'
+import { loginHref } from '@/lib/sign-in-required'
 import type { SavedKind } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
@@ -25,6 +27,8 @@ export function SaveToggle({
   className?: string
 }) {
   const t = useT()
+  const router = useRouter()
+  const pathname = usePathname()
   const [saved, setSaved] = useState(initial)
   const [pending, startTransition] = useTransition()
 
@@ -55,8 +59,13 @@ export function SaveToggle({
         setSaved(!previous)
         startTransition(async () => {
           const result = await toggleSaved(productId, kind, previous)
-          if (!result.ok) setSaved(previous)
-          else setSaved(result.saved)
+          if (!result.ok) {
+            setSaved(previous)
+            // Saving needs a list to save to, and a visitor has none yet.
+            if (result.signInRequired) router.push(loginHref(pathname))
+            return
+          }
+          setSaved(result.saved)
         })
       }}
       className={cn(
