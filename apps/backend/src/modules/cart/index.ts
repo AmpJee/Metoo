@@ -6,6 +6,8 @@ const cartResponse = t.Object({
   /** Number of orders this cart will become at checkout — one per brand. */
   brandCount: t.Integer(),
   itemCount: t.Integer(),
+  /** True until this retailer's first order: delivery is free on it. */
+  firstOrderFreeShipping: t.Boolean(),
   /** Goods only. */
   subtotalMinor: t.Integer(),
   /** Delivery across every brand parcel in the basket. */

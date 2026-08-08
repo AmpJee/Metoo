@@ -110,6 +110,13 @@ export default async function CartPage() {
                   : formatBaht(cart.shippingMinor)}
               </dd>
             </div>
+            {/* Say why it is free, or the number looks arbitrary and the
+                offer does no work. */}
+            {cart.firstOrderFreeShipping ? (
+              <p className="text-xs text-success">
+                {t('cart.firstOrderFreeShipping')}
+              </p>
+            ) : null}
           </dl>
 
           <div className="mt-4 flex justify-between border-t border-border pt-4 text-base font-semibold">
@@ -120,7 +127,7 @@ export default async function CartPage() {
           {/* The one number that changes what someone puts in a basket. Shown
               per brand because the threshold is per brand — a parcel is one
               brand's goods. */}
-          {cart.groups
+          {(cart.firstOrderFreeShipping ? [] : cart.groups)
             .filter((group) => group.toFreeShippingMinor > 0)
             .map((group) => (
               <p

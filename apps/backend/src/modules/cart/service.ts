@@ -81,6 +81,17 @@ function assertQuantity(packs: number, rules: { minPacks: number }) {
 }
 
 export async function getCart(cartId: string) {
+  // The welcome offer, resolved the same way checkout will resolve it so the
+  // basket cannot promise free delivery the order then charges for.
+  const cart = await prisma.cart.findUnique({
+    where: { id: cartId },
+    select: { retailerId: true },
+  })
+  const isFirstOrder = cart
+    ? (await prisma.order.count({ where: { retailerId: cart.retailerId } })) ===
+      0
+    : false
+
   const items = await prisma.cartItem.findMany({
     where: { cartId },
     orderBy: { createdAt: 'asc' },
@@ -141,6 +152,7 @@ export async function getCart(cartId: string) {
         }))
       ),
       subtotalMinor: group.subtotalMinor,
+      isFirstOrder,
     })
 
   const groups = groupByBrand(lines).map((group) => ({
@@ -177,6 +189,7 @@ export async function getCart(cartId: string) {
     // surprise on the payment screen.
     brandCount: groups.length,
     itemCount: lines.length,
+    firstOrderFreeShipping: isFirstOrder,
     subtotalMinor,
     shippingMinor,
     totalMinor: subtotalMinor + shippingMinor,

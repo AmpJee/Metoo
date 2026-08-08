@@ -62,6 +62,12 @@ export const en = {
   'cart.subtotalItem': 'Subtotal ({n} item)',
   'cart.shipping': 'Shipping',
   'cart.shippingFree': 'Free',
+  'cart.firstOrderFreeShipping':
+    'Welcome — delivery is on us for your first order.',
+  'product.shippingEstimate': 'Delivery about {amount} for this quantity',
+  'product.shippingFree': 'Free delivery',
+  'product.shippingToFree':
+    'Add {amount} more from this brand for free delivery',
   'cart.toFreeShipping':
     'Add {amount} more from {brand} for free delivery on their parcel.',
   'cart.total': 'Total',
@@ -365,6 +371,10 @@ export const th: Record<keyof Dict, string> = {
   'cart.subtotalItem': 'ยอดรวมสินค้า ({n} รายการ)',
   'cart.shipping': 'ค่าจัดส่ง',
   'cart.shippingFree': 'ฟรี',
+  'cart.firstOrderFreeShipping': 'ยินดีต้อนรับ — คำสั่งซื้อแรกของคุณ ส่งฟรี',
+  'product.shippingEstimate': 'ค่าจัดส่งประมาณ {amount} สำหรับจำนวนนี้',
+  'product.shippingFree': 'ส่งฟรี',
+  'product.shippingToFree': 'สั่งจากแบรนด์นี้เพิ่มอีก {amount} ส่งฟรี',
   'cart.toFreeShipping':
     'สั่งจาก {brand} เพิ่มอีก {amount} ส่งฟรีสำหรับพัสดุนี้',
   'cart.total': 'ยอดรวมทั้งหมด',

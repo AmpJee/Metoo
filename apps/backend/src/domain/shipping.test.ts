@@ -112,6 +112,38 @@ describe('shippingFeeMinor', () => {
   })
 })
 
+describe('the first order ships free', () => {
+  test('whatever it weighs and however small it is', () => {
+    expect(
+      shippingFeeMinor({
+        weightGrams: 40_000,
+        subtotalMinor: 100,
+        isFirstOrder: true,
+      })
+    ).toBe(0)
+  })
+
+  test('and the second one pays', () => {
+    // The offer is the welcome, not a permanent rate. A returning shop that
+    // kept being charged nothing would be a silent hole in the margin.
+    expect(
+      shippingFeeMinor({
+        weightGrams: 500,
+        subtotalMinor: 100,
+        isFirstOrder: false,
+      })
+    ).toBe(SHIPPING_BANDS[0]!.feeMinor)
+  })
+
+  test('absent means no offer', () => {
+    // Every caller that has not been taught about the offer must charge, not
+    // give it away by omission.
+    expect(shippingFeeMinor({ weightGrams: 500, subtotalMinor: 100 })).toBe(
+      SHIPPING_BANDS[0]!.feeMinor
+    )
+  })
+})
+
 describe('amountToFreeShippingMinor', () => {
   test('counts down to the threshold', () => {
     expect(amountToFreeShippingMinor(FREE_SHIPPING_OVER_MINOR - 31_000)).toBe(

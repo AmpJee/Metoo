@@ -230,15 +230,24 @@ export async function checkout(params: {
     // show them together and payment can be tracked as one attempt.
     const checkoutGroupId = crypto.randomUUID()
 
+    // Read before anything is written, so all of this basket's orders agree.
+    const isFirstOrder = (await tx.order.count({ where: { retailerId } })) === 0
+
     const orders = []
 
     for (const group of groups) {
       const category = dominantCategory(group.items)
       const recentOrders = await countRecentOrders(group.brandId, tx)
       // Per brand order, because that is one parcel from one place.
+      //
+      // `isFirstOrder` is read once before any order exists, so a first
+      // checkout spanning three brands has all three delivered free — it is
+      // one purchase to the shop making it, and charging two of the three
+      // would read as the offer half-working.
       const shipping = shippingFeeMinor({
         weightGrams: parcelWeightGrams(group.items),
         subtotalMinor: group.subtotalMinor,
+        isFirstOrder,
       })
 
       const commissionBps = resolveCommissionBps(category, recentOrders)

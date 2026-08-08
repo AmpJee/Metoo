@@ -16,7 +16,7 @@ import { LOGO_WORDMARK_DATA_URI } from './logo'
  */
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
-export const alt = 'Metoo — wholesale marketplace for Thai brands and shops'
+export const alt = 'Metoo — Where Local Brands Meet Local Shelves'
 
 export default function OpengraphImage() {
   return new ImageResponse(
@@ -36,7 +36,7 @@ export default function OpengraphImage() {
           no Next runtime and understands only basic elements. */}
       <img src={LOGO_WORDMARK_DATA_URI} width={720} alt="" />
       <div style={{ fontSize: 38, color: '#5b5b5b' }}>
-        Wholesale marketplace for Thai brands and shops
+        Where Local Brands Meet Local Shelves.
       </div>
     </div>,
     size
