@@ -284,6 +284,7 @@ export const en = {
 
   // --- reviewing a product you bought --------------------------------------
   'review.edit': 'Edit',
+  'review.write': 'Write a review',
   'review.submit': 'Submit review',
   'review.update': 'Update review',
   'review.placeholder': 'How was it? (optional)',
@@ -570,6 +571,7 @@ export const th: Record<keyof Dict, string> = {
 
   // --- reviewing a product you bought --------------------------------------
   'review.edit': 'แก้ไข',
+  'review.write': 'เขียนรีวิว',
   'review.submit': 'ส่งรีวิว',
   'review.update': 'แก้ไขรีวิว',
   'review.placeholder': 'สินค้าเป็นอย่างไรบ้าง? (ไม่บังคับ)',
