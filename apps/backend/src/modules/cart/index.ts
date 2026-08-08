@@ -6,6 +6,11 @@ const cartResponse = t.Object({
   /** Number of orders this cart will become at checkout — one per brand. */
   brandCount: t.Integer(),
   itemCount: t.Integer(),
+  /** Goods only. */
+  subtotalMinor: t.Integer(),
+  /** Delivery across every brand parcel in the basket. */
+  shippingMinor: t.Integer(),
+  /** What the retailer will actually transfer: subtotal + shipping. */
   totalMinor: t.Integer(),
   groups: t.Array(
     t.Object({
@@ -36,6 +41,10 @@ const cartResponse = t.Object({
         })
       ),
       subtotalMinor: t.Integer(),
+      /** Delivery for this brand's parcel. Zero once the order is big enough. */
+      shippingMinor: t.Integer(),
+      /** How much more this brand needs for free delivery. Zero once free. */
+      toFreeShippingMinor: t.Integer(),
     })
   ),
 })

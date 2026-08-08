@@ -133,14 +133,16 @@ export default async function CheckoutPage() {
               <dt className="text-muted-foreground">
                 {t('checkout.merchandiseSubtotal')}
               </dt>
-              <dd>{formatBaht(cart.totalMinor)}</dd>
+              <dd>{formatBaht(cart.subtotalMinor)}</dd>
             </div>
             <div className="flex justify-between">
               <dt className="text-muted-foreground">
                 {t('checkout.shippingSubtotal')}
               </dt>
-              <dd className="text-muted-foreground">
-                {t('checkout.shippingLater')}
+              <dd>
+                {cart.shippingMinor === 0
+                  ? t('cart.shippingFree')
+                  : formatBaht(cart.shippingMinor)}
               </dd>
             </div>
           </dl>

@@ -33,6 +33,7 @@ import {
   splitAmount,
 } from '../../domain/commission.ts'
 import { generateOrderNumber } from '../../domain/order-number.ts'
+import { parcelWeightGrams, shippingFeeMinor } from '../../domain/shipping.ts'
 import { unitPriceMinor } from '../../domain/volume-pricing.ts'
 import { COUNTS_TOWARD_VOLUME } from '../../domain/order-state.ts'
 import { missingShopFields } from '../../domain/shop-profile.ts'
@@ -45,6 +46,8 @@ interface CheckoutLine {
   pricePerPackMinor: number
   /** Null when the product is made to order — there is nothing to take. */
   stockPacks: number | null
+  /** Null when the seller has not recorded it; shipping falls back. */
+  packWeightGrams: number | null
   packs: number
   category: Prisma.ProductGetPayload<object>['category']
 }
@@ -73,6 +76,7 @@ async function loadAndValidateCart(
           category: true,
           isActive: true,
           stockPacks: true,
+          packWeightGrams: true,
           priceTiers: {
             select: { minPacks: true, pricePerPackMinor: true },
             orderBy: { minPacks: 'asc' },
@@ -122,6 +126,7 @@ async function loadAndValidateCart(
         product.priceTiers,
         packs
       ),
+      packWeightGrams: product.packWeightGrams,
       packs,
       category: product.category,
       // Null means "made to order" — nothing to take.
@@ -230,6 +235,12 @@ export async function checkout(params: {
     for (const group of groups) {
       const category = dominantCategory(group.items)
       const recentOrders = await countRecentOrders(group.brandId, tx)
+      // Per brand order, because that is one parcel from one place.
+      const shipping = shippingFeeMinor({
+        weightGrams: parcelWeightGrams(group.items),
+        subtotalMinor: group.subtotalMinor,
+      })
+
       const commissionBps = resolveCommissionBps(category, recentOrders)
       const { commissionMinor, payoutMinor } = splitAmount(
         group.subtotalMinor,
@@ -244,10 +255,12 @@ export async function checkout(params: {
           brandId: group.brandId,
           status: 'PENDING',
           subtotalMinor: group.subtotalMinor,
-          // Shipping is not charged to the retailer at MVP; what logistics
-          // costs the platform is recorded separately in deliveryCostMinor.
-          shippingMinor: 0,
-          totalMinor: group.subtotalMinor,
+          // Resolved here and snapshotted, like the commission rate: payment
+          // is one manual bank transfer against the total on screen, so the
+          // number cannot move afterwards. What the courier actually charges
+          // the platform is recorded separately in deliveryCostMinor.
+          shippingMinor: shipping,
+          totalMinor: group.subtotalMinor + shipping,
           paymentMethod,
           commissionBps,
           commissionMinor,
