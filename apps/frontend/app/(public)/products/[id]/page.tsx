@@ -25,7 +25,8 @@ export async function generateMetadata({
   const { id } = await params
   try {
     const product = await api.get<CatalogProductDetail>(
-      `/catalog/products/${id}`
+      `/catalog/products/${id}`,
+      { optionalAuth: true }
     )
     return { title: product.name }
   } catch {
@@ -44,7 +45,9 @@ export default async function ProductPage({
 
   let product: CatalogProductDetail
   try {
-    product = await api.get<CatalogProductDetail>(`/catalog/products/${id}`)
+    product = await api.get<CatalogProductDetail>(`/catalog/products/${id}`, {
+      optionalAuth: true,
+    })
   } catch (error) {
     // The API returns 404 for an inactive product or an unapproved brand,
     // identically to one that never existed — mirror that here.
@@ -65,7 +68,8 @@ export default async function ProductPage({
   let reviews: Review[] = []
   try {
     const data = await api.get<{ summary: Rating; reviews: Review[] }>(
-      `/products/${id}/reviews`
+      `/products/${id}/reviews`,
+      { optionalAuth: true }
     )
     reviews = data.reviews
   } catch {
