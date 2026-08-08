@@ -17,7 +17,9 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { brandId } = await params
   try {
-    const store = await api.get<Storefront>(`/stores/${brandId}`)
+    const store = await api.get<Storefront>(`/stores/${brandId}`, {
+      optionalAuth: true,
+    })
     return { title: store.name }
   } catch {
     return { title: (await getT())('store.fallbackTitle') }
@@ -35,7 +37,9 @@ export default async function StorefrontPage({
 
   let store: Storefront
   try {
-    store = await api.get<Storefront>(`/stores/${brandId}`)
+    store = await api.get<Storefront>(`/stores/${brandId}`, {
+      optionalAuth: true,
+    })
   } catch (error) {
     // A brand that is not ONBOARDED 404s exactly like one that does not exist.
     if (error instanceof ApiError && error.status === 404) notFound()

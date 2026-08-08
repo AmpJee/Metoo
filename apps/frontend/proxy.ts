@@ -145,7 +145,11 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     // Everything except Next internals, the auth proxy routes (they manage
-    // their own cookies), and static files.
-    '/((?!_next/static|_next/image|api/auth|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
+    // their own cookies), the healthcheck, and static files.
+    //
+    // `healthz` is excluded rather than listed as public: a liveness probe
+    // has no session to renew, and running the whole auth path on it would
+    // make the platform's view of "is this server up" depend on the API.
+    '/((?!_next/static|_next/image|api/auth|healthz|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
   ],
 }

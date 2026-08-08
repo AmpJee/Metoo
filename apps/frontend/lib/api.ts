@@ -55,6 +55,18 @@ type Options = {
   body?: unknown
   /** Skip the Authorization header — only /auth/login and /auth/register. */
   anonymous?: boolean
+  /**
+   * Send the token when there is one, and proceed without it when there is
+   * not — the client-side twin of the API's `optionalAccess` guard.
+   *
+   * For the public catalog. Without it, a signed-out visitor never reaches
+   * the network at all: the default path throws NO_SESSION on a missing
+   * cookie, so a public page would 500 before it could ask for public data.
+   * `anonymous` is not the same thing — that deliberately withholds a token
+   * a caller may well have, which would cost a signed-in retailer the
+   * personalised parts of a shared page.
+   */
+  optionalAuth?: boolean
   /** Next fetch cache options; defaults to no-store for authenticated data. */
   next?: { revalidate?: number; tags?: string[] }
   cache?: RequestCache
@@ -64,17 +76,24 @@ export async function apiFetch<T>(
   path: string,
   options: Options = {}
 ): Promise<T> {
-  const { method = 'GET', body, anonymous = false, next, cache } = options
+  const {
+    method = 'GET',
+    body,
+    anonymous = false,
+    optionalAuth = false,
+    next,
+    cache,
+  } = options
 
   const headers: Record<string, string> = {}
   if (body !== undefined) headers['content-type'] = 'application/json'
 
   if (!anonymous) {
     const { accessToken } = await readTokens()
-    if (!accessToken) {
+    if (!accessToken && !optionalAuth) {
       throw new ApiError(401, 'NO_SESSION', 'Not signed in.')
     }
-    headers.authorization = `Bearer ${accessToken}`
+    if (accessToken) headers.authorization = `Bearer ${accessToken}`
   }
 
   let response: Response

@@ -39,7 +39,9 @@ export default async function ExplorePage({
   // Brands only when something was searched for. Browsing a category is not
   // asking about shops, and the Stores page already lists them all.
   const [page, brands] = await Promise.all([
-    api.get<CatalogPage>(`/catalog/products${query ? `?${query}` : ''}`),
+    api.get<CatalogPage>(`/catalog/products${query ? `?${query}` : ''}`, {
+      optionalAuth: true,
+    }),
     q
       ? api
           .get<BrandListItem[]>(`/catalog/brands?q=${encodeURIComponent(q)}`)

@@ -14,7 +14,18 @@ export class AppError extends Error {
   constructor(
     readonly status: number,
     readonly code: string,
-    message: string
+    message: string,
+    /**
+     * Machine-readable extras for the caller, merged into the error body.
+     *
+     * For failures the frontend has to *act* on rather than print. The
+     * message is English and always will be — the API has no idea who is
+     * reading it — so anything a Thai screen needs to say in its own words,
+     * or turn into a link, has to arrive as data. WRONG_PORTAL is the case
+     * that forced this: "sign in at Seller Centre" is useless as a sentence
+     * and useful as a role the frontend can route on.
+     */
+    readonly details?: Record<string, unknown>
   ) {
     super(message)
     this.name = 'AppError'
@@ -29,7 +40,13 @@ export const errorHandler = new Elysia({ name: 'error-handler' })
     // fall through to the 500 branch below.
     if (error instanceof AppError) {
       set.status = error.status
-      return { error: { code: error.code, message: error.message } }
+      return {
+        error: {
+          code: error.code,
+          message: error.message,
+          ...error.details,
+        },
+      }
     }
 
     if (code === 'VALIDATION') {

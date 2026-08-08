@@ -23,31 +23,43 @@ const review = t.Object({
   }),
 })
 
+/**
+ * Reading reviews is public, like the catalog they sit on.
+ *
+ * The star average is already on every public product card, so gating the
+ * words behind it would show a visitor "4.8 (12)" and nothing to read — and
+ * what other shops say is exactly what a retailer weighs before signing up.
+ * Writing one is still a retailer's move; see reviewsWriteModule.
+ */
+export const reviewsPublicModule = new Elysia({
+  name: 'reviews-public',
+  prefix: '/products/:productId/reviews',
+}).get(
+  '/',
+  ({ params, query }) =>
+    service.listForProduct(params.productId, query.limit ?? 20),
+  {
+    params: t.Object({ productId: t.String({ format: 'uuid' }) }),
+    query: t.Object({
+      limit: t.Optional(t.Integer({ minimum: 1, maximum: 100 })),
+    }),
+    detail: {
+      summary: 'Reviews for a product',
+      description: 'Newest first, with the aggregate summary alongside.',
+      tags: ['Reviews'],
+    },
+    response: {
+      200: t.Object({ summary: ratingSummary, reviews: t.Array(review) }),
+    },
+  }
+)
+
+/** Everything that needs to know who is asking. */
 export const reviewsModule = new Elysia({
   name: 'reviews',
   prefix: '/products/:productId/reviews',
 })
   .use(requireAccess({ roles: ['RETAILER'], approved: true }))
-
-  .get(
-    '/',
-    ({ params, query }) =>
-      service.listForProduct(params.productId, query.limit ?? 20),
-    {
-      params: t.Object({ productId: t.String({ format: 'uuid' }) }),
-      query: t.Object({
-        limit: t.Optional(t.Integer({ minimum: 1, maximum: 100 })),
-      }),
-      detail: {
-        summary: 'Reviews for a product',
-        description: 'Newest first, with the aggregate summary alongside.',
-        tags: ['Reviews'],
-      },
-      response: {
-        200: t.Object({ summary: ratingSummary, reviews: t.Array(review) }),
-      },
-    }
-  )
 
   .get(
     '/mine',

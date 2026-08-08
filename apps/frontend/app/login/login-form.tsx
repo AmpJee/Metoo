@@ -1,6 +1,7 @@
 'use client'
 
 import { Loader2 } from 'lucide-react'
+import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useState } from 'react'
 import { Field } from '@/components/auth-shell'
@@ -8,25 +9,15 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/ui/password-input'
 import { useT } from '@/components/i18n-provider'
-import type { PortalKey } from '@/lib/portals'
+import { PORTALS, type PortalKey } from '@/lib/portals'
 import { homeForUser } from '@/lib/roles'
+import type { Role } from '@/lib/types'
 
-/**
- * What to show when a sign-in is refused.
- *
- * WRONG_PORTAL is deliberately flattened into the same wording as a bad
- * password. The API answers it only after the password checks out, so naming
- * the account type is not a leak — but it reads as "your password worked,
- * now go somewhere else", which is a confusing thing to tell someone who
- * simply used the wrong page. One message for every refusal is less to
- * interpret.
- *
- * The account is still not signed in either way; the distinction only ever
- * affected the wording.
- */
-function signInError(error: { code?: string; message?: string } | undefined) {
-  if (error?.code === 'WRONG_PORTAL') return 'Email or password is incorrect.'
-  return error?.message ?? 'Could not sign you in.'
+/** Where an account of this role actually signs in. */
+const PORTAL_FOR: Record<Role, PortalKey> = {
+  RETAILER: 'retailer',
+  BRAND: 'seller',
+  ADMIN: 'admin',
 }
 
 export function LoginForm({ portal }: { portal: PortalKey }) {
@@ -34,11 +25,15 @@ export function LoginForm({ portal }: { portal: PortalKey }) {
   const router = useRouter()
   const params = useSearchParams()
   const [error, setError] = useState<string | null>(null)
+  // Set when the credentials were right but the door was wrong. Carries a
+  // link, so the fix is one tap rather than a hunt for the other login page.
+  const [wrongPortal, setWrongPortal] = useState<PortalKey | null>(null)
   const [pending, setPending] = useState(false)
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setError(null)
+    setWrongPortal(null)
     setPending(true)
 
     const form = new FormData(event.currentTarget)
@@ -59,11 +54,22 @@ export function LoginForm({ portal }: { portal: PortalKey }) {
       const payload = await response.json()
 
       if (!response.ok) {
+        // WRONG_PORTAL used to be flattened into "email or password is
+        // incorrect" for consistency. That told the truth about nothing: a
+        // brand who signed up at Seller Centre and later used the shop's
+        // login was informed their correct password was wrong, and the only
+        // sensible thing left to do was reset a password that worked fine.
+        // It is the single most likely reason a new account "cannot log in".
+        const role = payload?.error?.role as Role | undefined
+        if (payload?.error?.code === 'WRONG_PORTAL' && role) {
+          setWrongPortal(PORTAL_FOR[role])
+          setError(t(`auth.wrongPortal.${role}`))
+          return
+        }
         setError(
-          payload?.error?.code === 'WRONG_PORTAL' ||
-            payload?.error?.code === 'INVALID_CREDENTIALS'
+          payload?.error?.code === 'INVALID_CREDENTIALS'
             ? t('auth.badCredentials')
-            : (signInError(payload?.error) ?? t('auth.badCredentials'))
+            : (payload?.error?.message ?? t('auth.badCredentials'))
         )
         return
       }
@@ -101,12 +107,20 @@ export function LoginForm({ portal }: { portal: PortalKey }) {
       </Field>
 
       {error ? (
-        <p
+        <div
           role="alert"
-          className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
+          className="flex flex-col gap-2 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
         >
-          {error}
-        </p>
+          <p>{error}</p>
+          {wrongPortal ? (
+            <Link
+              href={PORTALS[wrongPortal].loginPath}
+              className="font-medium underline underline-offset-2"
+            >
+              {t('auth.wrongPortal.go')}
+            </Link>
+          ) : null}
+        </div>
       ) : null}
 
       <Button type="submit" size="lg" disabled={pending}>

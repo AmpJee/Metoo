@@ -205,10 +205,15 @@ export async function login(
   // did not know — and saves them resetting a password that was never wrong.
   if (expectedRole && user.role !== expectedRole) {
     const portal = PORTAL_FOR[user.role]
+    // The role travels with the error so the frontend can name the right
+    // door in its own language and link to it. Not a leak: this is only
+    // reached after the password has already been verified, so the caller
+    // owns the account and learns nothing about it they did not know.
     throw new AppError(
       403,
       'WRONG_PORTAL',
-      `That is ${portal.account} account. Sign in at ${portal.site} instead.`
+      `That is ${portal.account} account. Sign in at ${portal.site} instead.`,
+      { role: user.role }
     )
   }
 
