@@ -81,7 +81,7 @@ export default async function OrdersPage({
             icon={Package}
             title={t('orders.emptyTitle')}
             description={t('orders.emptyBody')}
-            action={{ label: t('orders.startShopping'), href: '/explore' }}
+            action={{ label: t('orders.startShopping'), href: '/' }}
           />
         ) : (
           visible.map((order) => <OrderCard key={order.id} order={order} />)

@@ -80,7 +80,7 @@ export default async function SavedPage({
                 ? 'saved.emptyFavouritesBody'
                 : 'saved.emptyLaterBody'
             )}
-            action={{ label: t('cart.startShopping'), href: '/explore' }}
+            action={{ label: t('cart.startShopping'), href: '/' }}
           />
         ) : (
           <div className="grid grid-cols-2 gap-x-[16px] gap-y-[32px] md:grid-cols-4 md:gap-x-[26px]">

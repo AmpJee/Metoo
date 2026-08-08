@@ -12,6 +12,14 @@ export const en = {
   'explore.title': 'Explore',
   'explore.all': 'All',
   'explore.results': 'Results for “{q}”',
+  // --- hero ----------------------------------------------------------------
+  'hero.find': 'Find your',
+  'hero.bestSeller': 'next best seller',
+  'hero.subtitle':
+    'Unlock wholesale pricing from local brands, and stock your shelves in minutes.',
+  'hero.signUpToBuy': 'Sign up to buy',
+  'hero.signUpToSell': 'Sign up to sell',
+  'hero.trusted': 'Trusted by {n} local brands',
   'explore.brandResults': 'Brands',
   'explore.productResults': 'Products',
   'explore.noPhoto': 'No photo',
@@ -312,6 +320,16 @@ export const th: Record<keyof Dict, string> = {
   'explore.title': 'สำรวจสินค้า',
   'explore.all': 'ทั้งหมด',
   'explore.results': 'ผลการค้นหา “{q}”',
+  // --- hero ----------------------------------------------------------------
+  // "Find your ..." with the category typed in after it. Thai puts the object
+  // last too, so the animation lands in the same place.
+  'hero.find': 'ค้นหา',
+  'hero.bestSeller': 'สินค้าขายดีตัวต่อไป',
+  'hero.subtitle':
+    'เข้าถึงราคาส่งจากแบรนด์ไทย แล้วเติมสินค้าเข้าร้านได้ในไม่กี่นาที',
+  'hero.signUpToBuy': 'สมัครเพื่อสั่งซื้อ',
+  'hero.signUpToSell': 'สมัครเพื่อขายสินค้า',
+  'hero.trusted': 'มี {n} แบรนด์ไทยขายอยู่บน metoo',
   'explore.brandResults': 'แบรนด์',
   'explore.productResults': 'สินค้า',
   'explore.noPhoto': 'ไม่มีรูปภาพ',

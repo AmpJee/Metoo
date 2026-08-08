@@ -1,11 +1,4 @@
-import {
-  Heart,
-  Package,
-  Search,
-  Settings,
-  ShoppingCart,
-  Store,
-} from 'lucide-react'
+import { Heart, History, Home, Search, ShoppingCart, Store } from 'lucide-react'
 import Link from 'next/link'
 import { LanguageToggle } from '@/components/language-toggle'
 import { LogoutButton } from '@/components/logout-button'
@@ -37,13 +30,13 @@ export async function SiteHeader({
     <header className="sticky top-0 z-40 border-b border-border bg-background">
       <div className="container-page flex h-[44px] items-center gap-[14px] md:h-[86px] md:gap-x-[36px]">
         <Link
-          href="/explore"
+          href="/"
           className="shrink-0 text-[20px] font-bold text-primary md:text-[28px]"
         >
           metoo
         </Link>
 
-        <form action="/explore" className="relative hidden flex-1 md:block">
+        <form action="/" className="relative hidden flex-1 md:block">
           <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
           <input
             name="q"
@@ -52,12 +45,17 @@ export async function SiteHeader({
           />
         </form>
 
+        {/* The designer's nav. Home leads because the catalog is now the
+            front page; Account moved into the corner beside Log out, where
+            the shop name already lives. Chat joins this row in its own
+            change, once there is a page behind it. */}
         <nav className="flex flex-1 items-center justify-end gap-[18px] md:flex-none md:gap-[26px]">
+          <IconLink href="/" icon={Home} label={t('nav.home')} />
           <IconLink href="/stores" icon={Store} label={t('nav.stores')} />
           {me ? (
             <>
               <IconLink href="/saved" icon={Heart} label={t('nav.saved')} />
-              <IconLink href="/orders" icon={Package} label={t('nav.orders')} />
+              <IconLink href="/orders" icon={History} label={t('nav.orders')} />
             </>
           ) : null}
           <IconLink
@@ -66,13 +64,6 @@ export async function SiteHeader({
             label={t('nav.cart')}
             badge={cartCount}
           />
-          {me ? (
-            <IconLink
-              href="/settings"
-              icon={Settings}
-              label={t('nav.account')}
-            />
-          ) : null}
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
@@ -104,7 +95,7 @@ export async function SiteHeader({
       </div>
 
       {/* Search is in the nav row on desktop; on mobile it needs its own. */}
-      <form action="/explore" className="container-page pb-2 md:hidden">
+      <form action="/" className="container-page pb-2 md:hidden">
         <div className="relative">
           <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
           <input

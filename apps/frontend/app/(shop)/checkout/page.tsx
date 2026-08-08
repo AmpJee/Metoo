@@ -33,7 +33,7 @@ export default async function CheckoutPage() {
             icon={ShoppingCart}
             title={t('cart.emptyTitle')}
             description={t('checkout.emptyBody')}
-            action={{ label: t('cart.startShopping'), href: '/explore' }}
+            action={{ label: t('cart.startShopping'), href: '/' }}
           />
         </div>
       </div>

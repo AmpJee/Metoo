@@ -13,7 +13,7 @@ export function homeForRole(role: Role): string {
     case 'BRAND':
       return '/seller'
     case 'RETAILER':
-      return '/explore'
+      return '/'
   }
 }
 
