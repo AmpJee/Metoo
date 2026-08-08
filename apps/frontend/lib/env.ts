@@ -34,6 +34,23 @@ export const env = {
   PROMPTPAY_QR_URL: process.env.PROMPTPAY_QR_URL ?? '',
 
   /**
+   * This site's own public origin, for link previews.
+   *
+   * Open Graph tags have to be absolute URLs — a chat app fetching the page
+   * has no base to resolve against — so Next needs to be told where it is
+   * served from. Without it the share card points at localhost, which is
+   * worse than having no card at all.
+   *
+   * Railway injects RAILWAY_PUBLIC_DOMAIN, so production needs no manual
+   * setting; SITE_URL overrides it for a custom domain.
+   */
+  SITE_URL:
+    process.env.SITE_URL ??
+    (process.env.RAILWAY_PUBLIC_DOMAIN
+      ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
+      : 'http://localhost:5173'),
+
+  /**
    * Cookies are Secure in production. Left off locally because localhost is
    * served over plain HTTP and a Secure cookie would simply never be stored.
    */
