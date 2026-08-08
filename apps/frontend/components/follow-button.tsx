@@ -6,7 +6,7 @@ import { useState, useTransition } from 'react'
 import { toggleFollow } from '@/app/actions/follow'
 import { useT } from '@/components/i18n-provider'
 import { Button } from '@/components/ui/button'
-import { loginHref } from '@/lib/sign-in-required'
+import { loginHref } from '@/lib/portals'
 
 export function FollowButton({
   brandId,

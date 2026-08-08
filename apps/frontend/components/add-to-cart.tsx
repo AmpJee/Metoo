@@ -14,7 +14,7 @@ import { addToCart } from '@/app/actions/cart'
 import { useT } from '@/components/i18n-provider'
 import { Button } from '@/components/ui/button'
 import { formatBaht } from '@/lib/format'
-import { loginHref } from '@/lib/sign-in-required'
+import { loginHref } from '@/lib/portals'
 import { cn } from '@/lib/utils'
 
 /**

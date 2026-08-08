@@ -1,3 +1,4 @@
+import 'server-only'
 import { ApiError } from '@/lib/api'
 
 /**
@@ -15,14 +16,15 @@ import { ApiError } from '@/lib/api'
  * `isNotOnboarded` counts too. An applicant still in the pipeline is signed
  * in and still cannot buy; sending them to /login lets the shop layout route
  * them on to /pending, which is the screen that explains why.
+ *
+ * Server-only, and marked so: it reads ApiError from `lib/api`. The client
+ * half of this — `loginHref` — lives in `lib/portals.ts`, which imports
+ * nothing but a type. Keeping them apart is what stops a client component
+ * pulling `server-only` into the browser bundle, which fails `next build`
+ * and nothing else: typecheck and lint both pass on it.
  */
 export function isSignInRequired(error: unknown): boolean {
   return (
     error instanceof ApiError && (error.isUnauthorized || error.isNotOnboarded)
   )
-}
-
-/** What a client component does about it: sign in, then come back here. */
-export function loginHref(pathname: string): string {
-  return `/login?next=${encodeURIComponent(pathname)}`
 }
