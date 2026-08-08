@@ -19,6 +19,12 @@ import type { Review } from '@/lib/types'
  * An existing review collapses to a summary with an Edit affordance — the API
  * treats a resubmission as a change of mind, so there is nothing to stop them,
  * but the default state should be "done", not an open form inviting a rewrite.
+ *
+ * An unreviewed product starts collapsed too, showing five empty stars. The
+ * form used to open itself, which put a comment box and a Submit button in
+ * front of every buyer who had merely opened their order — asking for a review
+ * rather than offering one. Clicking a star is the invitation, and it carries
+ * the score the buyer just picked straight into the open form.
  */
 export function OrderItemReview({
   productId,
@@ -31,7 +37,7 @@ export function OrderItemReview({
 }) {
   const router = useRouter()
   const t = useT()
-  const [open, setOpen] = useState(existing === null)
+  const [open, setOpen] = useState(false)
   const [rating, setRating] = useState(existing?.rating ?? 0)
   const [comment, setComment] = useState(existing?.comment ?? '')
   const [error, setError] = useState<string | null>(null)
@@ -60,7 +66,21 @@ export function OrderItemReview({
         <div className="flex flex-col gap-1">
           <span className="text-sm font-medium">{productName}</span>
           <span className="flex items-center gap-2">
-            <StarDisplay rating={existing?.rating ?? rating} />
+            {existing ? (
+              <StarDisplay rating={existing.rating} />
+            ) : (
+              // Live stars, not a display: the click that picks a score is
+              // also what opens the form, so rating a product is one gesture
+              // rather than "press Review, then rate".
+              <StarRating
+                value={rating}
+                onChange={(picked) => {
+                  setRating(picked)
+                  setOpen(true)
+                }}
+                name={`rating-${productId}`}
+              />
+            )}
             {existing?.comment ? (
               <span className="text-xs text-muted-foreground">
                 “{existing.comment}”
@@ -69,7 +89,8 @@ export function OrderItemReview({
           </span>
         </div>
         <Button size="sm" variant="ghost" onClick={() => setOpen(true)}>
-          <Pencil className="mr-1 size-3" /> {t('review.edit')}
+          <Pencil className="mr-1 size-3" />
+          {t(existing ? 'review.edit' : 'review.write')}
         </Button>
       </div>
     )
@@ -101,23 +122,22 @@ export function OrderItemReview({
           {pending ? <Loader2 className="mr-1 size-3 animate-spin" /> : null}
           {t(existing ? 'review.update' : 'review.submit')}
         </Button>
-        {existing ? (
-          <Button
-            size="sm"
-            variant="ghost"
-            disabled={pending}
-            onClick={() => {
-              // Revert to what is stored, not to empty — cancelling an edit
-              // must not look like the review was cleared.
-              setRating(existing.rating)
-              setComment(existing.comment ?? '')
-              setError(null)
-              setOpen(false)
-            }}
-          >
-            {t('common.cancel')}
-          </Button>
-        ) : null}
+        <Button
+          size="sm"
+          variant="ghost"
+          disabled={pending}
+          onClick={() => {
+            // Revert to what is stored, not to empty — cancelling an edit must
+            // not look like the review was cleared. With nothing stored, back
+            // to empty stars is exactly right.
+            setRating(existing?.rating ?? 0)
+            setComment(existing?.comment ?? '')
+            setError(null)
+            setOpen(false)
+          }}
+        >
+          {t('common.cancel')}
+        </Button>
       </div>
 
       {error ? (

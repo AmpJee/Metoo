@@ -120,6 +120,27 @@ export function documentKey(params: {
   return `brands/${params.brandId}/documents/${params.documentType}/${unique}.${params.extension}`
 }
 
+/**
+ * A retailer's bank transfer slip, in the private bucket.
+ *
+ * Retailer-scoped like every other key, and the order id is in the path so an
+ * admin looking at storage can tell which payment a file is evidence for
+ * without a database round trip.
+ *
+ * `checkDocument` rather than `checkPhoto` governs what may be uploaded here:
+ * banking apps hand out PDF receipts as readily as screenshots, and the slip
+ * is only ever downloaded by an admin, never rendered into a page.
+ */
+export function paymentSlipKey(params: {
+  retailerId: string
+  orderId: string
+  extension: string
+  unique?: string
+}): string {
+  const unique = params.unique ?? crypto.randomUUID()
+  return `retailers/${params.retailerId}/slips/${params.orderId}/${unique}.${params.extension}`
+}
+
 /** Whose folder an avatar lives in. Brands and retailers both have one. */
 export type AvatarOwner = 'brands' | 'retailers'
 

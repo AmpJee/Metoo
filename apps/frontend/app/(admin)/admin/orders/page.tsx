@@ -1,5 +1,5 @@
 import { ORDER_STATUSES, type OrderStatus } from '@metoo/shared'
-import { ShoppingBag } from 'lucide-react'
+import { Receipt, ShoppingBag } from 'lucide-react'
 import type { Metadata } from 'next'
 import { adminTransitionOrder } from '@/app/actions/admin'
 import { FilterTabs } from '@/components/console/filter-tabs'
@@ -116,8 +116,27 @@ export default async function AdminOrdersPage({
                       </TD>
                       <TD>
                         <Pill tone={statusPillTone(order.status)}>
-                          {statusLabel(order.status)}
+                          {statusLabel(order.status, t)}
                         </Pill>
+                        {/* The one thing that decides whether a PENDING order
+                            is waiting on us or on the buyer. Shown beside the
+                            status so it is answered before the Payment
+                            Received button below is pressed. */}
+                        {order.paymentSlipAt ? (
+                          <a
+                            href={`/admin/orders/${order.id}/slip`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="mt-1 flex items-center gap-1 text-[13px] font-medium text-primary hover:underline"
+                          >
+                            <Receipt className="size-3.5" />
+                            {t('adminOrders.viewSlip')}
+                          </a>
+                        ) : order.status === 'PENDING' ? (
+                          <span className="mt-1 block text-[13px] text-black/50">
+                            {t('adminOrders.noSlip')}
+                          </span>
+                        ) : null}
                       </TD>
                       <TD numeric>{formatBaht(order.subtotalMinor)}</TD>
                       <TD numeric>

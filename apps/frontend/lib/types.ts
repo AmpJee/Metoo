@@ -169,6 +169,9 @@ export interface Order {
     postalCode?: string
     phone?: string
   } | null
+  /** When the buyer sent their transfer slip. The file is admin-only. */
+  paymentSlipAt: string | null
+  paymentConfirmedAt: string | null
   confirmedAt: string | null
   pickedUpAt: string | null
   deliveredAt: string | null
@@ -581,6 +584,9 @@ export interface AdminOrder {
   /** What logistics cost the platform, entered by admin after the fact. */
   deliveryCostMinor: number
   paymentMethod: 'PROMPTPAY' | 'CASH' | 'CARD'
+  /** Set once the buyer sends a slip; fetch the file itself separately. */
+  paymentSlipAt: string | null
+  paymentConfirmedAt: string | null
   confirmedAt: string | null
   deliveredAt: string | null
   settledAt: string | null

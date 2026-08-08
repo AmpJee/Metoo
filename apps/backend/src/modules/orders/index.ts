@@ -1,5 +1,6 @@
 import { Elysia, t } from 'elysia'
 import { ORDER_STATUSES } from '@metoo/shared'
+import { MAX_DOCUMENT_BYTES } from '../../domain/upload.ts'
 import { retailerIdForUser } from '../../lib/profile.ts'
 import { optionalEnum } from '../../lib/schema.ts'
 import { requireAccess } from '../../middleware/auth.ts'
@@ -15,6 +16,9 @@ const order = t.Object({
   totalMinor: t.Integer(),
   /** Snapshot of the delivery address at the time of the order. */
   shippingAddress: t.Unknown(),
+  /** When the buyer sent their transfer slip. The key itself is admin-only. */
+  paymentSlipAt: t.Union([t.Date(), t.Null()]),
+  paymentConfirmedAt: t.Union([t.Date(), t.Null()]),
   confirmedAt: t.Union([t.Date(), t.Null()]),
   pickedUpAt: t.Union([t.Date(), t.Null()]),
   deliveredAt: t.Union([t.Date(), t.Null()]),
@@ -99,6 +103,67 @@ export const ordersModule = new Elysia({ name: 'orders', prefix: '/orders' })
         description:
           'Another retailer’s order id returns 404 rather than 403, so the ' +
           'endpoint cannot confirm that an id exists.',
+        tags: ['Orders'],
+      },
+      response: { 200: order },
+    }
+  )
+
+  .post(
+    '/:id/payment-slip/upload-url',
+    async ({ auth, params, body }) =>
+      service.requestSlipUpload({
+        retailerId: await retailerIdForUser(auth.userId),
+        orderId: params.id,
+        contentType: body.contentType,
+        sizeBytes: body.sizeBytes,
+      }),
+    {
+      params: t.Object({ id: t.String({ format: 'uuid' }) }),
+      body: t.Object({
+        contentType: t.String({ maxLength: 100 }),
+        sizeBytes: t.Integer({ minimum: 1, maximum: MAX_DOCUMENT_BYTES }),
+      }),
+      detail: {
+        summary: 'Ask for a URL to upload a transfer slip to',
+        description:
+          'Payment is a manual bank transfer, so the slip is the only ' +
+          'evidence an admin has that money moved. The server names the key ' +
+          'from the calling retailer and the order — a client cannot choose ' +
+          'where its file lands. PUT the file to uploadUrl, then confirm ' +
+          'with the returned storageKey. JPEG, PNG, WebP or PDF up to 10 MB. ' +
+          'Valid only while the order is PENDING.',
+        tags: ['Orders'],
+      },
+      response: {
+        200: t.Object({
+          uploadUrl: t.String(),
+          token: t.String(),
+          storageKey: t.String(),
+        }),
+      },
+    }
+  )
+
+  .post(
+    '/:id/payment-slip',
+    async ({ auth, params, body }) =>
+      service.confirmSlipUpload({
+        retailerId: await retailerIdForUser(auth.userId),
+        orderId: params.id,
+        storageKey: body.storageKey,
+      }),
+    {
+      params: t.Object({ id: t.String({ format: 'uuid' }) }),
+      body: t.Object({ storageKey: t.String({ maxLength: 500 }) }),
+      detail: {
+        summary: 'Record the slip once it is uploaded',
+        description:
+          'Recorded only after the object is confirmed to exist, so an order ' +
+          'never claims a slip that failed to upload. Re-uploading replaces ' +
+          'the previous one: a buyer whose photo came out unreadable is ' +
+          'correcting the evidence, not adding to it. This does NOT move the ' +
+          'order — an admin still has to check the slip and confirm payment.',
         tags: ['Orders'],
       },
       response: { 200: order },

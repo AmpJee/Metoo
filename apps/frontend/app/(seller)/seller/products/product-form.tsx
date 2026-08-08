@@ -37,6 +37,16 @@ export function ProductForm({ product }: { product?: BrandProduct }) {
     pricePerPackMinor: product?.pricePerPackMinor ?? 0,
     priceTiers: product?.priceTiers ?? [],
   })
+  // Held here rather than left to the uncontrolled input, because the tier
+  // editor below needs it live: its first band IS the minimum order, and it
+  // used to read a value fixed at mount, so a seller had to save and reopen
+  // the form before the ladder caught up with the number they had just typed.
+  const [minPacksText, setMinPacksText] = useState(
+    String(product?.minPacks ?? 1)
+  )
+  // An empty or half-typed field is not a minimum of zero; one pack is the
+  // smallest order that means anything, and the input's own `min` agrees.
+  const minPacks = Math.max(1, Math.floor(Number(minPacksText)) || 1)
   const [pending, startTransition] = useTransition()
 
   const editing = Boolean(product)
@@ -72,7 +82,7 @@ export function ProductForm({ product }: { product?: BrandProduct }) {
         ? tiers.pricePerPackMinor
         : Math.round(baht * 100),
       priceTiers: tiers.priceTiers,
-      minPacks: Number(form.get('minPacks')),
+      minPacks,
       unitsPerPack: Number(form.get('unitsPerPack')),
       category: String(form.get('category')),
       // Omitted, not zero — "made to order" and "none left" are different.
@@ -164,7 +174,8 @@ export function ProductForm({ product }: { product?: BrandProduct }) {
             type="number"
             min="1"
             required
-            defaultValue={product?.minPacks ?? 1}
+            value={minPacksText}
+            onChange={(event) => setMinPacksText(event.target.value)}
           />
         </CField>
 
@@ -183,7 +194,7 @@ export function ProductForm({ product }: { product?: BrandProduct }) {
 
       <TierPricing
         basePriceMinor={product?.pricePerPackMinor ?? 0}
-        minPacks={product?.minPacks ?? 1}
+        minPacks={minPacks}
         tiers={product?.priceTiers ?? []}
         onChange={setTiers}
       />
