@@ -15,6 +15,7 @@ import {
   EARNS_REVENUE,
   availableTransitions,
 } from '../../domain/order-state.ts'
+import { createDocumentReadUrl } from '../../lib/supabase.ts'
 import { AppError } from '../../middleware/error.ts'
 
 const adminOrderSelect = {
@@ -30,6 +31,11 @@ const adminOrderSelect = {
   payoutMinor: true,
   deliveryCostMinor: true,
   paymentMethod: true,
+  // Whether a slip has arrived, not the slip itself — the table shows a
+  // marker so an admin can see at a glance which PENDING orders are waiting
+  // on them rather than on the buyer. Reading the file is its own request.
+  paymentSlipAt: true,
+  paymentConfirmedAt: true,
   confirmedAt: true,
   deliveredAt: true,
   settledAt: true,
@@ -180,6 +186,38 @@ export async function getById(orderId: string) {
   }
 
   return withActions((await decorate([order]))[0]!)
+}
+
+/**
+ * A short-lived link to the buyer's transfer slip.
+ *
+ * Signed on demand rather than stored as a URL, for the same reason
+ * verification documents are: the slip shows a bank account number and a
+ * name, and access to it has to stay revocable. The link is minted per
+ * request and expires on its own.
+ */
+export async function getPaymentSlipUrl(orderId: string) {
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    select: { paymentSlipKey: true, paymentSlipAt: true },
+  })
+
+  if (!order) {
+    throw new AppError(404, 'ORDER_NOT_FOUND', 'No such order.')
+  }
+
+  if (!order.paymentSlipKey) {
+    throw new AppError(
+      404,
+      'NO_PAYMENT_SLIP',
+      'The buyer has not sent a transfer slip for this order.'
+    )
+  }
+
+  return {
+    url: await createDocumentReadUrl(order.paymentSlipKey),
+    uploadedAt: order.paymentSlipAt,
+  }
 }
 
 /**

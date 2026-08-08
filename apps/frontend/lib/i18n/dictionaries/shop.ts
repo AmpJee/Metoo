@@ -165,9 +165,18 @@ export const en = {
   'pay.amount': 'Amount',
   'pay.reference': 'Reference',
   'pay.referenceHint':
-    'Put the order number in the transfer note — it is how the seller matches your payment to this order.',
+    'Put the order number in the transfer note — it is how we match your payment to this order.',
   'pay.stillToPay':
-    'The order stays in "{status}" until the seller confirms your transfer arrived. Shipping starts after that.',
+    'The order stays in "{status}" until we confirm your transfer arrived. The brand accepts it after that.',
+  'slip.title': 'Send your transfer slip',
+  'slip.hint':
+    'A photo or PDF of the transfer. We check it, then the brand starts preparing your order.',
+  'slip.upload': 'Upload slip',
+  'slip.replace': 'Upload a different slip',
+  'slip.sent': 'Slip received {when} — we will check it shortly.',
+  'slip.badType': 'Send a JPG, PNG, WebP or PDF.',
+  'slip.tooLarge': 'That file is over 10 MB. Try a smaller photo.',
+  'slip.failed': 'The upload did not finish. Please try again.',
 
   // --- saved ---------------------------------------------------------------
   'saved.title': 'Saved',
@@ -453,9 +462,18 @@ export const th: Record<keyof Dict, string> = {
   'pay.amount': 'ยอดชำระ',
   'pay.reference': 'อ้างอิง',
   'pay.referenceHint':
-    'กรุณาระบุเลขที่คำสั่งซื้อในหมายเหตุการโอน เพื่อให้ผู้ขายจับคู่การชำระเงินกับคำสั่งซื้อนี้ได้',
+    'กรุณาระบุเลขที่คำสั่งซื้อในหมายเหตุการโอน เพื่อให้เราจับคู่การชำระเงินกับคำสั่งซื้อนี้ได้',
   'pay.stillToPay':
-    'คำสั่งซื้อจะอยู่ในสถานะ "{status}" จนกว่าผู้ขายจะยืนยันว่าได้รับเงินโอนแล้ว จากนั้นจึงเริ่มจัดส่ง',
+    'คำสั่งซื้อจะอยู่ในสถานะ "{status}" จนกว่าเราจะยืนยันว่าได้รับเงินโอนแล้ว จากนั้นแบรนด์จึงจะรับออร์เดอร์',
+  'slip.title': 'ส่งสลิปการโอนเงิน',
+  'slip.hint':
+    'อัปโหลดรูปถ่ายหรือไฟล์ PDF ของสลิป เมื่อเราตรวจสอบแล้ว แบรนด์จะเริ่มเตรียมสินค้าให้คุณ',
+  'slip.upload': 'อัปโหลดสลิป',
+  'slip.replace': 'อัปโหลดสลิปใหม่',
+  'slip.sent': 'ได้รับสลิปแล้วเมื่อ {when} — เราจะตรวจสอบให้เร็วที่สุด',
+  'slip.badType': 'รองรับไฟล์ JPG, PNG, WebP หรือ PDF เท่านั้น',
+  'slip.tooLarge': 'ไฟล์มีขนาดเกิน 10 MB กรุณาใช้รูปที่เล็กลง',
+  'slip.failed': 'อัปโหลดไม่สำเร็จ กรุณาลองใหม่อีกครั้ง',
 
   // --- saved ---------------------------------------------------------------
   'saved.title': 'ที่บันทึกไว้',

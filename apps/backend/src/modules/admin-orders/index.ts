@@ -18,6 +18,9 @@ const adminOrder = t.Object({
   /** What logistics cost the platform, entered by admin after the fact. */
   deliveryCostMinor: t.Integer(),
   paymentMethod: t.UnionEnum(PAYMENT_PREFERENCES),
+  /** When the buyer sent a transfer slip. Fetch the file itself separately. */
+  paymentSlipAt: t.Union([t.Date(), t.Null()]),
+  paymentConfirmedAt: t.Union([t.Date(), t.Null()]),
   confirmedAt: t.Union([t.Date(), t.Null()]),
   deliveredAt: t.Union([t.Date(), t.Null()]),
   settledAt: t.Union([t.Date(), t.Null()]),
@@ -87,6 +90,29 @@ export const adminOrdersModule = new Elysia({
     detail: { summary: 'One order', tags: ['Admin · Orders'] },
     response: { 200: adminOrder },
   })
+
+  .get(
+    '/:id/payment-slip',
+    ({ params }) => service.getPaymentSlipUrl(params.id),
+    {
+      params: t.Object({ id: t.String({ format: 'uuid' }) }),
+      detail: {
+        summary: "Read the buyer's transfer slip",
+        description:
+          'A signed URL, minted per request and short-lived. The slip carries ' +
+          'a bank account number and a name, so it lives in the private bucket ' +
+          'and is never handed out as a permanent link. 404 when the buyer has ' +
+          'not sent one.',
+        tags: ['Admin · Orders'],
+      },
+      response: {
+        200: t.Object({
+          url: t.String(),
+          uploadedAt: t.Union([t.Date(), t.Null()]),
+        }),
+      },
+    }
+  )
 
   .patch(
     '/:id/status',

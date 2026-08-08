@@ -6,6 +6,7 @@ import {
   checkDocument,
   checkPhoto,
   documentKey,
+  paymentSlipKey,
   keyBelongsToBrand,
   keyBelongsToOwner,
   photoKey,
@@ -108,6 +109,30 @@ describe('storage keys', () => {
       unique: 'abc',
     })
     expect(key).toBe('brands/brand-1/documents/FDA_CERT/abc.pdf')
+  })
+
+  test('a payment slip is scoped to the retailer and the order', () => {
+    // The order id is in the path so an admin looking at storage can tell
+    // which payment a file is evidence for without a database round trip.
+    const key = paymentSlipKey({
+      retailerId: 'ret-1',
+      orderId: 'ord-7',
+      extension: 'jpg',
+      unique: 'abc',
+    })
+    expect(key).toBe('retailers/ret-1/slips/ord-7/abc.jpg')
+  })
+
+  test('a slip lands under the retailer, never a brand', () => {
+    // The confirm route checks this prefix; a slip written into a brand's
+    // folder would be readable by that brand's own document routes.
+    const key = paymentSlipKey({
+      retailerId: 'ret-1',
+      orderId: 'ord-7',
+      extension: 'pdf',
+    })
+    expect(keyBelongsToOwner(key, 'retailers', 'ret-1')).toBe(true)
+    expect(keyBelongsToBrand(key, 'ret-1')).toBe(false)
   })
 
   test('two uploads of the same file do not collide', () => {
