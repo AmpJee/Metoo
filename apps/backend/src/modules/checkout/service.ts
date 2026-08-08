@@ -32,6 +32,7 @@ import {
   resolveCommissionBps,
   splitAmount,
 } from '../../domain/commission.ts'
+import { resolveShippingAddress } from '../../domain/delivery-address.ts'
 import { generateOrderNumber } from '../../domain/order-number.ts'
 import { parcelWeightGrams, shippingFeeMinor } from '../../domain/shipping.ts'
 import { unitPriceMinor } from '../../domain/volume-pricing.ts'
@@ -188,6 +189,13 @@ export async function checkout(params: {
       addressLine: true,
       province: true,
       postalCode: true,
+      deliveryRecipient: true,
+      deliveryPhone: true,
+      deliveryAddressLine: true,
+      deliverySubdistrict: true,
+      deliveryDistrict: true,
+      deliveryProvince: true,
+      deliveryPostalCode: true,
       shopType: true,
       zone: true,
       currentProducts: true,
@@ -229,6 +237,10 @@ export async function checkout(params: {
     // Shared by every order from this basket, so the confirmation screen can
     // show them together and payment can be tracked as one attempt.
     const checkoutGroupId = crypto.randomUUID()
+
+    // The delivery address if there is one, the shop address if not — same
+    // for every order in this basket, since one shop is receiving them.
+    const shippingAddress = resolveShippingAddress(retailer)
 
     // Read before anything is written, so all of this basket's orders agree.
     const isFirstOrder = (await tx.order.count({ where: { retailerId } })) === 0
@@ -274,13 +286,12 @@ export async function checkout(params: {
           commissionBps,
           commissionMinor,
           payoutMinor,
-          shippingAddress: {
-            shopName: retailer.shopName,
-            phone: retailer.phone,
-            addressLine: retailer.addressLine,
-            province: retailer.province,
-            postalCode: retailer.postalCode,
-          },
+          // Snapshotted, like the price and the commission rate: a courier
+          // reading a two-week-old label must see the address agreed then,
+          // not the one the shop edited yesterday.
+          // Spread into a plain object: Prisma's Json input type does not
+          // accept a declared interface, only a structural literal.
+          shippingAddress: { ...shippingAddress },
           items: {
             create: group.items.map((line) => ({
               productId: line.productId,
