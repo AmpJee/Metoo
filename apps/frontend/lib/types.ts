@@ -84,6 +84,8 @@ export interface CatalogProduct {
  */
 export interface CatalogProductDetail extends CatalogProduct {
   packPresets: number[]
+  /** Grams per pack. What the delivery estimate on the page is priced from. */
+  packWeightGrams: number | null
   /** Volume pricing, cheapest threshold first. Empty when there is none. */
   priceTiers: PriceTier[]
 }
@@ -131,6 +133,8 @@ export interface Cart {
   shippingMinor: number
   /** Subtotal + shipping: what the retailer transfers. */
   totalMinor: number
+  /** True until their first order — delivery is on metoo, so shipping is 0. */
+  firstOrderFreeShipping: boolean
   groups: CartGroup[]
 }
 
