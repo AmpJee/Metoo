@@ -145,11 +145,18 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     // Everything except Next internals, the auth proxy routes (they manage
-    // their own cookies), the healthcheck, and static files.
+    // their own cookies), the healthcheck, the metadata files, and static
+    // files.
     //
     // `healthz` is excluded rather than listed as public: a liveness probe
     // has no session to renew, and running the whole auth path on it would
     // make the platform's view of "is this server up" depend on the API.
-    '/((?!_next/static|_next/image|api/auth|healthz|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
+    //
+    // `opengraph-image` and friends are excluded for the same reason from the
+    // other direction: the things fetching them are chat apps and crawlers
+    // with no cookies, and a link preview that redirects to a login page
+    // silently falls back to whatever image the page contains — which is the
+    // bug this whole change exists to fix.
+    '/((?!_next/static|_next/image|api/auth|healthz|opengraph-image|twitter-image|icon|apple-icon|robots.txt|sitemap.xml|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
   ],
 }
