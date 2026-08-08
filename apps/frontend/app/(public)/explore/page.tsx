@@ -2,13 +2,14 @@ import { CATEGORIES } from '@metoo/shared'
 import { PackageSearch } from 'lucide-react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { BrandTile } from '@/components/brand-tile'
 import { CategoryNav } from '@/components/category-nav'
 import { ProductCard } from '@/components/product-card'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { api } from '@/lib/api'
 import { getT } from '@/lib/i18n/server'
-import type { CatalogPage, Category } from '@/lib/types'
+import type { BrandListItem, CatalogPage, Category } from '@/lib/types'
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getT()
@@ -34,9 +35,17 @@ export default async function ExplorePage({
   if (cursor) params.set('cursor', cursor)
 
   const query = params.toString()
-  const page = await api.get<CatalogPage>(
-    `/catalog/products${query ? `?${query}` : ''}`
-  )
+
+  // Brands only when something was searched for. Browsing a category is not
+  // asking about shops, and the Stores page already lists them all.
+  const [page, brands] = await Promise.all([
+    api.get<CatalogPage>(`/catalog/products${query ? `?${query}` : ''}`),
+    q
+      ? api
+          .get<BrandListItem[]>(`/catalog/brands?q=${encodeURIComponent(q)}`)
+          .catch(() => [] as BrandListItem[])
+      : Promise.resolve([] as BrandListItem[]),
+  ])
 
   const heading = isCategory(category)
     ? t(`category.${category}`)
@@ -61,7 +70,28 @@ export default async function ExplorePage({
         />
       </div>
 
+      {/* The shop itself, above its goods. Someone typing a brand name is
+          looking for the shop; showing only its products makes them hunt for
+          the door. */}
+      {brands.length > 0 ? (
+        <section className="mt-8">
+          <h2 className="mb-4 text-base font-semibold">
+            {t('explore.brandResults')}
+          </h2>
+          <div className="grid grid-cols-2 gap-[16px] md:grid-cols-4 md:gap-[26px]">
+            {brands.map((brand) => (
+              <BrandTile key={brand.id} brand={brand} t={t} />
+            ))}
+          </div>
+        </section>
+      ) : null}
+
       <div className="mt-8">
+        {brands.length > 0 && page.items.length > 0 ? (
+          <h2 className="mb-4 text-base font-semibold">
+            {t('explore.productResults')}
+          </h2>
+        ) : null}
         {page.items.length === 0 ? (
           <EmptyState
             icon={PackageSearch}

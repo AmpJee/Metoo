@@ -1,7 +1,8 @@
 import { Elysia, t } from 'elysia'
-import { CATEGORIES } from '@metoo/shared'
+import { CATEGORIES, TRADING_STATUS } from '@metoo/shared'
 import { brandIdForUser, retailerIdForUser } from '../../lib/profile.ts'
-import { requireAccess } from '../../middleware/auth.ts'
+import type { AuthContext } from '../../middleware/auth.ts'
+import { optionalAccess, requireAccess } from '../../middleware/auth.ts'
 import * as service from './service.ts'
 
 const rating = t.Object({
@@ -15,22 +16,43 @@ const followResult = t.Object({
 })
 
 /**
- * The public store page.
+ * The retailer profile behind an optional caller, if there is one.
  *
- * Requires a signed-in retailer because wholesale prices are on it — the same
- * reason the catalog is gated. A brand previewing its own store reaches it
- * through `/brand/storefront`, which returns the identical shape.
+ * Anyone who is not an onboarded retailer — signed out, a brand, an admin, an
+ * applicant still in the pipeline — is a viewer with no follow state, which
+ * is exactly what `undefined` means to `service.storefront`.
+ */
+async function viewerRetailerId(auth: AuthContext | null) {
+  if (auth?.role !== 'RETAILER' || auth.status !== TRADING_STATUS) {
+    return undefined
+  }
+  return retailerIdForUser(auth.userId)
+}
+
+/**
+ * The public store page — genuinely public now, like the catalog it sits
+ * beside. A visitor who followed a link to a brand sees the shop; what they
+ * cannot do is follow it.
+ *
+ * `optionalAccess` rather than no guard at all, because the same screen has
+ * to serve both: a signed-in retailer still needs `following` to be true or
+ * false rather than null, or their Follow button renders in the wrong state.
+ * One route, two audiences, instead of a second anonymous copy that would
+ * drift from this one.
+ *
+ * A brand previewing its own store reaches `/brand/storefront`, which returns
+ * the identical shape.
  */
 export const storefrontModule = new Elysia({
   name: 'storefront',
   prefix: '/stores',
 })
-  .use(requireAccess({ roles: ['RETAILER'], approved: true }))
+  .use(optionalAccess)
 
   .get(
     '/:brandId',
     async ({ auth, params }) =>
-      service.storefront(params.brandId, await retailerIdForUser(auth.userId)),
+      service.storefront(params.brandId, await viewerRetailerId(auth)),
     {
       params: t.Object({ brandId: t.String({ format: 'uuid' }) }),
       detail: {
@@ -71,6 +93,18 @@ export const storefrontModule = new Elysia({
       },
     }
   )
+
+/**
+ * Following is a retailer's action, so it keeps the full guard. Its own
+ * instance rather than a `guard` block on the one above: the read route must
+ * stay reachable without a token, and a guard applied to the group would take
+ * that away.
+ */
+export const storefrontFollowModule = new Elysia({
+  name: 'storefront-follow',
+  prefix: '/stores',
+})
+  .use(requireAccess({ roles: ['RETAILER'], approved: true }))
 
   .post(
     '/:brandId/follow',

@@ -1,13 +1,22 @@
 /**
- * Retailer-facing catalog browsing.
+ * Catalog browsing — public.
  *
- * Requires an APPROVED retailer: wholesale prices are not public, so an
- * unapproved account must not be able to read them.
+ * Deliberately reachable without a session. A shop that will not show anyone
+ * what it sells until they have signed up and been approved has no way to
+ * earn the signup, and this is where a visitor arrives from a shared link.
+ *
+ * That is a reversal of the original rule ("wholesale prices are not public")
+ * and it was taken knowingly: prices are the reason a retailer decides
+ * whether to bother registering. What stays behind the gate is everything
+ * that acts — cart, checkout, orders, favourites — so a visitor can look at
+ * the whole catalog and can do nothing with it until they have an account.
+ *
+ * These routes read nothing about the caller, which is what makes them safe
+ * to open: there is no per-retailer field here to leak.
  */
 import { Elysia, t } from 'elysia'
 import { CATEGORIES } from '@metoo/shared'
 import { optionalEnum } from '../../lib/schema.ts'
-import { requireAccess } from '../../middleware/auth.ts'
 import * as service from './service.ts'
 
 const brandStub = t.Object({
@@ -77,7 +86,6 @@ export const catalogModule = new Elysia({
   name: 'catalog',
   prefix: '/catalog',
 })
-  .use(requireAccess({ roles: ['RETAILER'], approved: true }))
 
   .get(
     '/products',
@@ -102,8 +110,10 @@ export const catalogModule = new Elysia({
       detail: {
         summary: 'Browse the catalog',
         description:
-          'Only active products from approved brands. Paginate by passing the ' +
-          'returned nextCursor; a null nextCursor means the last page.',
+          'Only active products from approved brands. `q` matches the product ' +
+          'name OR its brand’s name, so searching a shop returns its goods. ' +
+          'Paginate by passing the returned nextCursor; a null nextCursor ' +
+          'means the last page.',
         tags: ['Catalog'],
       },
       response: {
@@ -115,12 +125,15 @@ export const catalogModule = new Elysia({
     }
   )
 
-  .get('/brands', () => service.listBrands(), {
+  .get('/brands', ({ query }) => service.listBrands(query.q), {
+    query: t.Object({ q: t.Optional(t.String({ maxLength: 100 })) }),
     detail: {
       summary: 'Brands that currently have products',
       description:
-        'For the brand filter and the storefront header. Each carries its ' +
-        'store rating, aggregated across that brand’s product reviews.',
+        'For the brand filter, the storefront header, and the Brands row on ' +
+        'the search results page — pass the same `q` the product search uses. ' +
+        'Each carries its store rating, aggregated across that brand’s ' +
+        'product reviews.',
       tags: ['Catalog'],
     },
     response: {

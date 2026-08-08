@@ -1,7 +1,7 @@
 'use client'
 
 import { Loader2, Minus, Plus, ShoppingCart } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import {
   lineTotalMinor,
   quickPickQuantities,
@@ -14,6 +14,7 @@ import { addToCart } from '@/app/actions/cart'
 import { useT } from '@/components/i18n-provider'
 import { Button } from '@/components/ui/button'
 import { formatBaht } from '@/lib/format'
+import { loginHref } from '@/lib/sign-in-required'
 import { cn } from '@/lib/utils'
 
 /**
@@ -45,6 +46,7 @@ export function AddToCart({
   disabled?: boolean
 }) {
   const router = useRouter()
+  const pathname = usePathname()
   const t = useT()
   const [packs, setPacks] = useState(minPacks)
   const unit = unitPriceMinor(pricePerPackMinor, priceTiers, packs)
@@ -156,6 +158,13 @@ export function AddToCart({
           startTransition(async () => {
             const result = await addToCart(productId, packs)
             if (!result.ok) {
+              // A visitor browsing the public catalog has just reached the
+              // point where an account starts to matter. Send them to sign in
+              // and back here, rather than showing them an error for it.
+              if (result.signInRequired) {
+                router.push(loginHref(pathname))
+                return
+              }
               setError(result.error)
               return
             }

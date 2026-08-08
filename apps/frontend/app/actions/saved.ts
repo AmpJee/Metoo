@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { ApiError, api } from '@/lib/api'
+import { isSignInRequired } from '@/lib/sign-in-required'
 import type { SavedKind, ToggleResult } from '@/lib/types'
 
 /**
@@ -17,7 +18,9 @@ const PATHS: Record<SavedKind, string> = {
   SAVED_FOR_LATER: '/saved-for-later',
 }
 
-type Result = { ok: true; saved: boolean } | { ok: false; error: string }
+type Result =
+  | { ok: true; saved: boolean }
+  | { ok: false; error: string; signInRequired?: boolean }
 
 export async function toggleSaved(
   productId: string,
@@ -34,6 +37,9 @@ export async function toggleSaved(
     revalidatePath('/saved')
     return { ok: true, saved: result.saved }
   } catch (error) {
+    if (isSignInRequired(error)) {
+      return { ok: false, error: '', signInRequired: true }
+    }
     if (error instanceof ApiError) return { ok: false, error: error.message }
     return { ok: false, error: 'Could not update your list.' }
   }
