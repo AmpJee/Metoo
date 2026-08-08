@@ -159,7 +159,7 @@ export const th: Record<EnumKey, string> = {
   // --- order status, as the buyer reads it ---------------------------------
   'status.PENDING': 'รอชำระเงิน',
   'status.PAYMENT_CONFIRMED': 'ได้รับเงินแล้ว',
-  'status.CONFIRMED': 'ยืนยันแล้ว',
+  'status.CONFIRMED': 'ยืนยันคำสั่งซื้อแล้ว',
   'status.READY_FOR_PICKUP': 'รอเข้ารับพัสดุ',
   'status.PICKED_UP': 'กำลังจัดส่ง',
   'status.DELIVERED': 'จัดส่งแล้ว',
@@ -171,7 +171,7 @@ export const th: Record<EnumKey, string> = {
   // PENDING is work arriving, not money owed; SETTLED is the payday.
   'orderStatus.PENDING': 'รอชำระเงิน',
   'orderStatus.PAYMENT_CONFIRMED': 'ชำระแล้ว รอร้านรับ',
-  'orderStatus.CONFIRMED': 'ยืนยันแล้ว',
+  'orderStatus.CONFIRMED': 'ยืนยันคำสั่งซื้อแล้ว',
   'orderStatus.READY_FOR_PICKUP': 'รอเข้ารับพัสดุ',
   'orderStatus.PICKED_UP': 'กำลังจัดส่ง',
   'orderStatus.DELIVERED': 'จัดส่งแล้ว',
