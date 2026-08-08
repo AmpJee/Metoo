@@ -115,12 +115,21 @@ export interface CartGroup {
   brand: { id: string; name: string }
   items: CartItem[]
   subtotalMinor: number
+  /** Delivery for this brand's parcel. Zero once the order qualifies. */
+  shippingMinor: number
+  /** How much more this brand needs for free delivery. Zero once free. */
+  toFreeShippingMinor: number
 }
 
 export interface Cart {
   /** How many orders checkout will create — one per brand. */
   brandCount: number
   itemCount: number
+  /** Goods only. */
+  subtotalMinor: number
+  /** Delivery across every brand parcel. */
+  shippingMinor: number
+  /** Subtotal + shipping: what the retailer transfers. */
   totalMinor: number
   groups: CartGroup[]
 }
@@ -426,6 +435,8 @@ export interface BrandProduct {
   pricePerPackMinor: number
   minPacks: number
   unitsPerPack: number
+  /** Grams per pack. What the delivery fee is priced from. */
+  packWeightGrams: number | null
   category: Category
   stockPacks: number | null
   isActive: boolean

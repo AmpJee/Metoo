@@ -61,7 +61,9 @@ export const en = {
   'cart.subtotalItems': 'Subtotal ({n} items)',
   'cart.subtotalItem': 'Subtotal ({n} item)',
   'cart.shipping': 'Shipping',
-  'cart.shippingLater': 'Calculated after ordering',
+  'cart.shippingFree': 'Free',
+  'cart.toFreeShipping':
+    'Add {amount} more from {brand} for free delivery on their parcel.',
   'cart.total': 'Total',
   'cart.splitNotice':
     'Your cart spans {n} brands, so it will be placed as {n} separate orders — one per brand, each tracked and delivered on its own.',
@@ -85,7 +87,7 @@ export const en = {
   'checkout.totalPayment': 'Total Payment',
   'checkout.merchandiseSubtotal': 'Merchandise subtotal',
   'checkout.shippingSubtotal': 'Shipping subtotal',
-  'checkout.shippingLater': 'Set after confirmation',
+
   'checkout.orderTotal': 'Order Total',
   'checkout.splitNotice':
     'This becomes {n} orders, one per brand. Each is confirmed and delivered separately, so a delay at one brand never holds up another.',
@@ -96,7 +98,7 @@ export const en = {
   'checkout.card': 'Credit / Debit Card',
   'checkout.cardHint': 'Coming soon',
   'checkout.noPaymentNow':
-    'No payment is taken now. Once the order is placed you will get a PromptPay QR to transfer to, then send us the slip — we confirm it arrived and the brand accepts your order.',
+    'No payment is taken now. This total, delivery included, is what you transfer once the order is placed — scan the PromptPay QR, send us the slip, and the brand accepts your order once we confirm it.',
   'checkout.placeOrder': 'Place Order',
   'checkout.placeOrderSplit': 'Place Order ({n} orders)',
 
@@ -362,7 +364,9 @@ export const th: Record<keyof Dict, string> = {
   'cart.subtotalItems': 'ยอดรวมสินค้า ({n} รายการ)',
   'cart.subtotalItem': 'ยอดรวมสินค้า ({n} รายการ)',
   'cart.shipping': 'ค่าจัดส่ง',
-  'cart.shippingLater': 'คำนวณหลังสั่งซื้อ',
+  'cart.shippingFree': 'ฟรี',
+  'cart.toFreeShipping':
+    'สั่งจาก {brand} เพิ่มอีก {amount} ส่งฟรีสำหรับพัสดุนี้',
   'cart.total': 'ยอดรวมทั้งหมด',
   'cart.splitNotice':
     'ตะกร้าของคุณมีสินค้าจาก {n} แบรนด์ ระบบจะแยกเป็น {n} คำสั่งซื้อ แบรนด์ละ 1 รายการ ติดตามและจัดส่งแยกกัน',
@@ -386,7 +390,7 @@ export const th: Record<keyof Dict, string> = {
   'checkout.totalPayment': 'ยอดชำระทั้งหมด',
   'checkout.merchandiseSubtotal': 'ยอดรวมค่าสินค้า',
   'checkout.shippingSubtotal': 'ยอดรวมค่าจัดส่ง',
-  'checkout.shippingLater': 'กำหนดหลังยืนยันออร์เดอร์',
+
   'checkout.orderTotal': 'ยอดรวมคำสั่งซื้อ',
   'checkout.splitNotice':
     'รายการนี้จะแยกเป็น {n} คำสั่งซื้อ แบรนด์ละ 1 รายการ แต่ละรายการยืนยันและจัดส่งแยกกัน ความล่าช้าของแบรนด์หนึ่งจึงไม่กระทบอีกแบรนด์',
@@ -397,7 +401,7 @@ export const th: Record<keyof Dict, string> = {
   'checkout.card': 'บัตรเครดิต / เดบิต',
   'checkout.cardHint': 'เร็ว ๆ นี้',
   'checkout.noPaymentNow':
-    'ยังไม่มีการเรียกเก็บเงินตอนนี้ เมื่อสั่งซื้อแล้วคุณจะได้รับ PromptPay QR เพื่อโอนเงิน จากนั้นส่งสลิปให้เรา เมื่อเรายืนยันแล้ว แบรนด์จะรับออร์เดอร์ของคุณ',
+    'ยังไม่มีการเรียกเก็บเงินตอนนี้ ยอดรวมนี้รวมค่าจัดส่งแล้ว และเป็นยอดที่คุณจะโอนหลังสั่งซื้อ สแกน PromptPay QR แล้วส่งสลิปให้เรา เมื่อเรายืนยันแล้ว แบรนด์จะรับออร์เดอร์ของคุณ',
   'checkout.placeOrder': 'ยืนยันสั่งซื้อ',
   'checkout.placeOrderSplit': 'ยืนยันสั่งซื้อ ({n} คำสั่งซื้อ)',
 
