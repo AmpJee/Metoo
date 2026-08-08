@@ -1,4 +1,5 @@
 import { ImageResponse } from 'next/og'
+import { LOGO_WORDMARK_DATA_URI } from './logo'
 
 /**
  * The picture a shared link shows.
@@ -6,15 +7,12 @@ import { ImageResponse } from 'next/og'
  * Without one, a chat app scrapes the page and picks the largest image it
  * finds — which on the catalog is whichever product happens to be first.
  * Sharing metoo showed someone else's packaging, and the day the catalog
- * reorders it shows something different.
+ * reordered it would show something different.
  *
- * Drawn here rather than shipped as a PNG so the wordmark and the brand
- * colour stay in one place: this is the same #cb2957 the header uses, and
- * changing it once changes both.
+ * White ground, not the brand pink: the logo is a single-colour pink mark, so
+ * on pink it disappears entirely.
  *
- * Applies to every route that does not define its own — see the note in
- * app/(public)/products/[id] about product pages deliberately keeping this
- * one rather than showing the product.
+ * Applies to every route that does not define its own.
  */
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
@@ -30,15 +28,13 @@ export default function OpengraphImage() {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 28,
-        background: '#cb2957',
-        color: '#ffffff',
+        gap: 44,
+        background: '#ffffff',
       }}
     >
-      <div style={{ fontSize: 172, fontWeight: 700, letterSpacing: -6 }}>
-        metoo
-      </div>
-      <div style={{ fontSize: 40, opacity: 0.92 }}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={LOGO_WORDMARK_DATA_URI} width={720} alt="" />
+      <div style={{ fontSize: 38, color: '#5b5b5b' }}>
         Wholesale marketplace for Thai brands and shops
       </div>
     </div>,
