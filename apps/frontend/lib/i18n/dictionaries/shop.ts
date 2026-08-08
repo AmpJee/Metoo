@@ -94,7 +94,7 @@ export const en = {
   'checkout.card': 'Credit / Debit Card',
   'checkout.cardHint': 'Coming soon',
   'checkout.noPaymentNow':
-    'No payment is taken now. Once the order is placed you will get a PromptPay QR to transfer to; the seller confirms when it arrives.',
+    'No payment is taken now. Once the order is placed you will get a PromptPay QR to transfer to, then send us the slip — we confirm it arrived and the brand accepts your order.',
   'checkout.placeOrder': 'Place Order',
   'checkout.placeOrderSplit': 'Place Order ({n} orders)',
 
@@ -150,7 +150,7 @@ export const en = {
   'group.manyBrands':
     'Your cart spanned {n} brands, so it was placed as {n} separate orders. Each is confirmed and delivered on its own.',
   'group.noPaymentYet':
-    'No payment has been taken yet — you will arrange that with the brand once they confirm.',
+    'No payment has been taken yet. Transfer the amount, send us the slip, and the brand accepts your order once we confirm it.',
   'group.countOne': '{n} order total',
   'group.countMany': '{n} orders total',
   'group.goToOrders': 'Go to My Purchase',
@@ -165,9 +165,18 @@ export const en = {
   'pay.amount': 'Amount',
   'pay.reference': 'Reference',
   'pay.referenceHint':
-    'Put the order number in the transfer note — it is how the seller matches your payment to this order.',
+    'Put the order number in the transfer note — it is how we match your payment to this order.',
   'pay.stillToPay':
-    'The order stays in "{status}" until the seller confirms your transfer arrived. Shipping starts after that.',
+    'The order stays in "{status}" until we confirm your transfer arrived. The brand accepts it after that.',
+  'slip.title': 'Send your transfer slip',
+  'slip.hint':
+    'A photo or PDF of the transfer. We check it, then the brand starts preparing your order.',
+  'slip.upload': 'Upload slip',
+  'slip.replace': 'Upload a different slip',
+  'slip.sent': 'Slip received {when} — we will check it shortly.',
+  'slip.badType': 'Send a JPG, PNG, WebP or PDF.',
+  'slip.tooLarge': 'That file is over 10 MB. Try a smaller photo.',
+  'slip.failed': 'The upload did not finish. Please try again.',
 
   // --- saved ---------------------------------------------------------------
   'saved.title': 'Saved',
@@ -284,6 +293,7 @@ export const en = {
 
   // --- reviewing a product you bought --------------------------------------
   'review.edit': 'Edit',
+  'review.write': 'Write a review',
   'review.submit': 'Submit review',
   'review.update': 'Update review',
   'review.placeholder': 'How was it? (optional)',
@@ -383,7 +393,7 @@ export const th: Record<keyof Dict, string> = {
   'checkout.card': 'บัตรเครดิต / เดบิต',
   'checkout.cardHint': 'เร็ว ๆ นี้',
   'checkout.noPaymentNow':
-    'ยังไม่มีการเรียกเก็บเงินตอนนี้ เมื่อสั่งซื้อแล้วคุณจะได้รับ PromptPay QR เพื่อโอนเงิน และผู้ขายจะยืนยันเมื่อได้รับเงิน',
+    'ยังไม่มีการเรียกเก็บเงินตอนนี้ เมื่อสั่งซื้อแล้วคุณจะได้รับ PromptPay QR เพื่อโอนเงิน จากนั้นส่งสลิปให้เรา เมื่อเรายืนยันแล้ว แบรนด์จะรับออร์เดอร์ของคุณ',
   'checkout.placeOrder': 'ยืนยันสั่งซื้อ',
   'checkout.placeOrderSplit': 'ยืนยันสั่งซื้อ ({n} คำสั่งซื้อ)',
 
@@ -438,7 +448,7 @@ export const th: Record<keyof Dict, string> = {
   'group.manyBrands':
     'ตะกร้าของคุณมีสินค้าจาก {n} แบรนด์ จึงแยกเป็น {n} คำสั่งซื้อ แต่ละรายการยืนยันและจัดส่งแยกกัน',
   'group.noPaymentYet':
-    'ยังไม่มีการเรียกเก็บเงิน คุณจะชำระเงินกับแบรนด์หลังจากที่แบรนด์ยืนยันคำสั่งซื้อ',
+    'ยังไม่มีการเรียกเก็บเงิน กรุณาโอนเงินแล้วส่งสลิปให้เรา เมื่อเรายืนยันแล้ว แบรนด์จะรับออร์เดอร์ของคุณ',
   'group.countOne': 'รวม {n} คำสั่งซื้อ',
   'group.countMany': 'รวม {n} คำสั่งซื้อ',
   'group.goToOrders': 'ไปที่คำสั่งซื้อของฉัน',
@@ -452,9 +462,18 @@ export const th: Record<keyof Dict, string> = {
   'pay.amount': 'ยอดชำระ',
   'pay.reference': 'อ้างอิง',
   'pay.referenceHint':
-    'กรุณาระบุเลขที่คำสั่งซื้อในหมายเหตุการโอน เพื่อให้ผู้ขายจับคู่การชำระเงินกับคำสั่งซื้อนี้ได้',
+    'กรุณาระบุเลขที่คำสั่งซื้อในหมายเหตุการโอน เพื่อให้เราจับคู่การชำระเงินกับคำสั่งซื้อนี้ได้',
   'pay.stillToPay':
-    'คำสั่งซื้อจะอยู่ในสถานะ "{status}" จนกว่าผู้ขายจะยืนยันว่าได้รับเงินโอนแล้ว จากนั้นจึงเริ่มจัดส่ง',
+    'คำสั่งซื้อจะอยู่ในสถานะ "{status}" จนกว่าเราจะยืนยันว่าได้รับเงินโอนแล้ว จากนั้นแบรนด์จึงจะรับออร์เดอร์',
+  'slip.title': 'ส่งสลิปการโอนเงิน',
+  'slip.hint':
+    'อัปโหลดรูปถ่ายหรือไฟล์ PDF ของสลิป เมื่อเราตรวจสอบแล้ว แบรนด์จะเริ่มเตรียมสินค้าให้คุณ',
+  'slip.upload': 'อัปโหลดสลิป',
+  'slip.replace': 'อัปโหลดสลิปใหม่',
+  'slip.sent': 'ได้รับสลิปแล้วเมื่อ {when} — เราจะตรวจสอบให้เร็วที่สุด',
+  'slip.badType': 'รองรับไฟล์ JPG, PNG, WebP หรือ PDF เท่านั้น',
+  'slip.tooLarge': 'ไฟล์มีขนาดเกิน 10 MB กรุณาใช้รูปที่เล็กลง',
+  'slip.failed': 'อัปโหลดไม่สำเร็จ กรุณาลองใหม่อีกครั้ง',
 
   // --- saved ---------------------------------------------------------------
   'saved.title': 'ที่บันทึกไว้',
@@ -570,6 +589,7 @@ export const th: Record<keyof Dict, string> = {
 
   // --- reviewing a product you bought --------------------------------------
   'review.edit': 'แก้ไข',
+  'review.write': 'เขียนรีวิว',
   'review.submit': 'ส่งรีวิว',
   'review.update': 'แก้ไขรีวิว',
   'review.placeholder': 'สินค้าเป็นอย่างไรบ้าง? (ไม่บังคับ)',

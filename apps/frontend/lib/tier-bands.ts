@@ -49,6 +49,31 @@ export function toBands(
   return closeBands(bands)
 }
 
+/**
+ * Move the ladder to a new minimum order.
+ *
+ * The first band is the minimum, so raising the minimum has to move it — the
+ * editor otherwise kept showing "1 to 9" under a product whose minimum had
+ * been set to 20, and a seller had to save and reopen the form before the
+ * ladder caught up.
+ *
+ * Bands that the new minimum has swallowed are dropped. A price break at 10
+ * on a product nobody may order fewer than 20 of is unreachable, and it is
+ * exactly what `checkPriceTiers` rejects as TIER_BELOW_MINIMUM — keeping it
+ * would block saving with an error pointing at a row the seller did not just
+ * touch.
+ */
+export function rebaseBands(bands: Band[], minPacks: number): Band[] {
+  const floor = Math.max(1, minPacks)
+  const [first, ...rest] = bands
+  if (!first) return bands
+
+  return closeBands([
+    { ...first, from: floor },
+    ...rest.filter((band) => band.from > floor),
+  ])
+}
+
 /** Each band ends where the next begins; the last one is open. */
 export function closeBands(bands: Band[]): Band[] {
   return bands.map((band, i) => ({

@@ -7,13 +7,14 @@ import {
   unitPriceMinor,
 } from '@metoo/shared'
 import { Plus, RotateCcw, Trash2 } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useT } from '@/components/i18n-provider'
 import { Input } from '@/components/ui/input'
 import { formatBaht } from '@/lib/format'
 import {
   addBand,
   fromBands,
+  rebaseBands,
   removeBand,
   setBandEnd,
   setBandStart,
@@ -73,6 +74,17 @@ export function TierPricing({
   const [bands, setBands] = useState<Band[]>(() =>
     toBands(basePriceMinor, minPacks, tiers)
   )
+
+  // The minimum order lives in a field above this one, and the first band IS
+  // that minimum — so when it changes, the ladder has to follow. Adjusted
+  // during render rather than in an effect: an effect would paint the stale
+  // ladder for a frame first, and the seller is looking straight at it.
+  const [builtFor, setBuiltFor] = useState(minPacks)
+  if (builtFor !== minPacks) {
+    setBuiltFor(minPacks)
+    setBands((current) => rebaseBands(current, minPacks))
+  }
+
   // What a retailer ordering this many would pay — the question a seller is
   // actually asking while they type.
   const [preview, setPreview] = useState(() => Math.max(minPacks, 1) * 2)
@@ -80,16 +92,20 @@ export function TierPricing({
   const { pricePerPackMinor, priceTiers } = fromBands(bands)
   const check = checkPriceTiers(priceTiers, pricePerPackMinor, minPacks)
 
-  function apply(next: Band[]) {
-    setBands(next)
-    const shaped = fromBands(next)
+  // One place decides what the form gets, so a ladder invalidated by a change
+  // to the minimum order reports itself the same way as one the seller broke
+  // by typing — `apply` used to own this, and a rebase went unreported.
+  useEffect(() => {
+    const shaped = fromBands(bands)
     const valid = checkPriceTiers(
       shaped.priceTiers,
       shaped.pricePerPackMinor,
       minPacks
     )
     onChange(valid.ok ? shaped : null)
-  }
+  }, [bands, minPacks, onChange])
+
+  const apply = (next: Band[]) => setBands(next)
 
   const setPrice = (index: number, baht: number) =>
     apply(

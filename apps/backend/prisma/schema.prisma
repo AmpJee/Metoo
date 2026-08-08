@@ -583,6 +583,16 @@ model Order {
   /// Copy of the retailer's address at order time.
   shippingAddress Json
 
+  /// The retailer's transfer slip, in the PRIVATE bucket. It is the evidence
+  /// an admin looks at before confirming payment, and it carries a bank
+  /// account number and a name, so it is never served publicly — admin reads
+  /// it through a short-lived signed URL, the same way verification documents
+  /// are handled.
+  paymentSlipKey String?
+  /// When the retailer uploaded it. Separate from the key so the buyer's own
+  /// screen can say "sent, awaiting check" without being handed the key.
+  paymentSlipAt  DateTime?
+
   /// When an admin confirmed the bank transfer landed.
   paymentConfirmedAt DateTime?
   confirmedAt        DateTime?

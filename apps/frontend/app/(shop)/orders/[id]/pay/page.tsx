@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
+import { PaymentSlipUpload } from '@/components/payment-slip-upload'
 import { Button } from '@/components/ui/button'
 import { ApiError, api } from '@/lib/api'
 import { env } from '@/lib/env'
@@ -20,8 +21,9 @@ export async function generateMetadata(): Promise<Metadata> {
  * Pay by PromptPay transfer.
  *
  * Everything here is instructions — there is no payment gateway. The buyer
- * scans, transfers, and the seller confirms the money arrived by moving the
- * order to Money Received. Nothing on this screen may imply the order is paid.
+ * scans, transfers, and sends the slip; an admin checks it and confirms the
+ * money arrived. Nothing on this screen may imply the order is paid, the
+ * upload included: sending a slip is evidence, not a payment.
  *
  * The order number is given as the transfer reference: it is the only thing
  * tying a bank line to an order when the seller reconciles by hand.
@@ -105,6 +107,8 @@ export default async function PayOrderPage({
             {t('pay.referenceHint')}
           </p>
         </div>
+
+        <PaymentSlipUpload orderId={order.id} sentAt={order.paymentSlipAt} />
 
         <div className="mt-4 flex items-start gap-2 rounded-[9px] border border-border p-4 text-sm">
           <Info className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
