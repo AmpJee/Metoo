@@ -29,6 +29,16 @@ export const en = {
   'auth.shopSignIn': 'Shop sign-in',
   'auth.sellOnMetoo': 'Sell on Metoo',
   'auth.badCredentials': 'Email or password is incorrect.',
+  // Named per role rather than one sentence with the site interpolated: Thai
+  // does not put the name in the same place, and a translator should see the
+  // whole sentence.
+  'auth.wrongPortal.BRAND':
+    'That is a seller account. Your password is fine — sign in at Seller Centre.',
+  'auth.wrongPortal.RETAILER':
+    'That is a shop account. Your password is fine — sign in on the shop.',
+  'auth.wrongPortal.ADMIN':
+    'That is a staff account. Your password is fine — sign in on the console.',
+  'auth.wrongPortal.go': 'Go to the right sign-in page',
   'auth.unreachable':
     'Cannot reach the server. Check your connection and try again.',
 
@@ -124,6 +134,13 @@ export const th: Record<keyof Dict, string> = {
   'auth.shopSignIn': 'เข้าสู่ระบบผู้ซื้อ',
   'auth.sellOnMetoo': 'ขายสินค้ากับ Metoo',
   'auth.badCredentials': 'อีเมลหรือรหัสผ่านไม่ถูกต้อง',
+  'auth.wrongPortal.BRAND':
+    'นี่เป็นบัญชีผู้ขาย รหัสผ่านของคุณถูกต้อง กรุณาเข้าสู่ระบบที่ Seller Centre',
+  'auth.wrongPortal.RETAILER':
+    'นี่เป็นบัญชีร้านค้าปลีก รหัสผ่านของคุณถูกต้อง กรุณาเข้าสู่ระบบที่หน้าร้าน',
+  'auth.wrongPortal.ADMIN':
+    'นี่เป็นบัญชีเจ้าหน้าที่ รหัสผ่านของคุณถูกต้อง กรุณาเข้าสู่ระบบที่ระบบจัดการหลังบ้าน',
+  'auth.wrongPortal.go': 'ไปที่หน้าเข้าสู่ระบบที่ถูกต้อง',
   'auth.unreachable':
     'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองใหม่',
 
