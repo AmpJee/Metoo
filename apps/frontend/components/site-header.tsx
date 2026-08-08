@@ -9,6 +9,7 @@ import {
 import Link from 'next/link'
 import { LanguageToggle } from '@/components/language-toggle'
 import { LogoutButton } from '@/components/logout-button'
+import { Button } from '@/components/ui/button'
 import { getT } from '@/lib/i18n/server'
 import type { Me } from '@/lib/types'
 
@@ -17,12 +18,17 @@ import type { Me } from '@/lib/types'
  *
  * Heights follow the design: 44px on mobile, 86px from md up — the file
  * defines exactly those two widths and nothing between.
+ *
+ * `me` is null for a visitor browsing the public catalog. The nav then drops
+ * to the two things that mean anything signed out — stores and the cart, the
+ * cart because clicking it is how someone discovers they need an account —
+ * and the account corner becomes sign in / sign up.
  */
 export async function SiteHeader({
   me,
   cartCount,
 }: {
-  me: Me
+  me: Me | null
   cartCount: number
 }) {
   const t = await getT()
@@ -48,26 +54,52 @@ export async function SiteHeader({
 
         <nav className="flex flex-1 items-center justify-end gap-[18px] md:flex-none md:gap-[26px]">
           <IconLink href="/stores" icon={Store} label={t('nav.stores')} />
-          <IconLink href="/saved" icon={Heart} label={t('nav.saved')} />
-          <IconLink href="/orders" icon={Package} label={t('nav.orders')} />
+          {me ? (
+            <>
+              <IconLink href="/saved" icon={Heart} label={t('nav.saved')} />
+              <IconLink href="/orders" icon={Package} label={t('nav.orders')} />
+            </>
+          ) : null}
           <IconLink
             href="/cart"
             icon={ShoppingCart}
             label={t('nav.cart')}
             badge={cartCount}
           />
-          <IconLink href="/settings" icon={Settings} label={t('nav.account')} />
+          {me ? (
+            <IconLink
+              href="/settings"
+              icon={Settings}
+              label={t('nav.account')}
+            />
+          ) : null}
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
           <LanguageToggle />
-          <Link
-            href="/settings"
-            className="max-w-[160px] truncate text-sm text-muted-foreground hover:text-primary"
-          >
-            {me.retailer?.shopName ?? me.email}
-          </Link>
-          <LogoutButton variant="outline" size="sm" />
+          {me ? (
+            <>
+              <Link
+                href="/settings"
+                className="max-w-[160px] truncate text-sm text-muted-foreground hover:text-primary"
+              >
+                {me.retailer?.shopName ?? me.email}
+              </Link>
+              <LogoutButton variant="outline" size="sm" />
+            </>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className="text-sm text-muted-foreground hover:text-primary"
+              >
+                {t('nav.login')}
+              </Link>
+              <Button asChild size="sm">
+                <Link href="/signup">{t('nav.signup')}</Link>
+              </Button>
+            </>
+          )}
         </div>
       </div>
 

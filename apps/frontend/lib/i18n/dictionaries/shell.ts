@@ -17,6 +17,8 @@ export const en = {
   'nav.account': 'Account',
   'nav.search': 'Search products and brands',
   'nav.logout': 'Log out',
+  'nav.login': 'Log in',
+  'nav.signup': 'Sign up',
 
   // --- language toggle -----------------------------------------------------
   'lang.label': 'Language',
@@ -70,6 +72,8 @@ export const th: Record<keyof Dict, string> = {
   'nav.account': 'บัญชี',
   'nav.search': 'ค้นหาสินค้าและแบรนด์',
   'nav.logout': 'ออกจากระบบ',
+  'nav.login': 'เข้าสู่ระบบ',
+  'nav.signup': 'สมัครสมาชิก',
 
   // --- language toggle -----------------------------------------------------
   'lang.label': 'ภาษา',

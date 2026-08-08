@@ -28,10 +28,23 @@ const REFRESH_COOKIE = 'metoo_rt'
  * ones out would bounce them to the shop login, which is the confusion the
  * split exists to remove.
  */
-const PUBLIC_PATHS = ['/', ...SIGNUP_PATHS, ...LOGIN_PATHS]
+const PUBLIC_PATHS = ['/', '/welcome', ...SIGNUP_PATHS, ...LOGIN_PATHS]
+
+/**
+ * The catalog, which anyone may read. Prefixes rather than exact paths
+ * because product and storefront ids are in the URL.
+ *
+ * This list must stay in step with `app/(public)/` — a page in that group
+ * that is missing here is unreachable for the visitor it was written for.
+ * Nothing that acts on a cart or an order belongs in either.
+ */
+const PUBLIC_PREFIXES = ['/explore', '/products/', '/stores']
 
 function isPublic(pathname: string) {
-  return PUBLIC_PATHS.includes(pathname)
+  if (PUBLIC_PATHS.includes(pathname)) return true
+  return PUBLIC_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(prefix)
+  )
 }
 
 /** An auth screen a signed-in user should not be sitting on. */

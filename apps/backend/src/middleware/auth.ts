@@ -150,3 +150,36 @@ export function requireAccess(options: AccessOptions = {}) {
 
 /** Any signed-in account, whatever its role or approval state. */
 export const requireAuth = requireAccess()
+
+/**
+ * Resolve the caller if there is one, and let them through either way.
+ *
+ * For the public catalog. A shopper browsing before they sign up must reach
+ * these routes, but a signed-in retailer on the same route should still get
+ * the parts that are about them — whether they follow this brand, for one —
+ * and a second, anonymous-only endpoint would mean two implementations of one
+ * screen, free to drift.
+ *
+ * `auth` is null rather than absent, so a handler cannot read it without
+ * having dealt with the anonymous case. A bad or expired token is treated as
+ * no token at all: the whole point is that being signed out is not an error
+ * here, and someone whose session lapsed mid-browse should see the catalog,
+ * not a 401.
+ */
+export const optionalAccess = new Elysia({ name: 'optional-access' })
+  .derive({ as: 'scoped' }, async ({ headers }) => {
+    const token = bearerToken(headers.authorization)
+    if (!token) return { auth: null }
+
+    const claims = await verifyAccessToken(token)
+    if (!claims) return { auth: null }
+
+    return {
+      auth: {
+        userId: claims.sub,
+        role: claims.role,
+        status: claims.status,
+      } satisfies AuthContext,
+    }
+  })
+  .as('scoped')

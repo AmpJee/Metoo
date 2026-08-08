@@ -40,6 +40,7 @@ import { reviewsModule } from './modules/reviews/index.ts'
 import {
   followingModule,
   storePreviewModule,
+  storefrontFollowModule,
   storefrontModule,
 } from './modules/storefront/index.ts'
 import { brandDocumentsModule, uploadsModule } from './modules/uploads/index.ts'
@@ -91,6 +92,7 @@ export const app = new Elysia()
   .use(adminSummaryModule)
   .use(reviewsModule)
   .use(storefrontModule)
+  .use(storefrontFollowModule)
   .use(followingModule)
   .use(storePreviewModule)
   .use(feedbackModule)

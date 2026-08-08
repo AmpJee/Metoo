@@ -137,12 +137,24 @@ record. Three things have since changed — follow these, not the brief:
 - **Prisma v7 requires a driver adapter** (`PrismaPg`) — there is no bundled
   query engine. `.env` is not auto-loaded by the CLI; config lives in
   `prisma.config.ts`.
-- **Every buyer-facing API route requires an ONBOARDED retailer.** Catalog,
-  storefront, cart, orders, favourites, reviews and returns are all behind
-  `requireAccess({ roles: ['RETAILER'], approved: true })`. Nothing is public,
-  so the frontend has exactly one unauthenticated page (the landing) and needs
-  a `/pending` screen — a new signup starts at `NOT_CONTACTED` and would
-  otherwise hit a blank wall.
+- **The catalog is public; everything that acts on it is not.**
+  `GET /catalog/*` and `GET /stores/:brandId` answer without a token — a
+  wholesale marketplace that shows nothing until you have signed up and been
+  approved cannot earn the signup, and a shared product link has to work for
+  whoever opens it. Wholesale prices are public as a consequence, decided
+  deliberately.
+  Cart, checkout, orders, favourites, saved-for-later, follows, reviews and
+  returns stay behind `requireAccess({ roles: ['RETAILER'], approved: true })`.
+  A retailer still needs `/pending` — a new signup starts at `NOT_CONTACTED`.
+- **`optionalAccess` is for a route two audiences share.** It resolves the
+  caller when a token is present and yields `auth: null` otherwise, so
+  `GET /stores/:brandId` can serve a visitor and still tell a signed-in
+  retailer whether they follow this brand. A bad or expired token is treated
+  as no token: being signed out is not an error on a public route. Do not
+  reach for it when a route needs a caller — that is `requireAccess`.
+- **Adding a page to `app/(public)/` is half the job.** `PUBLIC_PREFIXES` in
+  `proxy.ts` is what actually lets a visitor through; a page in that group
+  missing from the list is unreachable for the visitor it was written for.
 - **The frontend access cookie's max-age is derived from the token's `exp`**
   (`lib/token-lifetime.ts`), not hardcoded. The cookie expiring is what
   triggers renewal in `proxy.ts`; if it ever outlived the token, every request
@@ -177,12 +189,13 @@ apps/frontend/    Next.js — app/, components/, lib/, proxy.ts
 packages/shared/  types + constants shared by both apps
 ```
 
-One Next.js app serves all three surfaces, as three route groups, each with its
-own layout and role gate:
+One Next.js app serves all three surfaces, as four route groups, each with its
+own layout and role gate — `(public)` being the one with no gate at all:
 
-| Group | Role | Home |
+| Group | Role | Pages |
 | --- | --- | --- |
-| `app/(shop)/` | RETAILER, ONBOARDED | `/explore` |
+| `app/(public)/` | anyone, session optional | `/explore`, `/products`, `/stores` |
+| `app/(shop)/` | RETAILER, ONBOARDED | `/cart`, `/orders` |
 | `app/(seller)/` | BRAND, ONBOARDED | `/seller` |
 | `app/(admin)/` | ADMIN (no approval check) | `/admin` |
 

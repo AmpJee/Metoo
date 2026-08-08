@@ -1,10 +1,12 @@
 'use client'
 
 import { Check, Plus } from 'lucide-react'
+import { usePathname, useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { toggleFollow } from '@/app/actions/follow'
 import { useT } from '@/components/i18n-provider'
 import { Button } from '@/components/ui/button'
+import { loginHref } from '@/lib/sign-in-required'
 
 export function FollowButton({
   brandId,
@@ -16,6 +18,8 @@ export function FollowButton({
   initialCount: number
 }) {
   const t = useT()
+  const router = useRouter()
+  const pathname = usePathname()
   const [following, setFollowing] = useState(initialFollowing)
   const [count, setCount] = useState(initialCount)
   const [pending, startTransition] = useTransition()
@@ -35,6 +39,10 @@ export function FollowButton({
             if (!result.ok) {
               setFollowing(previous)
               setCount((n) => n + (previous ? 1 : -1))
+              // Following a brand is a retailer's action, and the storefront
+              // it sits on is public — so pressing this signed out means sign
+              // in, not failure.
+              if (result.signInRequired) router.push(loginHref(pathname))
               return
             }
             setFollowing(result.result.following)

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { ApiError, api } from '@/lib/api'
+import { isSignInRequired } from '@/lib/sign-in-required'
 import type { Cart } from '@/lib/types'
 
 /**
@@ -16,9 +17,15 @@ import type { Cart } from '@/lib/types'
  * the case-size multiple comes back as a 422 with a message worth showing.
  */
 
-type Result = { ok: true } | { ok: false; error: string }
+type Result =
+  { ok: true } | { ok: false; error: string; signInRequired?: boolean }
 
 function toResult(error: unknown): Result {
+  // A visitor browsing the public catalog has not done anything wrong; the
+  // caller turns this into a trip to the sign-in page, not a red message.
+  if (isSignInRequired(error)) {
+    return { ok: false, error: '', signInRequired: true }
+  }
   if (error instanceof ApiError) return { ok: false, error: error.message }
   return { ok: false, error: 'Something went wrong. Please try again.' }
 }
