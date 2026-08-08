@@ -61,6 +61,21 @@ export const en = {
   'cart.subtotalItems': 'Subtotal ({n} items)',
   'cart.subtotalItem': 'Subtotal ({n} item)',
   'cart.shipping': 'Shipping',
+  'delivery.title': 'Delivery address',
+  'delivery.subtitle':
+    'Where parcels are sent. Separate from your shop address — leave it blank ' +
+    'and we deliver to the shop.',
+  'delivery.usingShopAddress':
+    'No delivery address yet, so orders go to your shop address.',
+  'delivery.recipient': 'Recipient name',
+  'delivery.recipientPlaceholder': 'Who signs for the parcel',
+  'delivery.phone': 'Phone number',
+  'delivery.addressLine': 'House no., soi, moo, road',
+  'delivery.addressLinePlaceholder': 'e.g. 112, room 705, Soi Vibhavadi 2',
+  'delivery.subdistrict': 'Sub-district',
+  'delivery.district': 'District',
+  'delivery.province': 'Province',
+  'delivery.postalCode': 'Postal code',
   'cart.shippingFree': 'Free',
   'cart.firstOrderFreeShipping':
     'Welcome — delivery is on us for your first order.',
@@ -370,6 +385,20 @@ export const th: Record<keyof Dict, string> = {
   'cart.subtotalItems': 'ยอดรวมสินค้า ({n} รายการ)',
   'cart.subtotalItem': 'ยอดรวมสินค้า ({n} รายการ)',
   'cart.shipping': 'ค่าจัดส่ง',
+  'delivery.title': 'ที่อยู่ในการจัดส่ง',
+  'delivery.subtitle':
+    'ที่อยู่สำหรับส่งพัสดุ แยกจากที่อยู่ร้านค้า หากเว้นว่างไว้ เราจะจัดส่งไปที่ร้านของคุณ',
+  'delivery.usingShopAddress':
+    'ยังไม่ได้ตั้งที่อยู่จัดส่ง ระบบจะส่งพัสดุไปที่อยู่ร้านค้าของคุณ',
+  'delivery.recipient': 'ชื่อ นามสกุล ผู้รับ',
+  'delivery.recipientPlaceholder': 'ผู้ที่รับพัสดุแทนได้',
+  'delivery.phone': 'หมายเลขโทรศัพท์',
+  'delivery.addressLine': 'บ้านเลขที่, ซอย, หมู่, ถนน',
+  'delivery.addressLinePlaceholder': 'เช่น 112 ห้อง 705 ซอย วิภาวดีรังสิต 2',
+  'delivery.subdistrict': 'แขวง/ตำบล',
+  'delivery.district': 'เขต/อำเภอ',
+  'delivery.province': 'จังหวัด',
+  'delivery.postalCode': 'รหัสไปรษณีย์',
   'cart.shippingFree': 'ฟรี',
   'cart.firstOrderFreeShipping': 'ยินดีต้อนรับ — คำสั่งซื้อแรกของคุณ ส่งฟรี',
   'product.shippingEstimate': 'ค่าจัดส่งประมาณ {amount} สำหรับจำนวนนี้',

@@ -181,11 +181,18 @@ export default async function SellerOrderPage({
               </h2>
               <address className="mt-3 text-[15px] not-italic text-black/50">
                 <p className="font-bold text-foreground">
-                  {order.retailer.shopName}
+                  {/* The named recipient when there is one: the parcel is
+                      handed to a person, who is not always the shop. */}
+                  {address?.recipient ?? order.retailer.shopName}
                 </p>
                 {address?.addressLine ? <p>{address.addressLine}</p> : null}
                 <p>
-                  {[address?.province, address?.postalCode]
+                  {[
+                    address?.subdistrict,
+                    address?.district,
+                    address?.province,
+                    address?.postalCode,
+                  ]
                     .filter(Boolean)
                     .join(' ')}
                 </p>
