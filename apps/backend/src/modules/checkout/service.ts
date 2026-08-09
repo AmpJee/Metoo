@@ -187,6 +187,8 @@ export async function checkout(params: {
       shopName: true,
       phone: true,
       addressLine: true,
+      subdistrict: true,
+      district: true,
       province: true,
       postalCode: true,
       deliveryRecipient: true,
