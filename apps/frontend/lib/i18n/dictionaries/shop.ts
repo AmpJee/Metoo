@@ -13,6 +13,19 @@ export const en = {
   'explore.all': 'All',
   'explore.results': 'Results for “{q}”',
   // --- hero ----------------------------------------------------------------
+  // --- chat ----------------------------------------------------------------
+  'chat.title': 'Messages',
+  'chat.brandLine': 'Brand · usually replies within a day',
+  'chat.placeholder': 'Write a message…',
+  'chat.send': 'Send',
+  'chat.noMessages': 'No messages yet.',
+  'chat.emptyTitle': 'No conversations yet',
+  'chat.emptyBody':
+    'Open a brand’s store and press Chat with brand to ask about stock, lead time or a price.',
+  'chat.withBrand': 'Chat with brand',
+  'chat.firstMessage': 'Hello! I have a question about your products.',
+  'chat.failed': 'Could not open that conversation.',
+
   'hero.find': 'Find your',
   'hero.bestSeller': 'next best seller',
   'hero.subtitle':
@@ -344,6 +357,19 @@ export const th: Record<keyof Dict, string> = {
   // --- hero ----------------------------------------------------------------
   // "Find your ..." with the category typed in after it. Thai puts the object
   // last too, so the animation lands in the same place.
+  // --- chat ----------------------------------------------------------------
+  'chat.title': 'ข้อความ',
+  'chat.brandLine': 'แบรนด์ · มักตอบกลับภายใน 1 วัน',
+  'chat.placeholder': 'พิมพ์ข้อความ…',
+  'chat.send': 'ส่ง',
+  'chat.noMessages': 'ยังไม่มีข้อความ',
+  'chat.emptyTitle': 'ยังไม่มีการสนทนา',
+  'chat.emptyBody':
+    'เปิดหน้าร้านของแบรนด์แล้วกด “แชทกับแบรนด์” เพื่อถามเรื่องสต็อก ระยะเวลาผลิต หรือราคา',
+  'chat.withBrand': 'แชทกับแบรนด์',
+  'chat.firstMessage': 'สวัสดีครับ/ค่ะ สนใจสอบถามเกี่ยวกับสินค้าของแบรนด์',
+  'chat.failed': 'เปิดการสนทนาไม่สำเร็จ',
+
   'hero.find': 'ค้นหา',
   'hero.bestSeller': 'สินค้าขายดีตัวต่อไป',
   'hero.subtitle':
