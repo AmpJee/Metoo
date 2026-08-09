@@ -6,7 +6,7 @@ import { Card, CardEmpty } from '@/components/console/card'
 import { StatTile } from '@/components/console/stat-tile'
 import { Table, TBody, TD, TH, THead, TR } from '@/components/console/table'
 import { api } from '@/lib/api'
-import { getT } from '@/lib/i18n/server'
+import { getLocale, getT } from '@/lib/i18n/server'
 import { formatBaht, formatDate } from '@/lib/format'
 import type { AdminWithdrawal, WithdrawalStatus } from '@/lib/types'
 import { WithdrawalActions } from './withdrawal-actions'
@@ -36,6 +36,7 @@ const TONE: Record<
  */
 export default async function AdminWithdrawalsPage() {
   const t = await getT()
+  const locale = await getLocale()
   const withdrawals = await api.get<AdminWithdrawal[]>('/admin/withdrawals')
 
   const awaiting = withdrawals.filter((row) => row.status === 'REQUESTED')
@@ -93,7 +94,7 @@ export default async function AdminWithdrawalsPage() {
                 {withdrawals.map((row) => (
                   <TR key={row.id}>
                     <TD className="whitespace-nowrap text-black/50">
-                      {formatDate(row.createdAt)}
+                      {formatDate(row.createdAt, locale)}
                     </TD>
                     <TD className="font-bold">{row.brand.name}</TD>
                     <TD>
