@@ -6,7 +6,7 @@ import { ReturnReview } from '@/components/return-review'
 import { Pill } from '@/components/console/pill'
 import { Card, CardEmpty } from '@/components/console/card'
 import { api } from '@/lib/api'
-import { getT } from '@/lib/i18n/server'
+import { getLocale, getT } from '@/lib/i18n/server'
 import { formatBaht, formatDate } from '@/lib/format'
 import type { ReturnRequest, ReturnStatus } from '@/lib/types'
 
@@ -36,6 +36,7 @@ const LABEL: Record<ReturnStatus, string> = {
  */
 export default async function AdminReturnsPage() {
   const t = await getT()
+  const locale = await getLocale()
   const returns = await api.get<ReturnRequest[]>('/admin/returns')
   const open = returns.filter((item) => item.status === 'REQUESTED')
 
@@ -90,7 +91,9 @@ export default async function AdminReturnsPage() {
                 <div className="flex flex-col gap-4 px-4 py-4">
                   <div>
                     <p className="text-[13px] text-black/50">
-                      Reason · raised {formatDate(request.createdAt)}
+                      {t('sellerReturns.reasonRaised', {
+                        date: formatDate(request.createdAt, locale),
+                      })}
                     </p>
                     <p className="text-[15px] whitespace-pre-line">
                       {request.reason}
@@ -102,9 +105,9 @@ export default async function AdminReturnsPage() {
                   ) : request.reviewNote ? (
                     <div className="rounded-md bg-[#f5f5f5] p-3">
                       <p className="text-[13px] text-black/50">
-                        Decision
+                        {t('adminReturns.decision')}
                         {request.reviewedAt
-                          ? ` · ${formatDate(request.reviewedAt)}`
+                          ? ` · ${formatDate(request.reviewedAt, locale)}`
                           : ''}
                       </p>
                       <p className="text-[15px]">{request.reviewNote}</p>
