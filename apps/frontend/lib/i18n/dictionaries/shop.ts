@@ -103,6 +103,8 @@ export const en = {
   // disabled with no explanation.
   'delivery.provinceFirst': 'Choose a province first',
   'delivery.districtFirst': 'Choose a district first',
+  'delivery.sameAsShop': 'Deliver to my shop address',
+  'settings.shopAddress': 'Shop address',
   'delivery.postalCode': 'Postal code',
   'cart.shippingFree': 'Free',
   'cart.firstOrderFreeShipping':
@@ -442,7 +444,7 @@ export const th: Record<keyof Dict, string> = {
   'delivery.recipientPlaceholder': 'ผู้ที่รับพัสดุแทนได้',
   'delivery.phone': 'หมายเลขโทรศัพท์',
   'delivery.addressLine': 'บ้านเลขที่, ซอย, หมู่, ถนน',
-  'delivery.addressLinePlaceholder': 'เช่น 112 ห้อง 705 ซอย วิภาวดีรังสิต 2',
+  'delivery.addressLinePlaceholder': 'เช่น 99/9 ถนนรัชดาภิเษก ซอย 2',
   'delivery.subdistrict': 'แขวง/ตำบล',
   'delivery.district': 'เขต/อำเภอ',
   'delivery.province': 'จังหวัด',
@@ -451,6 +453,8 @@ export const th: Record<keyof Dict, string> = {
   'delivery.chooseSubdistrict': 'เลือกแขวง/ตำบล',
   'delivery.provinceFirst': 'เลือกจังหวัดก่อน',
   'delivery.districtFirst': 'เลือกเขต/อำเภอก่อน',
+  'delivery.sameAsShop': 'ใช้ที่อยู่เดียวกับที่อยู่ร้านค้า',
+  'settings.shopAddress': 'ที่อยู่ร้านค้า',
   'delivery.postalCode': 'รหัสไปรษณีย์',
   'cart.shippingFree': 'ฟรี',
   'cart.firstOrderFreeShipping': 'ยินดีต้อนรับ — คำสั่งซื้อแรกของคุณ ส่งฟรี',

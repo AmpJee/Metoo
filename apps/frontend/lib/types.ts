@@ -212,6 +212,9 @@ export interface RetailerProfile {
   shopName: string
   phone: string
   addressLine: string
+  /** Nullable: shops that predate the area picker have neither on file. */
+  subdistrict: string | null
+  district: string | null
   province: string
   postalCode: string
   taxId: string | null
@@ -693,10 +696,13 @@ export interface ChatThread {
  */
 export interface AddressSubDistrict {
   name: string
+  /** So an English-locale form can label its own dropdown. */
+  nameEn: string
   postalCode: string
 }
 
 export interface AddressDistrict {
   name: string
+  nameEn: string
   subDistricts: AddressSubDistrict[]
 }
