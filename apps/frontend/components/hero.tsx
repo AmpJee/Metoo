@@ -1,6 +1,5 @@
 'use client'
 
-import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { CATEGORIES } from '@metoo/shared'
 import { useT } from '@/components/i18n-provider'
@@ -60,6 +59,9 @@ function useTypedWord(words: readonly string[]) {
  * The marketplace hero — the designer's, cycling a category through the
  * headline.
  *
+ * No sign-up buttons: the header already carries Log in and Sign up on every
+ * page, and a second pair one screen below them is the same offer twice.
+ *
  * It sits above the product grid rather than on a page of its own: someone
  * following a shared link should see the pitch and the goods in one screen,
  * which is the whole argument for a public catalog.
@@ -95,21 +97,6 @@ export function Hero({ brandCount }: { brandCount: number }) {
       <p className="max-w-[620px] text-[15px] text-muted-foreground md:text-[22px]">
         {t('hero.subtitle')}
       </p>
-
-      <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
-        <Link
-          href="/register"
-          className="rounded-[9px] bg-primary px-6 py-[14px] font-medium text-primary-foreground transition-opacity hover:opacity-90 md:px-8 md:py-[18px]"
-        >
-          {t('hero.signUpToBuy')}
-        </Link>
-        <Link
-          href="/register/seller"
-          className="rounded-[9px] border border-border px-6 py-[14px] font-medium transition-colors hover:border-primary md:px-8 md:py-[18px]"
-        >
-          {t('hero.signUpToSell')}
-        </Link>
-      </div>
 
       {brandCount > 0 ? (
         <p className="text-sm text-muted-foreground">
