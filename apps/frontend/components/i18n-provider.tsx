@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext } from 'react'
+import { createContext, useContext, useMemo } from 'react'
 import { DEFAULT_LOCALE, translator, type Locale } from '@/lib/i18n'
 
 const LocaleContext = createContext<Locale>(DEFAULT_LOCALE)
@@ -24,9 +24,18 @@ export function I18nProvider({
   )
 }
 
-/** `const t = useT()` in any client component. */
+/**
+ * `const t = useT()` in any client component.
+ *
+ * Memoised on the locale, so the identity is stable between renders. That
+ * matters to any component that puts `t` in a dependency array: this used to
+ * hand back a fresh function every render, which made a `useMemo` keyed on it
+ * recompute every time — the hero's typing animation reset itself on each
+ * render and never got past the first character.
+ */
 export function useT() {
-  return translator(useContext(LocaleContext))
+  const locale = useContext(LocaleContext)
+  return useMemo(() => translator(locale), [locale])
 }
 
 export function useLocale() {
