@@ -212,9 +212,22 @@ export default async function OrderDetailPage({
                 <MapPin className="size-4" /> {t('order.deliveryAddress')}
               </h2>
               <address className="mt-3 text-sm not-italic text-muted-foreground">
+                {address.recipient ? (
+                  <p className="font-medium text-foreground">
+                    {address.recipient}
+                  </p>
+                ) : null}
                 {address.addressLine ? <p>{address.addressLine}</p> : null}
+                {/* Thai postal order, and empty parts simply drop out — an
+                    order placed before the delivery address existed has no
+                    sub-district or district to show. */}
                 <p>
-                  {[address.province, address.postalCode]
+                  {[
+                    address.subdistrict,
+                    address.district,
+                    address.province,
+                    address.postalCode,
+                  ]
                     .filter(Boolean)
                     .join(' ')}
                 </p>
