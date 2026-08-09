@@ -1,10 +1,8 @@
 /*
  * The loading screen.
  *
- * The mark tilts and breathes rather than spinning. A spinner says "this is
- * taking a while"; the brand mark holding its shape says "this is metoo, one
- * moment" — and on a fast connection the whole thing is gone before a full
- * rotation would have finished, which makes a spinner read as a flicker.
+ * The mark turns a full circle, swelling slightly at the quarter points so
+ * the rotation has a pulse to it rather than reading as a flat spin.
  */
 
 /*
@@ -26,10 +24,9 @@
 .mark {
   width: 56px;
   height: 56px;
-  /* The design's tilt. Kept as the resting angle so the animation eases
-     around it rather than away from it. */
-  transform: rotate(-12deg);
-  animation: breathe 1.6s ease-in-out infinite;
+  /* Upright at rest; the animation carries it all the way round. */
+  transform: rotate(0deg);
+  animation: spin 1.6s ease-in-out infinite;
 }
 
 .wordmark {
@@ -40,13 +37,21 @@
   color: #676767;
 }
 
-@keyframes breathe {
-  0%,
-  100% {
-    transform: rotate(-12deg) scale(1);
+@keyframes spin {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  25% {
+    transform: rotate(90deg) scale(1.06);
   }
   50% {
-    transform: rotate(-6deg) scale(1.06);
+    transform: rotate(180deg) scale(1);
+  }
+  75% {
+    transform: rotate(270deg) scale(1.06);
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
   }
 }
 
