@@ -1,0 +1,56 @@
+/*
+ * The loading screen.
+ *
+ * The mark tilts and breathes rather than spinning. A spinner says "this is
+ * taking a while"; the brand mark holding its shape says "this is metoo, one
+ * moment" — and on a fast connection the whole thing is gone before a full
+ * rotation would have finished, which makes a spinner read as a flicker.
+ */
+
+.screen {
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+}
+
+.mark {
+  width: 96px;
+  height: 96px;
+  border-radius: 18px;
+  background: var(--color-primary);
+  /* The design's tilt. Kept as the resting angle so the animation eases
+     around it rather than away from it. */
+  transform: rotate(-12deg);
+  animation: breathe 1.6s ease-in-out infinite;
+}
+
+.wordmark {
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--color-foreground);
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    transform: rotate(-12deg) scale(1);
+  }
+  50% {
+    transform: rotate(-6deg) scale(1.06);
+  }
+}
+
+/*
+ * Someone who has asked not to be moved gets a still mark. The screen still
+ * communicates — it is the brand on an otherwise empty page — so there is no
+ * need to substitute a different animation.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .mark {
+    animation: none;
+  }
+}
