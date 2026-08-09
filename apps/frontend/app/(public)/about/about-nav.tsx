@@ -53,8 +53,9 @@ export function AboutNav() {
 
   return (
     <div className={styles.topBar}>
-      <span className={styles.topLogo}>metoo</span>
-
+      {/* The team's design had their own wordmark here, because their page
+          stood alone. Inside the site it sat directly under the header's, the
+          same mark twice a few pixels apart. The header carries it now. */}
       <nav className={styles.pillNav} aria-label={t('story.navLabel')}>
         <ul className={styles.pillList}>
           {SECTIONS.map((section) => (
