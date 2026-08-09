@@ -47,18 +47,22 @@ export function DashboardShell({
             {title}
           </p>
 
-          <div className="flex min-w-fit flex-1 items-center justify-end gap-[14px]">
-            <div className="flex flex-col items-end">
-              <p className="max-w-[200px] truncate text-[18px] font-bold whitespace-nowrap text-black md:text-[20px]">
+          {/* `min-w-fit` here refused to shrink below the account name, which
+              pushed the console 14px wider than a 375px phone on every screen.
+              The name truncates instead — a shop knows its own name, and a
+              page that scrolls sideways is worse than an ellipsis. */}
+          <div className="flex min-w-0 flex-1 items-center justify-end gap-[14px]">
+            <div className="flex min-w-0 flex-col items-end">
+              <p className="max-w-full truncate text-[18px] font-bold text-black md:max-w-[200px] md:text-[20px]">
                 {accountName}
               </p>
-              <p className="text-[14px] whitespace-nowrap text-black/50">
+              <p className="truncate text-[14px] text-black/50">
                 {accountSubtitle}
               </p>
             </div>
             {/* The design's avatar is a plain crimson circle with an initial —
                 no account images exist anywhere in the schema. */}
-            <span className="flex size-[52px] shrink-0 items-center justify-center rounded-full bg-[#cb2957] text-[20px] font-bold text-white md:size-[60px]">
+            <span className="flex size-[42px] shrink-0 items-center justify-center rounded-full bg-[#cb2957] text-[18px] font-bold text-white md:size-[60px] md:text-[20px]">
               {accountName.charAt(0).toUpperCase()}
             </span>
           </div>
