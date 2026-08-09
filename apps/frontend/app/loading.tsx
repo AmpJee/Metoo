@@ -25,8 +25,8 @@ export default function Loading() {
       <Image
         src="/logo-mark.svg"
         alt=""
-        width={96}
-        height={96}
+        width={56}
+        height={56}
         className={styles.mark}
         priority
       />

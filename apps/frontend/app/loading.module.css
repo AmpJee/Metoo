@@ -7,18 +7,25 @@
  * rotation would have finished, which makes a spinner read as a flicker.
  */
 
+/*
+ * Measured off the design recording rather than guessed: background #f5f5f5,
+ * a 56px mark, an 18px gap, and the wordmark at 24px in #676767. The earlier
+ * version was a white ground with a 96px mark and near-black text, which read
+ * as a different screen at a glance.
+ */
 .screen {
-  min-height: 60vh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 22px;
+  gap: 18px;
+  background: #f5f5f5;
 }
 
 .mark {
-  width: 96px;
-  height: 96px;
+  width: 56px;
+  height: 56px;
   /* The design's tilt. Kept as the resting angle so the animation eases
      around it rather than away from it. */
   transform: rotate(-12deg);
@@ -26,10 +33,11 @@
 }
 
 .wordmark {
-  font-size: 32px;
+  font-size: 24px;
   font-weight: 700;
   letter-spacing: -0.02em;
-  color: var(--color-foreground);
+  /* Grey, not the body text colour: sampled from the recording. */
+  color: #676767;
 }
 
 @keyframes breathe {
