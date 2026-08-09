@@ -28,7 +28,7 @@
   height: 56px;
   /* The design's tilt. Kept as the resting angle so the animation eases
      around it rather than away from it. */
-  transform: rotate(-12deg);
+  transform: rotate(0deg);
   animation: breathe 1.6s ease-in-out infinite;
 }
 
@@ -41,12 +41,20 @@
 }
 
 @keyframes breathe {
-  0%,
-  100% {
-    transform: rotate(-12deg) scale(1);
+   0% {
+    transform: rotate(0deg) scale(1);
+  }
+  25% {
+    transform: rotate(90deg) scale(1.06); 
   }
   50% {
-    transform: rotate(-6deg) scale(1.06);
+    transform: rotate(180deg) scale(1); 
+  }
+  75% {
+    transform: rotate(270deg) scale(1.06); 
+  }
+  100% {
+    transform: rotate(360deg) scale(1); 
   }
 }
 
