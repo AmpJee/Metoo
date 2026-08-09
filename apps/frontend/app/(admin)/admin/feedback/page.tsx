@@ -5,7 +5,7 @@ import { PageHeader } from '@/components/dashboard-shell'
 import { Pill } from '@/components/console/pill'
 import { Card, CardEmpty } from '@/components/console/card'
 import { api } from '@/lib/api'
-import { getT } from '@/lib/i18n/server'
+import { getLocale, getT } from '@/lib/i18n/server'
 import { formatDate } from '@/lib/format'
 import type { Feedback, FeedbackStatus } from '@/lib/types'
 import { ResolveButton } from './resolve-button'
@@ -23,6 +23,7 @@ export default async function AdminFeedbackPage({
   searchParams: Promise<{ status?: string }>
 }) {
   const t = await getT()
+  const locale = await getLocale()
   const { status: raw } = await searchParams
   const status = STATUSES.includes(raw as FeedbackStatus)
     ? (raw as FeedbackStatus)
@@ -76,11 +77,15 @@ export default async function AdminFeedbackPage({
                     <Pill>{entry.authorRole}</Pill>
                     <span className="font-bold">{entry.authorLabel}</span>
                     <span className="text-[13px] text-black/50">
-                      {formatDate(entry.createdAt)}
+                      {formatDate(entry.createdAt, locale)}
                     </span>
                   </span>
                   <Pill tone={entry.status === 'OPEN' ? 'warning' : 'success'}>
-                    {entry.status === 'OPEN' ? 'Open' : 'Resolved'}
+                    {t(
+                      entry.status === 'OPEN'
+                        ? 'feedback.open'
+                        : 'feedback.resolved'
+                    )}
                   </Pill>
                 </header>
 
@@ -91,9 +96,11 @@ export default async function AdminFeedbackPage({
                 {entry.adminNote ? (
                   <div className="mt-3 rounded-md bg-[#f5f5f5] p-3">
                     <p className="text-[13px] text-black/50">
-                      Internal note
+                      {t('feedback.internalNote')}
                       {entry.resolvedAt
-                        ? ` · resolved ${formatDate(entry.resolvedAt)}`
+                        ? ` · ${t('feedback.resolvedOn', {
+                            date: formatDate(entry.resolvedAt, locale),
+                          })}`
                         : ''}
                     </p>
                     <p className="text-[15px]">{entry.adminNote}</p>
