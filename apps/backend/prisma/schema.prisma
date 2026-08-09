@@ -278,6 +278,33 @@ model RetailerProfile {
   province    String
   postalCode  String
   taxId       String?
+
+  // --- Delivery address --------------------------------------------------
+  //
+  // Separate from the shop address above, because they are genuinely
+  // different things: the shop address is who this business is and where it
+  // trades; this is where a parcel is handed over, which may be a warehouse,
+  // a condo lobby, or a relative who is in during the day.
+  //
+  // Broken into the parts a Thai courier actually needs — a single free-text
+  // line cannot be sorted by district, and every domestic courier's label
+  // wants แขวง/ตำบล and เขต/อำเภอ separately.
+  //
+  // All nullable: a retailer who signed up before this existed still has to
+  // be able to order, so checkout falls back to the shop address until the
+  // delivery one is filled in.
+  /// Who receives the parcel. Not always the shop's own name.
+  deliveryRecipient   String?
+  deliveryPhone       String?
+  /// House number, soi, moo, road.
+  deliveryAddressLine String?
+  /// แขวง/ตำบล
+  deliverySubdistrict String?
+  /// เขต/อำเภอ
+  deliveryDistrict    String?
+  deliveryProvince    String?
+  deliveryPostalCode  String?
+
   /// Shop photo, shown wherever a retailer appears — chat, the seller's
   /// Customers list, admin. The brand-side equivalent is `logoUrl`.
   avatarUrl   String?

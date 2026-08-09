@@ -96,6 +96,22 @@ record. Three things have since changed — follow these, not the brief:
 
 ## Conventions
 
+- **A retailer has two addresses.** The shop address is who the business is
+  and where it trades; the delivery address is where a parcel is handed over.
+  `domain/delivery-address.ts` resolves which one an order ships to and
+  snapshots it onto `Order.shippingAddress`, falling back to the shop address
+  when no delivery one is set — `usedShopAddress` on the snapshot records
+  which happened. Orders placed before this carry a shorter shape, so
+  anything rendering an address must tolerate missing parts.
+- **Delivery is charged to the retailer, per brand order, by parcel weight.**
+  `domain/shipping.ts` owns the band table, the free-over threshold and the
+  fallback weight — nothing else decides a delivery price. The fee is resolved
+  at checkout and snapshotted onto `Order.shippingMinor`, for the same reason
+  the commission rate is: payment is one manual bank transfer against the
+  total on screen, so a fee that arrived later would mean transferring twice.
+  metoo keeps it and pays the courier; `deliveryCostMinor` is what that cost.
+  Commission is charged on goods only and the brand's payout never includes
+  shipping.
 - **Money is `Int` minor units (satang).** Every field is named `*Minor`. This
   maps 1:1 to Stripe amounts and keeps commission math exact. Never use a float
   or `Decimal` for money.

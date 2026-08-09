@@ -29,13 +29,18 @@ export interface ShopProfile {
  * `paymentReliability` is deliberately absent even though the table has a
  * column for it: that is a track record an admin maintains from experience,
  * not something a shop declares about itself.
+ *
+ * `preferredPayment` left this list when the platform stopped offering a
+ * choice. PromptPay is the only way to pay, so asking a shop to declare a
+ * preference — and blocking checkout until they did — was demanding an answer
+ * to a question with one option. The column stays for the admin console and
+ * for the day card or cash arrives.
  */
 export const REQUIRED_SHOP_FIELDS = [
   ['shopType', 'Shop type'],
   ['zone', 'Location or zone'],
   ['currentProducts', 'What you currently stock'],
   ['monthlyCapacity', 'Monthly capacity'],
-  ['preferredPayment', 'Preferred payment'],
   ['deliveryWindow', 'Delivery window'],
 ] as const satisfies readonly [keyof ShopProfile, string][]
 

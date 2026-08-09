@@ -1,50 +1,24 @@
 'use client'
 
-import { CreditCard, Loader2, QrCode } from 'lucide-react'
+import { Loader2, QrCode } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { placeOrder } from '@/app/actions/checkout'
 import { useT } from '@/components/i18n-provider'
 import { Button } from '@/components/ui/button'
-import type { MessageKey } from '@/lib/i18n'
-import { cn } from '@/lib/utils'
 
 /**
- * Only PROMPTPAY is selectable.
+ * PromptPay is the only way to pay, so this screen states it rather than
+ * asking.
  *
- * Card is shown but disabled — a buyer who expects to pay by card should see
- * it is coming rather than wonder. Cash on delivery is gone entirely: it is
- * still a valid `RetailerProfile.preferredPayment` the admin console reads, so
- * the shared enum keeps it; this screen just does not offer it.
+ * It used to be a radio group with Card greyed out beside it. A choice of one
+ * is not a choice, and a disabled option a buyer cannot pick is a question
+ * they still have to read. `Order.paymentMethod` keeps the enum for the day
+ * card or cash arrives; until then the value is fixed here.
  */
-type PaymentPreference = 'PROMPTPAY' | 'CARD'
-
-const OPTIONS: {
-  value: PaymentPreference
-  labelKey: MessageKey
-  hintKey: MessageKey
-  icon: typeof QrCode
-  disabled?: boolean
-}[] = [
-  {
-    value: 'PROMPTPAY',
-    labelKey: 'checkout.promptpay',
-    hintKey: 'checkout.promptpayHint',
-    icon: QrCode,
-  },
-  {
-    value: 'CARD',
-    labelKey: 'checkout.card',
-    hintKey: 'checkout.cardHint',
-    icon: CreditCard,
-    disabled: true,
-  },
-]
-
 export function CheckoutForm({ brandCount }: { brandCount: number }) {
   const router = useRouter()
   const t = useT()
-  const [method, setMethod] = useState<PaymentPreference>('PROMPTPAY')
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
 
@@ -54,43 +28,16 @@ export function CheckoutForm({ brandCount }: { brandCount: number }) {
         <h2 className="text-base font-semibold">
           {t('checkout.paymentMethod')}
         </h2>
-        <div className="flex flex-col gap-2">
-          {OPTIONS.map((option) => (
-            <label
-              key={option.value}
-              aria-disabled={option.disabled}
-              className={cn(
-                'flex items-center gap-3 rounded-[9px] border p-4 transition-colors',
-                option.disabled
-                  ? 'cursor-not-allowed border-border opacity-50'
-                  : 'cursor-pointer',
-                !option.disabled && method === option.value
-                  ? 'border-primary bg-primary/5'
-                  : !option.disabled
-                    ? 'border-border hover:border-neutral-line'
-                    : ''
-              )}
-            >
-              <input
-                type="radio"
-                name="paymentMethod"
-                value={option.value}
-                checked={method === option.value}
-                disabled={option.disabled}
-                onChange={() => setMethod(option.value)}
-                className="sr-only"
-              />
-              <option.icon className="size-5 shrink-0 text-neutral-dark" />
-              <span className="flex flex-col">
-                <span className="text-sm font-medium">
-                  {t(option.labelKey)}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {t(option.hintKey)}
-                </span>
-              </span>
-            </label>
-          ))}
+        <div className="flex items-center gap-3 rounded-[9px] border border-primary bg-primary/5 p-4">
+          <QrCode className="size-5 shrink-0 text-neutral-dark" />
+          <span className="flex flex-col">
+            <span className="text-sm font-medium">
+              {t('checkout.promptpay')}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {t('checkout.promptpayHint')}
+            </span>
+          </span>
         </div>
 
         {/* Honest about what this button does. There is no payment module on
@@ -116,7 +63,7 @@ export function CheckoutForm({ brandCount }: { brandCount: number }) {
         onClick={() => {
           setError(null)
           startTransition(async () => {
-            const result = await placeOrder(method)
+            const result = await placeOrder('PROMPTPAY')
             if (!result.ok) {
               setError(result.error)
               return

@@ -84,6 +84,7 @@ export function ProductForm({ product }: { product?: BrandProduct }) {
       priceTiers: tiers.priceTiers,
       minPacks,
       unitsPerPack: Number(form.get('unitsPerPack')),
+      packWeightGrams: Number(form.get('packWeightGrams')),
       category: String(form.get('category')),
       // Omitted, not zero — "made to order" and "none left" are different.
       stockPacks: stock === '' ? undefined : Number(stock),
@@ -176,6 +177,23 @@ export function ProductForm({ product }: { product?: BrandProduct }) {
             required
             value={minPacksText}
             onChange={(event) => setMinPacksText(event.target.value)}
+          />
+        </CField>
+
+        {/* Required, and the reason is in the hint: an unweighed pack falls
+            back to a default at checkout, which either overcharges the shop
+            or costs metoo the difference on every parcel. */}
+        <CField
+          label={t('productForm.packWeight')}
+          hint={t('productForm.packWeightHint')}
+        >
+          <CInput
+            name="packWeightGrams"
+            type="number"
+            min="1"
+            max="50000"
+            required
+            defaultValue={product?.packWeightGrams ?? ''}
           />
         </CField>
 
