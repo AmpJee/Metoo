@@ -363,3 +363,97 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* ---------- PILL NAV ----------
+ *
+ * The team's own header, sitting over the hero. Their `.pill-nav` markup and
+ * rules, with the GSAP hover-circle dropped: it animated a filled circle up
+ * from the bottom of a pill on hover, which needs the library on the page for
+ * an effect the CSS background transition already conveys.
+ */
+.topBar {
+  position: absolute;
+  top: 1rem;
+  left: 1.5rem;
+  right: 1.5rem;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.topLogo {
+  color: var(--pink);
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+.pillNav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 10px;
+  background: rgba(0, 0, 0, 0.18);
+  border-radius: 9999px;
+}
+.pillList {
+  --nav-h: 42px;
+  list-style: none;
+  display: flex;
+  align-items: stretch;
+  gap: 3px;
+  margin: 0;
+  padding: 3px;
+  height: var(--nav-h);
+  background: var(--pink);
+  border-radius: 9999px;
+}
+.pillList > li {
+  display: flex;
+}
+.pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 18px;
+  background: #fff;
+  color: #000;
+  border-radius: 9999px;
+  font-weight: 600;
+  font-size: 15px;
+  text-transform: uppercase;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+  transition:
+    background 0.25s ease,
+    color 0.25s ease;
+}
+.pill:hover,
+.pillActive {
+  background: var(--pink);
+  color: #fff;
+}
+
+@media (max-width: 900px) {
+  .topBar {
+    position: static;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1rem 1rem 0;
+  }
+  .topLogo {
+    color: var(--pink);
+  }
+  .pillNav {
+    width: 100%;
+    overflow-x: auto;
+    background: transparent;
+    padding: 0;
+  }
+  .pill {
+    font-size: 13px;
+    padding: 0 14px;
+  }
+}

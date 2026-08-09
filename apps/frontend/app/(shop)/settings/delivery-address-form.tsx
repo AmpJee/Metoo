@@ -1,11 +1,12 @@
 'use client'
 
+import { PROVINCES } from '@metoo/shared'
 import { Loader2, MapPin } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { updateRetailerProfile } from '@/app/actions/account'
 import { Field } from '@/components/auth-shell'
-import { useT } from '@/components/i18n-provider'
+import { useLocale, useT } from '@/components/i18n-provider'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import type { RetailerProfile } from '@/lib/types'
@@ -29,6 +30,7 @@ import type { RetailerProfile } from '@/lib/types'
 export function DeliveryAddressForm({ profile }: { profile: RetailerProfile }) {
   const router = useRouter()
   const t = useT()
+  const locale = useLocale()
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
   const [pending, startTransition] = useTransition()
@@ -129,12 +131,22 @@ export function DeliveryAddressForm({ profile }: { profile: RetailerProfile }) {
           />
         </Field>
 
+        {/* A select, not free text: 77 fixed values, and a misspelt province
+            is a parcel a courier cannot route. District and sub-district stay
+            free text — the province dataset has neither. */}
         <Field label={t('delivery.province')}>
-          <Input
+          <select
             name="deliveryProvince"
-            maxLength={100}
             defaultValue={profile.deliveryProvince ?? ''}
-          />
+            className="flex h-10 w-full rounded-lg bg-input px-3 text-sm disabled:opacity-50"
+          >
+            <option value="">{t('delivery.chooseProvince')}</option>
+            {PROVINCES.map((province) => (
+              <option key={province.code} value={province.th}>
+                {locale === 'th' ? province.th : province.en}
+              </option>
+            ))}
+          </select>
         </Field>
 
         <Field label={t('delivery.postalCode')}>

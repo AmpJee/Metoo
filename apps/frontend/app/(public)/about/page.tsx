@@ -3,6 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { getT } from '@/lib/i18n/server'
 import type { MessageKey, Translate } from '@/lib/i18n'
+import { AboutNav } from './about-nav'
 import styles from './about.module.css'
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -40,6 +41,7 @@ export default async function AboutPage() {
 function Hero({ t }: { t: Translate }) {
   return (
     <section className={styles.hero}>
+      <AboutNav />
       <div className={styles.heroInner}>
         <div className={styles.eyebrow}>{t('story.eyebrow')}</div>
         <h1>{t('story.heroTitle')}</h1>

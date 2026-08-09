@@ -11,6 +11,11 @@ export const en = {
   'story.metaTitle': 'Our story',
 
   // --- hero ------------------------------------------------------------------
+  'story.navLabel': 'About sections',
+  'story.navWho': 'Who we are',
+  'story.navStory': 'Our story',
+  'story.navMission': 'Mission',
+  'story.navValues': 'Values',
   'story.eyebrow': 'About Metoo',
   'story.heroTitle': 'Big opportunities begin local.',
   'story.heroBody':
@@ -101,6 +106,11 @@ export const en = {
 export const th: Record<keyof typeof en, string> = {
   'story.metaTitle': 'เรื่องราวของเรา',
 
+  'story.navLabel': 'หัวข้อเกี่ยวกับเรา',
+  'story.navWho': 'เราคือใคร',
+  'story.navStory': 'จุดเริ่มต้น',
+  'story.navMission': 'พันธกิจ',
+  'story.navValues': 'ค่านิยม',
   'story.eyebrow': 'เกี่ยวกับ metoo',
   'story.heroTitle': 'โอกาสใหญ่ เริ่มต้นจากของดีใกล้ตัว',
   'story.heroBody':
