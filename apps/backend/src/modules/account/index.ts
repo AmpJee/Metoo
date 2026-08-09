@@ -55,6 +55,16 @@ const retailerProfile = t.Object({
   preferredPayment: t.Union([t.UnionEnum(PAYMENT_PREFERENCES), t.Null()]),
   deliveryWindow: t.Union([t.String(), t.Null()]),
 
+  // Where parcels go, separate from the shop address above. A shop trades at
+  // one address and takes deliveries at another more often than not.
+  deliveryRecipient: t.Union([t.String(), t.Null()]),
+  deliveryPhone: t.Union([t.String(), t.Null()]),
+  deliveryAddressLine: t.Union([t.String(), t.Null()]),
+  deliverySubdistrict: t.Union([t.String(), t.Null()]),
+  deliveryDistrict: t.Union([t.String(), t.Null()]),
+  deliveryProvince: t.Union([t.String(), t.Null()]),
+  deliveryPostalCode: t.Union([t.String(), t.Null()]),
+
   /** Which of the above are still blank. Empty means the shop can check out. */
   missingForCheckout: t.Array(
     t.Object({ field: t.String(), label: t.String() })
@@ -114,6 +124,16 @@ export const retailerProfileModule = new Elysia({
           monthlyCapacity: t.Optional(t.Integer({ minimum: 1 })),
           preferredPayment: optionalEnum(PAYMENT_PREFERENCES),
           deliveryWindow: t.Optional(t.String({ maxLength: 100 })),
+
+          deliveryRecipient: t.Optional(t.String({ maxLength: 200 })),
+          deliveryPhone: t.Optional(t.String({ maxLength: 30 })),
+          deliveryAddressLine: t.Optional(t.String({ maxLength: 500 })),
+          deliverySubdistrict: t.Optional(t.String({ maxLength: 100 })),
+          deliveryDistrict: t.Optional(t.String({ maxLength: 100 })),
+          deliveryProvince: t.Optional(t.String({ maxLength: 100 })),
+          // Thai postcodes are five digits. Rejected at the edge so a typo is
+          // caught here rather than by a courier holding the parcel.
+          deliveryPostalCode: t.Optional(t.String({ pattern: '^\\d{5}$' })),
         },
         // An empty patch is a client bug every time. Answering it 200 with an
         // unchanged row hides the bug instead of reporting it.

@@ -20,6 +20,7 @@ import * as consoles from './console'
 import * as enums from './enums'
 import * as shell from './shell'
 import * as shop from './shop'
+import * as story from './story'
 
 export const en = {
   ...shell.en,
@@ -27,6 +28,7 @@ export const en = {
   ...shop.en,
   ...consoles.en,
   ...enums.en,
+  ...story.en,
 }
 
 export type Dict = typeof en
@@ -38,6 +40,7 @@ export const th: Record<MessageKey, string> = {
   ...shop.th,
   ...consoles.th,
   ...enums.th,
+  ...story.th,
 }
 
 export const DICTIONARIES = { en, th } as const

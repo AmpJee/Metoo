@@ -13,6 +13,11 @@ import { useState, useTransition } from 'react'
 import { addToCart } from '@/app/actions/cart'
 import { useT } from '@/components/i18n-provider'
 import { Button } from '@/components/ui/button'
+import {
+  amountToFreeShippingMinor,
+  parcelWeightGrams,
+  shippingFeeMinor,
+} from '@metoo/shared'
 import { formatBaht } from '@/lib/format'
 import { loginHref } from '@/lib/portals'
 import { cn } from '@/lib/utils'
@@ -32,12 +37,15 @@ export function AddToCart({
   pricePerPackMinor,
   priceTiers = [],
   packPresets = [],
+  packWeightGrams,
   stockPacks,
   disabled,
 }: {
   productId: string
   minPacks: number
   pricePerPackMinor: number
+  /** Grams per pack. Null when the seller has not recorded it. */
+  packWeightGrams?: number | null
   /** Volume pricing. Empty for a product priced flat. */
   priceTiers?: PriceTier[]
   /** The "Amount" quick-picks, in display order. */
@@ -52,6 +60,18 @@ export function AddToCart({
   const unit = unitPriceMinor(pricePerPackMinor, priceTiers, packs)
   const lineTotal = lineTotalMinor(pricePerPackMinor, priceTiers, packs)
   const saved = savingsMinor(pricePerPackMinor, priceTiers, packs)
+
+  // What delivery would cost if this were the whole order from this brand.
+  // An estimate, and labelled as one: adding more of the same brand's goods
+  // can push the parcel into the next weight band, or past the free
+  // threshold. Same function checkout runs, so it cannot drift from the bill.
+  const shipping = shippingFeeMinor({
+    weightGrams: parcelWeightGrams([
+      { packWeightGrams: packWeightGrams ?? null, packs },
+    ]),
+    subtotalMinor: lineTotal,
+  })
+  const toFree = amountToFreeShippingMinor(lineTotal)
   // Derived from the ladder, not from a second list the seller has to keep in
   // step with it: every price break gets a button, so a discount at 12 is one
   // tap away instead of something a buyer has to find by typing.
@@ -139,6 +159,18 @@ export function AddToCart({
               </span>
             ) : null}
           </span>
+          <span className="mt-1 block">
+            {shipping === 0
+              ? t('product.shippingFree')
+              : t('product.shippingEstimate', {
+                  amount: formatBaht(shipping),
+                })}
+          </span>
+          {toFree > 0 ? (
+            <span className="block text-xs">
+              {t('product.shippingToFree', { amount: formatBaht(toFree) })}
+            </span>
+          ) : null}
         </div>
       </div>
 
