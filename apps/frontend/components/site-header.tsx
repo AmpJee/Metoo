@@ -1,8 +1,9 @@
 import {
   Heart,
-  Package,
+  History,
+  Home,
+  MessageCircle,
   Search,
-  Settings,
   ShoppingCart,
   Store,
 } from 'lucide-react'
@@ -50,7 +51,14 @@ export async function SiteHeader({
           />
         </Link>
 
-        <form action="/" className="relative hidden flex-1 md:block">
+        {/* A minimum width the nav cannot eat into. Adding Chat made six
+            items compete with the search box and squeezed it to a few
+            characters — search is the primary way into a catalog, so it wins
+            the space. */}
+        <form
+          action="/"
+          className="relative hidden min-w-[200px] flex-1 md:block"
+        >
           <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
           <input
             name="q"
@@ -61,8 +69,9 @@ export async function SiteHeader({
 
         {/* The designer's nav. Home leads because the catalog is now the
             front page; Account moved into the corner beside Log out, where
-            the shop name already lives. Chat joins this row in its own
-            change, once there is a page behind it. */}
+            the shop name already lives. Chat, Saved and History
+            are only for someone signed in — there is nothing behind them
+            otherwise. */}
         <nav className="flex flex-1 items-center justify-end gap-[18px] md:flex-none md:gap-[26px]">
           <IconLink href="/" icon={Home} label={t('nav.home')} />
           <IconLink href="/stores" icon={Store} label={t('nav.stores')} />
@@ -70,6 +79,11 @@ export async function SiteHeader({
             <>
               <IconLink href="/saved" icon={Heart} label={t('nav.saved')} />
               <IconLink href="/orders" icon={History} label={t('nav.orders')} />
+              <IconLink
+                href="/chat"
+                icon={MessageCircle}
+                label={t('nav.chat')}
+              />
             </>
           ) : null}
           <IconLink
@@ -141,7 +155,10 @@ function IconLink({
       className="relative flex items-center gap-2 text-neutral-dark transition-colors hover:text-primary"
     >
       <Icon className="size-5" strokeWidth={1.5} />
-      <span className="hidden text-sm md:inline">{label}</span>
+      {/* Labels only where they fit. Thai runs longer than the designer's
+          English — "ประวัติการสั่งซื้อ" against "History" — so the row is
+          icon-only until there is room for words. */}
+      <span className="hidden text-sm xl:inline">{label}</span>
       {badge ? (
         <span className="absolute -top-1.5 -left-2 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground md:-left-2.5">
           {badge > 9 ? '9+' : badge}
