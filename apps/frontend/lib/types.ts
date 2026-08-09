@@ -684,3 +684,19 @@ export interface ChatThread {
   lastMessageAt: string
   createdAt: string
 }
+
+/**
+ * Thai administrative areas, from GET /address/districts.
+ *
+ * One province's worth at a time — the largest is under 8KB, so the whole
+ * district → sub-district → postcode cascade runs off a single response.
+ */
+export interface AddressSubDistrict {
+  name: string
+  postalCode: string
+}
+
+export interface AddressDistrict {
+  name: string
+  subDistricts: AddressSubDistrict[]
+}

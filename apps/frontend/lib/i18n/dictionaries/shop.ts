@@ -97,6 +97,12 @@ export const en = {
   'delivery.district': 'District',
   'delivery.province': 'Province',
   'delivery.chooseProvince': 'Choose a province',
+  'delivery.chooseDistrict': 'Choose a district',
+  'delivery.chooseSubdistrict': 'Choose a sub-district',
+  // Each select says what is blocking it rather than sitting empty and
+  // disabled with no explanation.
+  'delivery.provinceFirst': 'Choose a province first',
+  'delivery.districtFirst': 'Choose a district first',
   'delivery.postalCode': 'Postal code',
   'cart.shippingFree': 'Free',
   'cart.firstOrderFreeShipping':
@@ -441,6 +447,10 @@ export const th: Record<keyof Dict, string> = {
   'delivery.district': 'เขต/อำเภอ',
   'delivery.province': 'จังหวัด',
   'delivery.chooseProvince': 'เลือกจังหวัด',
+  'delivery.chooseDistrict': 'เลือกเขต/อำเภอ',
+  'delivery.chooseSubdistrict': 'เลือกแขวง/ตำบล',
+  'delivery.provinceFirst': 'เลือกจังหวัดก่อน',
+  'delivery.districtFirst': 'เลือกเขต/อำเภอก่อน',
   'delivery.postalCode': 'รหัสไปรษณีย์',
   'cart.shippingFree': 'ฟรี',
   'cart.firstOrderFreeShipping': 'ยินดีต้อนรับ — คำสั่งซื้อแรกของคุณ ส่งฟรี',

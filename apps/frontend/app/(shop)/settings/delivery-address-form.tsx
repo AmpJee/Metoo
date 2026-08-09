@@ -3,13 +3,14 @@
 import { PROVINCES } from '@metoo/shared'
 import { Loader2, MapPin } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useState, useTransition } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import { updateRetailerProfile } from '@/app/actions/account'
+import { districtsForProvince } from '@/app/actions/address'
 import { Field } from '@/components/auth-shell'
 import { useLocale, useT } from '@/components/i18n-provider'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import type { RetailerProfile } from '@/lib/types'
+import type { AddressDistrict, RetailerProfile } from '@/lib/types'
 
 /**
  * Where parcels go — separate from the shop address on purpose.
@@ -27,6 +28,9 @@ import type { RetailerProfile } from '@/lib/types'
  * address, which is where goods went before this existed. The empty state
  * says so rather than leaving someone guessing whether they have to fill it.
  */
+const SELECT_CLASS =
+  'flex h-10 w-full rounded-lg bg-input px-3 text-sm disabled:opacity-50'
+
 export function DeliveryAddressForm({ profile }: { profile: RetailerProfile }) {
   const router = useRouter()
   const t = useT()
@@ -34,6 +38,67 @@ export function DeliveryAddressForm({ profile }: { profile: RetailerProfile }) {
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
   const [pending, startTransition] = useTransition()
+
+  // The three area fields are controlled, unlike the rest of the form:
+  // choosing a province has to clear what is below it, and a postcode has to
+  // appear without being typed. Neither is expressible with defaultValue.
+  const [province, setProvince] = useState(profile.deliveryProvince ?? '')
+  const [district, setDistrict] = useState(profile.deliveryDistrict ?? '')
+  const [subDistrict, setSubDistrict] = useState(
+    profile.deliverySubdistrict ?? ''
+  )
+  const [postalCode, setPostalCode] = useState(profile.deliveryPostalCode ?? '')
+  const [districts, setDistricts] = useState<AddressDistrict[]>([])
+  const [loading, setLoading] = useState(false)
+
+  // A saved address opens with its province already chosen, so the selects
+  // below it need their options before anyone touches the form.
+  useEffect(() => {
+    if (!province) {
+      setDistricts([])
+      return
+    }
+
+    let current = true
+    setLoading(true)
+
+    districtsForProvince(province)
+      .then((result) => {
+        if (current) setDistricts(result)
+      })
+      .finally(() => {
+        if (current) setLoading(false)
+      })
+
+    // Guards against a slow first province resolving after a second was
+    // picked, which would leave the wrong districts on screen.
+    return () => {
+      current = false
+    }
+  }, [province])
+
+  const subDistricts =
+    districts.find((entry) => entry.name === district)?.subDistricts ?? []
+
+  function onProvinceChange(next: string) {
+    setProvince(next)
+    // A district in Chiang Mai means nothing once the province is Phuket.
+    setDistrict('')
+    setSubDistrict('')
+    setPostalCode('')
+  }
+
+  function onDistrictChange(next: string) {
+    setDistrict(next)
+    setSubDistrict('')
+    setPostalCode('')
+  }
+
+  function onSubDistrictChange(next: string) {
+    setSubDistrict(next)
+    const match = subDistricts.find((entry) => entry.name === next)
+    if (match) setPostalCode(match.postalCode)
+  }
 
   const usingShopAddress = !profile.deliveryAddressLine
 
@@ -114,50 +179,82 @@ export function DeliveryAddressForm({ profile }: { profile: RetailerProfile }) {
         />
       </Field>
 
+      {/* Province → district → sub-district, each one narrowing the next, and
+          the postcode filling itself in from the sub-district. Free text here
+          was how แขวง and เขต got misspelt, and a courier finds that out while
+          holding the parcel. */}
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label={t('delivery.subdistrict')}>
-          <Input
-            name="deliverySubdistrict"
-            maxLength={100}
-            defaultValue={profile.deliverySubdistrict ?? ''}
-          />
-        </Field>
-
-        <Field label={t('delivery.district')}>
-          <Input
-            name="deliveryDistrict"
-            maxLength={100}
-            defaultValue={profile.deliveryDistrict ?? ''}
-          />
-        </Field>
-
-        {/* A select, not free text: 77 fixed values, and a misspelt province
-            is a parcel a courier cannot route. District and sub-district stay
-            free text — the province dataset has neither. */}
         <Field label={t('delivery.province')}>
           <select
             name="deliveryProvince"
-            defaultValue={profile.deliveryProvince ?? ''}
-            className="flex h-10 w-full rounded-lg bg-input px-3 text-sm disabled:opacity-50"
+            value={province}
+            onChange={(event) => onProvinceChange(event.target.value)}
+            className={SELECT_CLASS}
           >
             <option value="">{t('delivery.chooseProvince')}</option>
-            {PROVINCES.map((province) => (
-              <option key={province.code} value={province.th}>
-                {locale === 'th' ? province.th : province.en}
+            {PROVINCES.map((entry) => (
+              <option key={entry.code} value={entry.th}>
+                {locale === 'th' ? entry.th : entry.en}
+              </option>
+            ))}
+          </select>
+        </Field>
+
+        <Field label={t('delivery.district')}>
+          <select
+            name="deliveryDistrict"
+            value={district}
+            disabled={!province || loading}
+            onChange={(event) => onDistrictChange(event.target.value)}
+            className={SELECT_CLASS}
+          >
+            <option value="">
+              {loading
+                ? t('common.loading')
+                : province
+                  ? t('delivery.chooseDistrict')
+                  : t('delivery.provinceFirst')}
+            </option>
+            {districts.map((entry) => (
+              <option key={entry.name} value={entry.name}>
+                {entry.name}
+              </option>
+            ))}
+          </select>
+        </Field>
+
+        <Field label={t('delivery.subdistrict')}>
+          <select
+            name="deliverySubdistrict"
+            value={subDistrict}
+            disabled={!district}
+            onChange={(event) => onSubDistrictChange(event.target.value)}
+            className={SELECT_CLASS}
+          >
+            <option value="">
+              {district
+                ? t('delivery.chooseSubdistrict')
+                : t('delivery.districtFirst')}
+            </option>
+            {subDistricts.map((entry) => (
+              <option key={entry.name} value={entry.name}>
+                {entry.name}
               </option>
             ))}
           </select>
         </Field>
 
         <Field label={t('delivery.postalCode')}>
-          {/* Five digits, checked here and again at the API. A postcode typo
-              is found by a courier holding the parcel, which is late. */}
+          {/* Filled from the sub-district but still editable: three
+              sub-districts carry two postcodes, and the tree keeps only the
+              first. Typing over it has to stay possible. */}
           <Input
             name="deliveryPostalCode"
             inputMode="numeric"
             pattern="\d{5}"
             maxLength={5}
-            defaultValue={profile.deliveryPostalCode ?? ''}
+            value={postalCode}
+            onChange={(event) => setPostalCode(event.target.value)}
           />
         </Field>
       </div>
