@@ -663,3 +663,24 @@ export interface FollowedBrand {
   province: string
   followerCount: number
 }
+
+// --- chat -------------------------------------------------------------------
+
+export interface ChatMessage {
+  id: string
+  senderId: string
+  body: string
+  /** Null until the other side opens the thread. */
+  readAt: string | null
+  createdAt: string
+}
+
+export interface ChatThread {
+  id: string
+  /** The other side: a retailer sees the brand, a brand sees the shop. */
+  counterparty: { id: string; name: string; logoUrl: string | null }
+  lastMessage: ChatMessage | null
+  unreadCount: number
+  lastMessageAt: string
+  createdAt: string
+}
