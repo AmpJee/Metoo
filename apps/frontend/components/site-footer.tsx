@@ -17,6 +17,7 @@ const HREFS: Partial<Record<MessageKey, string>> = {
   // The old landing page: what metoo is and how it works, for someone who has
   // not signed up. It lives at /welcome now that "/" opens the catalog.
   'footer.howItWorks': '/welcome',
+  'footer.helpCenter': '/help',
 }
 
 const GROUPS: { title: MessageKey; links: MessageKey[] }[] = [

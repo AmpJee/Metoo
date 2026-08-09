@@ -38,7 +38,7 @@ const PUBLIC_PATHS = ['/', '/welcome', ...SIGNUP_PATHS, ...LOGIN_PATHS]
  * that is missing here is unreachable for the visitor it was written for.
  * Nothing that acts on a cart or an order belongs in either.
  */
-const PUBLIC_PREFIXES = ['/about', '/explore', '/products/', '/stores']
+const PUBLIC_PREFIXES = ['/about', '/explore', '/help', '/products/', '/stores']
 
 function isPublic(pathname: string) {
   if (PUBLIC_PATHS.includes(pathname)) return true

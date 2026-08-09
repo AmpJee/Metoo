@@ -20,6 +20,11 @@ const shop: ShopAddress = {
   shopName: 'Somchai Minimart',
   phone: '021111111',
   addressLine: '99/1 Phahonyothin Road',
+  // Null on purpose: this fixture is a shop that registered before the area
+  // picker existed, which is what the fallback tests below are about — the
+  // formatter must not leave blank gaps where แขวง and เขต would go.
+  subdistrict: null,
+  district: null,
   province: 'Bangkok',
   postalCode: '10400',
 }

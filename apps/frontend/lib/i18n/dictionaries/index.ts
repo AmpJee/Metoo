@@ -18,6 +18,7 @@
 import * as auth from './auth'
 import * as consoles from './console'
 import * as enums from './enums'
+import * as help from './help'
 import * as shell from './shell'
 import * as shop from './shop'
 import * as story from './story'
@@ -28,6 +29,7 @@ export const en = {
   ...shop.en,
   ...consoles.en,
   ...enums.en,
+  ...help.en,
   ...story.en,
 }
 
@@ -40,6 +42,7 @@ export const th: Record<MessageKey, string> = {
   ...shop.th,
   ...consoles.th,
   ...enums.th,
+  ...help.th,
   ...story.th,
 }
 

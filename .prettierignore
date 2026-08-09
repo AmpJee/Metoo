@@ -7,3 +7,7 @@ bun.lock
 # Prisma output and migration SQL are generated, not hand-formatted
 **/src/generated
 **/prisma/migrations
+
+# A vendored dataset, not hand-written source. Prettier expands its single
+# minified line into 13,650, which buries every real diff that touches it.
+apps/backend/src/data/thai-addresses.json
