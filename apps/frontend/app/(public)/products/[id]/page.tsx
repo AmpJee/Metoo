@@ -180,6 +180,7 @@ export default async function ProductPage({
             pricePerPackMinor={product.pricePerPackMinor}
             priceTiers={product.priceTiers}
             packPresets={product.packPresets}
+            packWeightGrams={product.packWeightGrams}
             stockPacks={product.stockPacks}
             disabled={outOfStock}
           />

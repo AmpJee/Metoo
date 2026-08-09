@@ -13,6 +13,11 @@
 import { prisma } from '../../config/prisma.ts'
 import { unitPriceMinor } from '../../domain/volume-pricing.ts'
 import { checkQuantity, groupByBrand } from '../../domain/cart.ts'
+import {
+  amountToFreeShippingMinor,
+  parcelWeightGrams,
+  shippingFeeMinor,
+} from '../../domain/shipping.ts'
 import { AppError } from '../../middleware/error.ts'
 
 export async function cartIdForUser(userId: string): Promise<string> {
@@ -76,6 +81,17 @@ function assertQuantity(packs: number, rules: { minPacks: number }) {
 }
 
 export async function getCart(cartId: string) {
+  // The welcome offer, resolved the same way checkout will resolve it so the
+  // basket cannot promise free delivery the order then charges for.
+  const cart = await prisma.cart.findUnique({
+    where: { id: cartId },
+    select: { retailerId: true },
+  })
+  const isFirstOrder = cart
+    ? (await prisma.order.count({ where: { retailerId: cart.retailerId } })) ===
+      0
+    : false
+
   const items = await prisma.cartItem.findMany({
     where: { cartId },
     orderBy: { createdAt: 'asc' },
@@ -91,6 +107,7 @@ export async function getCart(cartId: string) {
           minPacks: true,
           unitsPerPack: true,
           isActive: true,
+          packWeightGrams: true,
           priceTiers: {
             select: { minPacks: true, pricePerPackMinor: true },
             orderBy: { minPacks: 'asc' },
@@ -122,6 +139,22 @@ export async function getCart(cartId: string) {
     }
   })
 
+  /** One brand's parcel, priced by the shared domain rule. */
+  const shippingFor = (group: {
+    items: { packs: number; product: { packWeightGrams: number | null } }[]
+    subtotalMinor: number
+  }) =>
+    shippingFeeMinor({
+      weightGrams: parcelWeightGrams(
+        group.items.map((line) => ({
+          packWeightGrams: line.product.packWeightGrams,
+          packs: line.packs,
+        }))
+      ),
+      subtotalMinor: group.subtotalMinor,
+      isFirstOrder,
+    })
+
   const groups = groupByBrand(lines).map((group) => ({
     brand: group.items[0]!.product.brand,
     items: group.items.map((line) => ({
@@ -142,14 +175,24 @@ export async function getCart(cartId: string) {
       },
     })),
     subtotalMinor: group.subtotalMinor,
+    // The same function checkout will run, on the same lines, so the number
+    // here is the number charged rather than an estimate that drifts.
+    shippingMinor: shippingFor(group),
+    toFreeShippingMinor: amountToFreeShippingMinor(group.subtotalMinor),
   }))
+
+  const shippingMinor = groups.reduce((sum, g) => sum + g.shippingMinor, 0)
+  const subtotalMinor = groups.reduce((sum, g) => sum + g.subtotalMinor, 0)
 
   return {
     // One order per group at checkout — surfaced here so the split is never a
     // surprise on the payment screen.
     brandCount: groups.length,
     itemCount: lines.length,
-    totalMinor: groups.reduce((sum, g) => sum + g.subtotalMinor, 0),
+    firstOrderFreeShipping: isFirstOrder,
+    subtotalMinor,
+    shippingMinor,
+    totalMinor: subtotalMinor + shippingMinor,
     groups,
   }
 }

@@ -5,6 +5,7 @@ import { api } from '@/lib/api'
 import { getT } from '@/lib/i18n/server'
 import type { RetailerProfile } from '@/lib/types'
 import { RetailerSettings } from './retailer-settings'
+import { DeliveryAddressForm } from './delivery-address-form'
 import { ShopOperationsForm } from './shop-operations-form'
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -39,6 +40,22 @@ export default async function SettingsPage() {
       <section className="flex flex-col gap-4">
         <h2 className="text-base font-semibold">{t('settings.details')}</h2>
         <RetailerSettings profile={profile} />
+      </section>
+
+      {/* Its own section, above the operational questions: this is the one
+          a shop comes here to change, and burying it under capacity and
+          delivery window would hide it. */}
+      <section
+        id="delivery"
+        className="flex flex-col gap-4 scroll-mt-8 border-t border-border pt-8"
+      >
+        <div className="flex flex-col gap-1">
+          <h2 className="text-base font-semibold">{t('delivery.title')}</h2>
+          <p className="text-sm text-muted-foreground">
+            {t('delivery.subtitle')}
+          </p>
+        </div>
+        <DeliveryAddressForm profile={profile} />
       </section>
 
       <section

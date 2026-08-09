@@ -60,6 +60,8 @@ export type ProductInput = {
   pricePerPackMinor: number
   minPacks: number
   unitsPerPack: number
+  /** Grams per pack. Drives the delivery fee, so it is not optional in the UI. */
+  packWeightGrams?: number
   category: string
   stockPacks?: number
   isActive?: boolean

@@ -34,6 +34,13 @@ const retailerSelect = {
   monthlyCapacity: true,
   preferredPayment: true,
   deliveryWindow: true,
+  deliveryRecipient: true,
+  deliveryPhone: true,
+  deliveryAddressLine: true,
+  deliverySubdistrict: true,
+  deliveryDistrict: true,
+  deliveryProvince: true,
+  deliveryPostalCode: true,
   updatedAt: true,
 }
 
@@ -57,6 +64,13 @@ export interface RetailerProfilePatch {
   monthlyCapacity?: number
   preferredPayment?: string
   deliveryWindow?: string
+  deliveryRecipient?: string
+  deliveryPhone?: string
+  deliveryAddressLine?: string
+  deliverySubdistrict?: string
+  deliveryDistrict?: string
+  deliveryProvince?: string
+  deliveryPostalCode?: string
   shopName?: string
   phone?: string
   addressLine?: string
