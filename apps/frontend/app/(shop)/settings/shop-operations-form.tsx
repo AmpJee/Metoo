@@ -1,6 +1,6 @@
 'use client'
 
-import { PAYMENT_PREFERENCES, SHOP_TYPES } from '@metoo/shared'
+import { SHOP_TYPES } from '@metoo/shared'
 import { Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
@@ -49,9 +49,6 @@ export function ShopOperationsForm({ profile }: { profile: RetailerProfile }) {
           zone: String(data.get('zone') ?? '').trim(),
           currentProducts: String(data.get('currentProducts') ?? '').trim(),
           monthlyCapacity: Number.isFinite(capacity) ? capacity : undefined,
-          preferredPayment: String(
-            data.get('preferredPayment')
-          ) as RetailerProfile['preferredPayment'],
           deliveryWindow: String(data.get('deliveryWindow') ?? '').trim(),
         },
         {
@@ -135,24 +132,6 @@ export function ShopOperationsForm({ profile }: { profile: RetailerProfile }) {
           defaultValue={profile.monthlyCapacity ?? ''}
           placeholder={t('shopOps.capacityPlaceholder')}
         />
-      </Field>
-
-      <Field label={t('shopOps.preferredPayment')}>
-        <select
-          name="preferredPayment"
-          required
-          defaultValue={profile.preferredPayment ?? ''}
-          className={SELECT_CLASS}
-        >
-          <option value="" disabled>
-            {t('shopOps.chooseOne')}
-          </option>
-          {PAYMENT_PREFERENCES.map((method) => (
-            <option key={method} value={method}>
-              {t(`payment.${method}`)}
-            </option>
-          ))}
-        </select>
       </Field>
 
       <Field label={t('shopOps.deliveryWindow')}>

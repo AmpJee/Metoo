@@ -175,12 +175,24 @@ export interface Order {
   subtotalMinor: number
   shippingMinor: number
   totalMinor: number
-  /** Snapshot taken at checkout, so it stays true if the profile changes. */
+  /**
+   * Snapshot taken at checkout, so it stays true if the profile changes.
+   *
+   * Every field optional because orders placed before the delivery address
+   * existed carry the older, shorter shape — the shop's address with no
+   * recipient, sub-district or district. Rendering has to survive both.
+   */
   shippingAddress: {
+    /** Who signs for it. Absent on orders placed before this existed. */
+    recipient?: string
     addressLine?: string
+    subdistrict?: string
+    district?: string
     province?: string
     postalCode?: string
     phone?: string
+    /** True when it fell back to the shop address. */
+    usedShopAddress?: boolean
   } | null
   /** When the buyer sent their transfer slip. The file is admin-only. */
   paymentSlipAt: string | null
@@ -212,6 +224,15 @@ export interface RetailerProfile {
   monthlyCapacity: number | null
   preferredPayment: PaymentPreference | null
   deliveryWindow: string | null
+
+  // Where parcels go, separate from the shop address above.
+  deliveryRecipient: string | null
+  deliveryPhone: string | null
+  deliveryAddressLine: string | null
+  deliverySubdistrict: string | null
+  deliveryDistrict: string | null
+  deliveryProvince: string | null
+  deliveryPostalCode: string | null
 
   /** Blank required fields. Empty means this shop can check out. */
   missingForCheckout: Array<{ field: string; label: string }>
