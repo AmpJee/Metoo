@@ -24,6 +24,8 @@ const retailerSelect = {
   shopName: true,
   phone: true,
   addressLine: true,
+  subdistrict: true,
+  district: true,
   province: true,
   postalCode: true,
   taxId: true,
@@ -74,6 +76,9 @@ export interface RetailerProfilePatch {
   shopName?: string
   phone?: string
   addressLine?: string
+  /** Nullable so a wrongly-picked area can be cleared, not just replaced. */
+  subdistrict?: string | null
+  district?: string | null
   province?: string
   postalCode?: string
   /** Explicitly nullable — a shop that never had a tax ID can clear a typo. */

@@ -36,9 +36,13 @@ export const addressModule = new Elysia({
       districts: t.Array(
         t.Object({
           name: t.String(),
+          // Both names travel, so an English-locale form does not have to
+          // show Thai in its dropdowns or translate on the client.
+          nameEn: t.String(),
           subDistricts: t.Array(
             t.Object({
               name: t.String(),
+              nameEn: t.String(),
               postalCode: t.String(),
             })
           ),
