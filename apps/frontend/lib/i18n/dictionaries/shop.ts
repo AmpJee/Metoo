@@ -92,7 +92,9 @@ export const en = {
   'delivery.recipientPlaceholder': 'Who signs for the parcel',
   'delivery.phone': 'Phone number',
   'delivery.addressLine': 'House no., soi, moo, road',
-  'delivery.addressLinePlaceholder': 'e.g. 112, room 705, Soi Vibhavadi 2',
+  // Generic on purpose. A placeholder ships to every user, so it must never
+  // be a real address belonging to anyone.
+  'delivery.addressLinePlaceholder': 'House no., building, soi, road',
   'delivery.subdistrict': 'Sub-district',
   'delivery.district': 'District',
   'delivery.province': 'Province',
@@ -436,7 +438,7 @@ export const th: Record<keyof Dict, string> = {
   'delivery.recipientPlaceholder': 'ผู้ที่รับพัสดุแทนได้',
   'delivery.phone': 'หมายเลขโทรศัพท์',
   'delivery.addressLine': 'บ้านเลขที่, ซอย, หมู่, ถนน',
-  'delivery.addressLinePlaceholder': 'เช่น 112 ห้อง 705 ซอย วิภาวดีรังสิต 2',
+  'delivery.addressLinePlaceholder': 'บ้านเลขที่ อาคาร ซอย ถนน',
   'delivery.subdistrict': 'แขวง/ตำบล',
   'delivery.district': 'เขต/อำเภอ',
   'delivery.province': 'จังหวัด',

@@ -39,7 +39,7 @@ export async function SiteHeader({
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background">
       <div className="container-page flex h-[44px] items-center gap-[14px] md:h-[86px] md:gap-x-[36px]">
-        <Link href="/explore" className="shrink-0" aria-label="metoo">
+        <Link href="/" className="shrink-0" aria-label="metoo">
           {/* The mark, not the word set in bold. Sized by height so it keeps
               the two heights the header design already uses. */}
           <Image
