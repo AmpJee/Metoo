@@ -39,7 +39,10 @@
     },
     "test": {
       "dependsOn": ["^test"],
-      "inputs": ["src/domain/**"]
+      // The backend's pure domain layer and the frontend's dictionaries. Both
+      // are data-and-arithmetic only, which is what keeps `test` runnable with
+      // no database — see the unit-tests-only decision in CLAUDE.md.
+      "inputs": ["src/domain/**", "lib/i18n/**"]
     },
     "format": {
       "dependsOn": ["^format"]

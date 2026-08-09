@@ -99,9 +99,13 @@ const retailerUser = await prisma.user.upsert({
 const retailerFields = {
   shopName: 'Somchai Minimart',
   phone: '02-111-1111',
-  addressLine: '42 Sukhumvit Soi 31',
+  // Invented, and it has to stay invented. Seed data is committed, shipped to
+  // every developer and rendered on screen, so a real address belonging to a
+  // real person does not belong in it. 99/1 is the standard Thai example
+  // number, the way 555-0100 is for phones.
+  addressLine: '99/1 Phahonyothin Road',
   province: 'Bangkok',
-  postalCode: '10110',
+  postalCode: '10400',
   // Explicitly null, not omitted: a re-run has to clear one that was set, or
   // it is not restoring the seeded state. Same for every pipeline column below
   // — an admin screen can write them, so the seed has to be able to undo that.

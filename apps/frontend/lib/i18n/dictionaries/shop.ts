@@ -92,7 +92,9 @@ export const en = {
   'delivery.recipientPlaceholder': 'Who signs for the parcel',
   'delivery.phone': 'Phone number',
   'delivery.addressLine': 'House no., soi, moo, road',
-  'delivery.addressLinePlaceholder': 'e.g. 112, room 705, Soi Vibhavadi 2',
+  // Generic on purpose. A placeholder ships to every user, so it must never
+  // be a real address belonging to anyone.
+  'delivery.addressLinePlaceholder': 'House no., building, soi, road',
   'delivery.subdistrict': 'Sub-district',
   'delivery.district': 'District',
   'delivery.province': 'Province',

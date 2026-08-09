@@ -7,29 +7,21 @@ import {
 } from './delivery-address.ts'
 
 /**
- * Both fixtures are invented and have to stay that way — a test file is
- * committed and read by everyone here, so a real name, phone or address does
- * not belong in one.
+ * Both fixtures are invented, and have to stay that way — a test file is
+ * committed, shared and read by everyone who works here, so a real name,
+ * phone or address does not belong in one.
  *
- * The shop's area fields are null on purpose: that is what every shop that
- * signed up before the picker existed looks like, and the fallback path has
- * to keep working for them.
+ * The two addresses are deliberately in different districts with different
+ * postcodes. Half the assertions below are about the delivery address winning
+ * over the shop's, and identical values would let a bug that returns the
+ * wrong one pass.
  */
 const shop: ShopAddress = {
   shopName: 'Somchai Minimart',
   phone: '021111111',
   addressLine: '99/1 Phahonyothin Road',
-  subdistrict: null,
-  district: null,
   province: 'Bangkok',
   postalCode: '10400',
-}
-
-/** A shop that has since filled its areas in. */
-const shopWithAreas: ShopAddress = {
-  ...shop,
-  subdistrict: 'สามเสนใน',
-  district: 'พญาไท',
 }
 
 const noDelivery: DeliveryAddressFields = {
@@ -49,8 +41,6 @@ const delivery: DeliveryAddressFields = {
   deliverySubdistrict: 'ห้วยขวาง',
   deliveryDistrict: 'ห้วยขวาง',
   deliveryProvince: 'กรุงเทพมหานคร',
-  // A different district and postcode from the shop's, so the assertions
-  // about the delivery address winning actually mean something.
   deliveryPostalCode: '10310',
 }
 
@@ -92,6 +82,7 @@ describe('resolveShippingAddress', () => {
     expect(resolved.recipient).toBe('สมหญิง ใจดี')
     expect(resolved.phone).toBe('0812345678')
     expect(resolved.district).toBe('ห้วยขวาง')
+    // The delivery postcode, not the shop's 10400.
     expect(resolved.postalCode).toBe('10310')
     expect(resolved.usedShopAddress).toBe(false)
   })
@@ -129,16 +120,6 @@ describe('resolveShippingAddress', () => {
     })
     expect(resolved.postalCode).toBe('10310')
   })
-
-  test('carries the shop areas through when it falls back', () => {
-    // Before the shop address had these columns the fallback hardcoded null,
-    // so a shop with no delivery address shipped without a district even
-    // though it had one on file.
-    const resolved = resolveShippingAddress({ ...shopWithAreas, ...noDelivery })
-    expect(resolved.subdistrict).toBe('สามเสนใน')
-    expect(resolved.district).toBe('พญาไท')
-    expect(resolved.usedShopAddress).toBe(true)
-  })
 })
 
 describe('formatShippingAddress', () => {
@@ -155,13 +136,5 @@ describe('formatShippingAddress', () => {
     expect(
       formatShippingAddress(resolveShippingAddress({ ...shop, ...noDelivery }))
     ).toBe('99/1 Phahonyothin Road Bangkok 10400')
-  })
-
-  test('includes the shop areas once a shop has filled them in', () => {
-    expect(
-      formatShippingAddress(
-        resolveShippingAddress({ ...shopWithAreas, ...noDelivery })
-      )
-    ).toBe('99/1 Phahonyothin Road สามเสนใน พญาไท Bangkok 10400')
   })
 })

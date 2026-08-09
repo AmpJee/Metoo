@@ -25,10 +25,10 @@ export const en = {
   'auth.signUpToBuy': 'Sign up to buy',
   'auth.sellingHere': 'Selling on Metoo?',
   'auth.sellerCentre': 'Seller Centre',
-  'auth.sellerDoorHint': 'Sellers sign in at Seller Centre, not here.',
+  'auth.sellerDoorHint': 'Sellers sign in at Seller Centre.',
   // Its own key rather than reusing the sign-in one: this sits on the signup
   // form, where "sign in" would be the wrong verb.
-  'auth.brandSignupHint': 'Brands sign up at Seller Centre, not here.',
+  'auth.brandSignupHint': 'Brands sign up at Seller Centre.',
   'auth.buyingInstead': 'Buying instead?',
   'auth.shopSignIn': 'Shop sign-in',
   'auth.sellOnMetoo': 'Sell on Metoo',

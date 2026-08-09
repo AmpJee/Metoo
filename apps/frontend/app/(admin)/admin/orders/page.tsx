@@ -9,7 +9,7 @@ import { Pill } from '@/components/console/pill'
 import { Card, CardEmpty } from '@/components/console/card'
 import { Table, TBody, TD, TH, THead, TR } from '@/components/console/table'
 import { api } from '@/lib/api'
-import { getT } from '@/lib/i18n/server'
+import { getLocale, getT } from '@/lib/i18n/server'
 import { formatBaht, formatDate } from '@/lib/format'
 import { statusLabel, statusPillTone } from '@/lib/order-status'
 import type { AdminOrder } from '@/lib/types'
@@ -30,6 +30,7 @@ export default async function AdminOrdersPage({
   searchParams: Promise<{ status?: string }>
 }) {
   const t = await getT()
+  const locale = await getLocale()
   const { status: raw } = await searchParams
   const status = ORDER_STATUSES.includes(raw as OrderStatus)
     ? (raw as OrderStatus)
@@ -105,7 +106,7 @@ export default async function AdminOrdersPage({
                       <TD>
                         <span className="font-bold">{order.orderNumber}</span>
                         <span className="block text-[13px] text-black/50">
-                          {formatDate(order.createdAt)}
+                          {formatDate(order.createdAt, locale)}
                         </span>
                       </TD>
                       <TD>
