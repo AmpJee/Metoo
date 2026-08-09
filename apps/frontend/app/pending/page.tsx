@@ -46,7 +46,7 @@ export default async function PendingPage() {
   }
 
   // Approved users have no business here.
-  if (me.status === 'ONBOARDED') redirect('/explore')
+  if (me.status === 'ONBOARDED') redirect('/')
 
   const { icon: Icon, tone } = PRESENTATION[me.status]
   const title = t(`pending.${me.status}.title`)

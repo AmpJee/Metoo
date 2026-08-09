@@ -11,9 +11,11 @@
 export const en = {
   // --- header --------------------------------------------------------------
   'nav.stores': 'Stores',
+  'nav.home': 'Home',
   'nav.saved': 'Saved',
-  'nav.orders': 'Orders',
+  'nav.orders': 'History',
   'nav.cart': 'Cart',
+  'nav.chat': 'Chat',
   'nav.account': 'Account',
   'nav.search': 'Search products and brands',
   'nav.logout': 'Log out',
@@ -66,9 +68,11 @@ export type Dict = typeof en
 export const th: Record<keyof Dict, string> = {
   // --- header --------------------------------------------------------------
   'nav.stores': 'ร้านค้า',
+  'nav.home': 'หน้าแรก',
   'nav.saved': 'ที่บันทึกไว้',
-  'nav.orders': 'คำสั่งซื้อ',
+  'nav.orders': 'ประวัติ',
   'nav.cart': 'ตะกร้า',
+  'nav.chat': 'แชท',
   'nav.account': 'บัญชี',
   'nav.search': 'ค้นหาสินค้าและแบรนด์',
   'nav.logout': 'ออกจากระบบ',

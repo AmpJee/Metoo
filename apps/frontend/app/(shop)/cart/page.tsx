@@ -39,7 +39,7 @@ export default async function CartPage() {
             icon={ShoppingCart}
             title={t('cart.emptyTitle')}
             description={t('cart.emptyBody')}
-            action={{ label: t('cart.startShopping'), href: '/explore' }}
+            action={{ label: t('cart.startShopping'), href: '/' }}
           />
         </div>
       </div>
@@ -167,7 +167,7 @@ export default async function CartPage() {
           )}
 
           <Button asChild variant="ghost" className="mt-2 w-full">
-            <Link href="/explore">{t('cart.continue')}</Link>
+            <Link href="/">{t('cart.continue')}</Link>
           </Button>
         </aside>
       </div>

@@ -18,7 +18,7 @@ export async function CategoryNav({
     if (category) params.set('category', category)
     if (q) params.set('q', q)
     const query = params.toString()
-    return query ? `/explore?${query}` : '/explore'
+    return query ? `/?${query}` : '/'
   }
 
   return (

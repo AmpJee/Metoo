@@ -12,6 +12,27 @@ export const en = {
   'explore.title': 'Explore',
   'explore.all': 'All',
   'explore.results': 'Results for “{q}”',
+  // --- hero ----------------------------------------------------------------
+  // --- chat ----------------------------------------------------------------
+  'chat.title': 'Messages',
+  'chat.brandLine': 'Brand · usually replies within a day',
+  'chat.placeholder': 'Write a message…',
+  'chat.send': 'Send',
+  'chat.noMessages': 'No messages yet.',
+  'chat.emptyTitle': 'No conversations yet',
+  'chat.emptyBody':
+    'Open a brand’s store and press Chat with brand to ask about stock, lead time or a price.',
+  'chat.withBrand': 'Chat with brand',
+  'chat.firstMessage': 'Hello! I have a question about your products.',
+  'chat.failed': 'Could not open that conversation.',
+
+  'hero.find': 'Find your',
+  'hero.bestSeller': 'next best seller',
+  'hero.subtitle':
+    'Unlock wholesale pricing from local brands, and stock your shelves in minutes.',
+  'hero.signUpToBuy': 'Sign up to buy',
+  'hero.signUpToSell': 'Sign up to sell',
+  'hero.trusted': 'Trusted by {n} local brands',
   'explore.brandResults': 'Brands',
   'explore.productResults': 'Products',
   'explore.noPhoto': 'No photo',
@@ -333,6 +354,29 @@ export const th: Record<keyof Dict, string> = {
   'explore.title': 'สำรวจสินค้า',
   'explore.all': 'ทั้งหมด',
   'explore.results': 'ผลการค้นหา “{q}”',
+  // --- hero ----------------------------------------------------------------
+  // "Find your ..." with the category typed in after it. Thai puts the object
+  // last too, so the animation lands in the same place.
+  // --- chat ----------------------------------------------------------------
+  'chat.title': 'ข้อความ',
+  'chat.brandLine': 'แบรนด์ · มักตอบกลับภายใน 1 วัน',
+  'chat.placeholder': 'พิมพ์ข้อความ…',
+  'chat.send': 'ส่ง',
+  'chat.noMessages': 'ยังไม่มีข้อความ',
+  'chat.emptyTitle': 'ยังไม่มีการสนทนา',
+  'chat.emptyBody':
+    'เปิดหน้าร้านของแบรนด์แล้วกด “แชทกับแบรนด์” เพื่อถามเรื่องสต็อก ระยะเวลาผลิต หรือราคา',
+  'chat.withBrand': 'แชทกับแบรนด์',
+  'chat.firstMessage': 'สวัสดีครับ/ค่ะ สนใจสอบถามเกี่ยวกับสินค้าของแบรนด์',
+  'chat.failed': 'เปิดการสนทนาไม่สำเร็จ',
+
+  'hero.find': 'ค้นหา',
+  'hero.bestSeller': 'สินค้าขายดีตัวต่อไป',
+  'hero.subtitle':
+    'เข้าถึงราคาส่งจากแบรนด์ไทย แล้วเติมสินค้าเข้าร้านได้ในไม่กี่นาที',
+  'hero.signUpToBuy': 'สมัครเพื่อสั่งซื้อ',
+  'hero.signUpToSell': 'สมัครเพื่อขายสินค้า',
+  'hero.trusted': 'มี {n} แบรนด์ไทยขายอยู่บน metoo',
   'explore.brandResults': 'แบรนด์',
   'explore.productResults': 'สินค้า',
   'explore.noPhoto': 'ไม่มีรูปภาพ',

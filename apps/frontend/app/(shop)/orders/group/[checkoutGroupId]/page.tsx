@@ -84,7 +84,7 @@ export default async function CheckoutGroupPage({
           <Link href="/orders">{t('group.goToOrders')}</Link>
         </Button>
         <Button asChild variant="outline">
-          <Link href="/explore">{t('cart.continue')}</Link>
+          <Link href="/">{t('cart.continue')}</Link>
         </Button>
       </div>
     </div>

@@ -2,6 +2,7 @@ import { MapPin, PackageSearch, Star } from 'lucide-react'
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import { notFound } from 'next/navigation'
+import { ChatWithBrand } from '@/components/chat-with-brand'
 import { FollowButton } from '@/components/follow-button'
 import { ProductCard } from '@/components/product-card'
 import { EmptyState } from '@/components/ui/empty-state'
@@ -91,13 +92,21 @@ export default async function StorefrontPage({
           </div>
         </div>
 
-        {/* `following` is null for a viewer who is not a retailer — but this
-            route group is retailer-only, so it is a boolean in practice. */}
-        <FollowButton
-          brandId={store.id}
-          initialFollowing={store.following ?? false}
-          initialCount={store.followerCount}
-        />
+        <div className="flex flex-wrap items-center gap-3">
+          {/* `following` is null for a viewer who is not a retailer — this
+              page is public, so a visitor sees the button unfilled and is
+              sent to sign in when they press it. */}
+          <FollowButton
+            brandId={store.id}
+            initialFollowing={store.following ?? false}
+            initialCount={store.followerCount}
+          />
+          {/* The designer's entry into chat. On the storefront rather than the
+              product page: the questions a retailer asks — lead time, stock,
+              whether a bigger order changes the price — are about the brand,
+              not one item. */}
+          <ChatWithBrand brandId={store.id} />
+        </div>
       </header>
 
       {store.description ? (
