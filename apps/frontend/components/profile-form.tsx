@@ -26,15 +26,26 @@ export interface ProfileField {
  * The caller owns the save, because a retailer PATCHes /retailer/profile and a
  * brand PATCHes /brand/profile with different shapes. This handles everything
  * around it.
+ *
+ * `onSaved` and `onCancel` are for a caller that shows this inside a
+ * read-only → Edit toggle, as the buyer's account page does. Passing them
+ * hands the "saved" feedback back to that caller — the card collapses to its
+ * read-only state, which says the same thing a green banner would. Omit them
+ * and the form stays always-open with its own confirmation, which is what the
+ * seller console does.
  */
 export function ProfileForm({
   fields,
   onSave,
+  onSaved,
+  onCancel,
 }: {
   fields: ProfileField[]
   onSave: (
     values: Record<string, string>
   ) => Promise<{ ok: boolean; error?: string }>
+  onSaved?: () => void
+  onCancel?: () => void
 }) {
   const router = useRouter()
   const t = useT()
@@ -60,7 +71,10 @@ export function ProfileForm({
         setError(result.error ?? t('settings.saveFailed'))
         return
       }
-      setSaved(true)
+      // Only one of the two runs: a caller with an Edit toggle collapses the
+      // card, everyone else gets the inline banner.
+      if (onSaved) onSaved()
+      else setSaved(true)
       router.refresh()
     })
   }
@@ -121,14 +135,27 @@ export function ProfileForm({
         </p>
       ) : null}
 
-      <button
-        type="submit"
-        disabled={pending}
-        className="inline-flex h-10 w-fit items-center justify-center gap-2 rounded-[9px] bg-primary px-4 text-sm font-medium text-primary-foreground disabled:opacity-60"
-      >
-        {pending ? <Loader2 className="size-4 animate-spin" /> : null}
-        {t('common.save')}
-      </button>
+      <div className="flex items-center gap-5">
+        {onCancel ? (
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={pending}
+            className="cursor-pointer text-sm text-muted-foreground transition-colors hover:text-foreground disabled:opacity-60"
+          >
+            {t('common.cancel')}
+          </button>
+        ) : null}
+
+        <button
+          type="submit"
+          disabled={pending}
+          className="inline-flex h-10 w-fit items-center justify-center gap-2 rounded-[9px] bg-primary px-4 text-sm font-medium text-primary-foreground disabled:opacity-60"
+        >
+          {pending ? <Loader2 className="size-4 animate-spin" /> : null}
+          {t('common.save')}
+        </button>
+      </div>
     </form>
   )
 }

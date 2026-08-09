@@ -26,8 +26,19 @@ import type { RetailerProfile } from '@/lib/types'
  * Optional as a whole: leave it blank and checkout falls back to the shop
  * address, which is where goods went before this existed. The empty state
  * says so rather than leaving someone guessing whether they have to fill it.
+ *
+ * `onSaved`/`onCancel` let the account card collapse back to the address as
+ * written once it is saved; see `delivery-card.tsx`.
  */
-export function DeliveryAddressForm({ profile }: { profile: RetailerProfile }) {
+export function DeliveryAddressForm({
+  profile,
+  onSaved,
+  onCancel,
+}: {
+  profile: RetailerProfile
+  onSaved?: () => void
+  onCancel?: () => void
+}) {
   const router = useRouter()
   const t = useT()
   const locale = useLocale()
@@ -71,7 +82,8 @@ export function DeliveryAddressForm({ profile }: { profile: RetailerProfile }) {
         setError(result.error)
         return
       }
-      setSaved(true)
+      if (onSaved) onSaved()
+      else setSaved(true)
       router.refresh()
     })
   }
@@ -171,7 +183,18 @@ export function DeliveryAddressForm({ profile }: { profile: RetailerProfile }) {
         </p>
       ) : null}
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-5">
+        {onCancel ? (
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={pending}
+            className="cursor-pointer text-sm text-muted-foreground transition-colors hover:text-foreground disabled:opacity-60"
+          >
+            {t('common.cancel')}
+          </button>
+        ) : null}
+
         <Button type="submit" disabled={pending}>
           {pending ? <Loader2 className="mr-1 size-4 animate-spin" /> : null}
           {t('common.save')}

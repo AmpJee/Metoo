@@ -1,6 +1,6 @@
 'use client'
 
-import { ImageUp, Loader2 } from 'lucide-react'
+import { Camera, ImageUp, Loader2 } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useRef, useState, useTransition } from 'react'
@@ -27,15 +27,24 @@ const ACCEPTED = ['image/jpeg', 'image/png', 'image/webp']
  *
  * The same component serves both roles; the API builds the storage key from
  * the caller's own id, so neither can write into the other's folder.
+ *
+ * Two shapes. The default puts the avatar beside a labelled button and a note
+ * about file limits — a settings row that explains itself. `variant="avatar"`
+ * drops all of that and makes the picture itself the control, for the account
+ * card where it sits next to the shop's name and a second button would be
+ * competing with the name for the eye. The limits move into the tooltip, and
+ * an error still appears beneath.
  */
 export function PictureUpload({
   who,
   url,
   label,
+  variant = 'row',
 }: {
   who: 'retailer' | 'brand'
   url: string | null
   label: string
+  variant?: 'row' | 'avatar'
 }) {
   const router = useRouter()
   const t = useT()
@@ -88,23 +97,74 @@ export function PictureUpload({
     })
   }
 
+  const picture = (
+    <div className="relative size-20 shrink-0 overflow-hidden rounded-full border border-border bg-muted">
+      {preview ? (
+        <Image
+          src={preview}
+          alt={label}
+          fill
+          sizes="80px"
+          className="object-cover"
+        />
+      ) : (
+        <span className="flex size-full items-center justify-center text-muted-foreground">
+          <ImageUp className="size-6" />
+        </span>
+      )}
+    </div>
+  )
+
+  const fileInput = (
+    <input
+      ref={inputRef}
+      type="file"
+      accept={ACCEPTED.join(',')}
+      onChange={onPick}
+      className="hidden"
+    />
+  )
+
+  if (variant === 'avatar') {
+    return (
+      <div className="flex flex-col items-center gap-1.5">
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() => inputRef.current?.click()}
+          title={t('picture.limits')}
+          aria-label={t(preview ? 'picture.change' : 'picture.upload')}
+          className="group relative cursor-pointer rounded-full disabled:opacity-60"
+        >
+          {picture}
+          {/* Only on hover and focus: at rest this is a portrait, not a
+              control, and a permanent camera badge would say otherwise. */}
+          <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+            {pending ? (
+              <Loader2 className="size-5 animate-spin text-white" />
+            ) : (
+              <Camera className="size-5 text-white" />
+            )}
+          </span>
+        </button>
+
+        {error ? (
+          <span
+            role="alert"
+            className="max-w-[140px] text-center text-xs text-destructive"
+          >
+            {error}
+          </span>
+        ) : null}
+
+        {fileInput}
+      </div>
+    )
+  }
+
   return (
     <div className="flex items-center gap-4">
-      <div className="relative size-20 shrink-0 overflow-hidden rounded-full border border-border bg-muted">
-        {preview ? (
-          <Image
-            src={preview}
-            alt={label}
-            fill
-            sizes="80px"
-            className="object-cover"
-          />
-        ) : (
-          <span className="flex size-full items-center justify-center text-muted-foreground">
-            <ImageUp className="size-6" />
-          </span>
-        )}
-      </div>
+      {picture}
 
       <div className="flex flex-col gap-1">
         <button
@@ -126,13 +186,7 @@ export function PictureUpload({
         ) : null}
       </div>
 
-      <input
-        ref={inputRef}
-        type="file"
-        accept={ACCEPTED.join(',')}
-        onChange={onPick}
-        className="hidden"
-      />
+      {fileInput}
     </div>
   )
 }
