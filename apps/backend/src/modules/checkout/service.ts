@@ -32,7 +32,9 @@ import {
   resolveCommissionBps,
   splitAmount,
 } from '../../domain/commission.ts'
+import { resolveShippingAddress } from '../../domain/delivery-address.ts'
 import { generateOrderNumber } from '../../domain/order-number.ts'
+import { parcelWeightGrams, shippingFeeMinor } from '../../domain/shipping.ts'
 import { unitPriceMinor } from '../../domain/volume-pricing.ts'
 import { COUNTS_TOWARD_VOLUME } from '../../domain/order-state.ts'
 import { missingShopFields } from '../../domain/shop-profile.ts'
@@ -45,6 +47,8 @@ interface CheckoutLine {
   pricePerPackMinor: number
   /** Null when the product is made to order — there is nothing to take. */
   stockPacks: number | null
+  /** Null when the seller has not recorded it; shipping falls back. */
+  packWeightGrams: number | null
   packs: number
   category: Prisma.ProductGetPayload<object>['category']
 }
@@ -73,6 +77,7 @@ async function loadAndValidateCart(
           category: true,
           isActive: true,
           stockPacks: true,
+          packWeightGrams: true,
           priceTiers: {
             select: { minPacks: true, pricePerPackMinor: true },
             orderBy: { minPacks: 'asc' },
@@ -122,6 +127,7 @@ async function loadAndValidateCart(
         product.priceTiers,
         packs
       ),
+      packWeightGrams: product.packWeightGrams,
       packs,
       category: product.category,
       // Null means "made to order" — nothing to take.
@@ -183,6 +189,13 @@ export async function checkout(params: {
       addressLine: true,
       province: true,
       postalCode: true,
+      deliveryRecipient: true,
+      deliveryPhone: true,
+      deliveryAddressLine: true,
+      deliverySubdistrict: true,
+      deliveryDistrict: true,
+      deliveryProvince: true,
+      deliveryPostalCode: true,
       shopType: true,
       zone: true,
       currentProducts: true,
@@ -225,11 +238,30 @@ export async function checkout(params: {
     // show them together and payment can be tracked as one attempt.
     const checkoutGroupId = crypto.randomUUID()
 
+    // The delivery address if there is one, the shop address if not — same
+    // for every order in this basket, since one shop is receiving them.
+    const shippingAddress = resolveShippingAddress(retailer)
+
+    // Read before anything is written, so all of this basket's orders agree.
+    const isFirstOrder = (await tx.order.count({ where: { retailerId } })) === 0
+
     const orders = []
 
     for (const group of groups) {
       const category = dominantCategory(group.items)
       const recentOrders = await countRecentOrders(group.brandId, tx)
+      // Per brand order, because that is one parcel from one place.
+      //
+      // `isFirstOrder` is read once before any order exists, so a first
+      // checkout spanning three brands has all three delivered free — it is
+      // one purchase to the shop making it, and charging two of the three
+      // would read as the offer half-working.
+      const shipping = shippingFeeMinor({
+        weightGrams: parcelWeightGrams(group.items),
+        subtotalMinor: group.subtotalMinor,
+        isFirstOrder,
+      })
+
       const commissionBps = resolveCommissionBps(category, recentOrders)
       const { commissionMinor, payoutMinor } = splitAmount(
         group.subtotalMinor,
@@ -244,21 +276,22 @@ export async function checkout(params: {
           brandId: group.brandId,
           status: 'PENDING',
           subtotalMinor: group.subtotalMinor,
-          // Shipping is not charged to the retailer at MVP; what logistics
-          // costs the platform is recorded separately in deliveryCostMinor.
-          shippingMinor: 0,
-          totalMinor: group.subtotalMinor,
+          // Resolved here and snapshotted, like the commission rate: payment
+          // is one manual bank transfer against the total on screen, so the
+          // number cannot move afterwards. What the courier actually charges
+          // the platform is recorded separately in deliveryCostMinor.
+          shippingMinor: shipping,
+          totalMinor: group.subtotalMinor + shipping,
           paymentMethod,
           commissionBps,
           commissionMinor,
           payoutMinor,
-          shippingAddress: {
-            shopName: retailer.shopName,
-            phone: retailer.phone,
-            addressLine: retailer.addressLine,
-            province: retailer.province,
-            postalCode: retailer.postalCode,
-          },
+          // Snapshotted, like the price and the commission rate: a courier
+          // reading a two-week-old label must see the address agreed then,
+          // not the one the shop edited yesterday.
+          // Spread into a plain object: Prisma's Json input type does not
+          // accept a declared interface, only a structural literal.
+          shippingAddress: { ...shippingAddress },
           items: {
             create: group.items.map((line) => ({
               productId: line.productId,

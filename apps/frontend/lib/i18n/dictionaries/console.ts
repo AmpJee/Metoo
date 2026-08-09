@@ -153,6 +153,9 @@ export const en = {
   'productForm.minPacks': 'Minimum order (packs)',
   'productForm.minPacksHint': 'The fewest packs a retailer may order.',
   'productForm.stock': 'Stock (packs)',
+  'productForm.packWeight': 'Pack weight (grams)',
+  'productForm.packWeightHint':
+    'Delivery is priced from this. A missing weight is billed at 1 kg a pack.',
   'productForm.stockHint': 'Leave blank for made to order.',
   'productForm.visible': 'Visible in the catalog',
   'productForm.badPrice': 'Enter a price greater than zero.',
@@ -639,6 +642,9 @@ export const th: Record<keyof Dict, string> = {
   'productForm.minPacks': 'สั่งซื้อขั้นต่ำ (แพ็ก)',
   'productForm.minPacksHint': 'จำนวนแพ็กน้อยที่สุดที่ร้านค้าปลีกสั่งได้',
   'productForm.stock': 'สต็อก (แพ็ก)',
+  'productForm.packWeight': 'น้ำหนักต่อแพ็ก (กรัม)',
+  'productForm.packWeightHint':
+    'ใช้คำนวณค่าจัดส่ง หากไม่ระบุ ระบบจะคิดที่ 1 กก. ต่อแพ็ก',
   'productForm.stockHint': 'เว้นว่างไว้หากผลิตตามสั่ง',
   'productForm.visible': 'แสดงในแคตตาล็อก',
   'productForm.badPrice': 'กรุณากรอกราคามากกว่าศูนย์',

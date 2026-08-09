@@ -97,22 +97,49 @@ export default async function CartPage() {
                   { n: cart.itemCount }
                 )}
               </dt>
-              <dd>{formatBaht(cart.totalMinor)}</dd>
+              <dd>{formatBaht(cart.subtotalMinor)}</dd>
             </div>
             <div className="flex justify-between">
               <dt className="text-muted-foreground">{t('cart.shipping')}</dt>
-              {/* Delivery cost is set by an admin per order after it is
-                  placed, so it genuinely is not known here. */}
-              <dd className="text-muted-foreground">
-                {t('cart.shippingLater')}
+              {/* A real number, priced by the same rule checkout will use.
+                  Payment is one bank transfer against this total, so it has
+                  to be final here. */}
+              <dd>
+                {cart.shippingMinor === 0
+                  ? t('cart.shippingFree')
+                  : formatBaht(cart.shippingMinor)}
               </dd>
             </div>
+            {/* Say why it is free, or the number looks arbitrary and the
+                offer does no work. */}
+            {cart.firstOrderFreeShipping ? (
+              <p className="text-xs text-success">
+                {t('cart.firstOrderFreeShipping')}
+              </p>
+            ) : null}
           </dl>
 
           <div className="mt-4 flex justify-between border-t border-border pt-4 text-base font-semibold">
             <span>{t('cart.total')}</span>
             <span className="text-primary">{formatBaht(cart.totalMinor)}</span>
           </div>
+
+          {/* The one number that changes what someone puts in a basket. Shown
+              per brand because the threshold is per brand — a parcel is one
+              brand's goods. */}
+          {(cart.firstOrderFreeShipping ? [] : cart.groups)
+            .filter((group) => group.toFreeShippingMinor > 0)
+            .map((group) => (
+              <p
+                key={group.brand.id}
+                className="mt-3 rounded-md bg-secondary p-3 text-xs text-muted-foreground"
+              >
+                {t('cart.toFreeShipping', {
+                  brand: group.brand.name,
+                  amount: formatBaht(group.toFreeShippingMinor),
+                })}
+              </p>
+            ))}
 
           {cart.brandCount > 1 ? (
             <p className="mt-3 rounded-md bg-secondary p-3 text-xs text-muted-foreground">

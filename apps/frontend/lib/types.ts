@@ -84,6 +84,8 @@ export interface CatalogProduct {
  */
 export interface CatalogProductDetail extends CatalogProduct {
   packPresets: number[]
+  /** Grams per pack. What the delivery estimate on the page is priced from. */
+  packWeightGrams: number | null
   /** Volume pricing, cheapest threshold first. Empty when there is none. */
   priceTiers: PriceTier[]
 }
@@ -115,13 +117,24 @@ export interface CartGroup {
   brand: { id: string; name: string }
   items: CartItem[]
   subtotalMinor: number
+  /** Delivery for this brand's parcel. Zero once the order qualifies. */
+  shippingMinor: number
+  /** How much more this brand needs for free delivery. Zero once free. */
+  toFreeShippingMinor: number
 }
 
 export interface Cart {
   /** How many orders checkout will create — one per brand. */
   brandCount: number
   itemCount: number
+  /** Goods only. */
+  subtotalMinor: number
+  /** Delivery across every brand parcel. */
+  shippingMinor: number
+  /** Subtotal + shipping: what the retailer transfers. */
   totalMinor: number
+  /** True until their first order — delivery is on metoo, so shipping is 0. */
+  firstOrderFreeShipping: boolean
   groups: CartGroup[]
 }
 
@@ -162,12 +175,24 @@ export interface Order {
   subtotalMinor: number
   shippingMinor: number
   totalMinor: number
-  /** Snapshot taken at checkout, so it stays true if the profile changes. */
+  /**
+   * Snapshot taken at checkout, so it stays true if the profile changes.
+   *
+   * Every field optional because orders placed before the delivery address
+   * existed carry the older, shorter shape — the shop's address with no
+   * recipient, sub-district or district. Rendering has to survive both.
+   */
   shippingAddress: {
+    /** Who signs for it. Absent on orders placed before this existed. */
+    recipient?: string
     addressLine?: string
+    subdistrict?: string
+    district?: string
     province?: string
     postalCode?: string
     phone?: string
+    /** True when it fell back to the shop address. */
+    usedShopAddress?: boolean
   } | null
   /** When the buyer sent their transfer slip. The file is admin-only. */
   paymentSlipAt: string | null
@@ -199,6 +224,15 @@ export interface RetailerProfile {
   monthlyCapacity: number | null
   preferredPayment: PaymentPreference | null
   deliveryWindow: string | null
+
+  // Where parcels go, separate from the shop address above.
+  deliveryRecipient: string | null
+  deliveryPhone: string | null
+  deliveryAddressLine: string | null
+  deliverySubdistrict: string | null
+  deliveryDistrict: string | null
+  deliveryProvince: string | null
+  deliveryPostalCode: string | null
 
   /** Blank required fields. Empty means this shop can check out. */
   missingForCheckout: Array<{ field: string; label: string }>
@@ -426,6 +460,8 @@ export interface BrandProduct {
   pricePerPackMinor: number
   minPacks: number
   unitsPerPack: number
+  /** Grams per pack. What the delivery fee is priced from. */
+  packWeightGrams: number | null
   category: Category
   stockPacks: number | null
   isActive: boolean

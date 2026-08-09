@@ -1,4 +1,12 @@
-import { Heart, History, Home, Search, ShoppingCart, Store } from 'lucide-react'
+import {
+  Heart,
+  Package,
+  Search,
+  Settings,
+  ShoppingCart,
+  Store,
+} from 'lucide-react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { LanguageToggle } from '@/components/language-toggle'
 import { LogoutButton } from '@/components/logout-button'
@@ -29,11 +37,17 @@ export async function SiteHeader({
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background">
       <div className="container-page flex h-[44px] items-center gap-[14px] md:h-[86px] md:gap-x-[36px]">
-        <Link
-          href="/"
-          className="shrink-0 text-[20px] font-bold text-primary md:text-[28px]"
-        >
-          metoo
+        <Link href="/explore" className="shrink-0" aria-label="metoo">
+          {/* The mark, not the word set in bold. Sized by height so it keeps
+              the two heights the header design already uses. */}
+          <Image
+            src="/logo-wordmark.svg"
+            alt=""
+            width={124}
+            height={30}
+            className="h-[22px] w-auto md:h-[30px]"
+            priority
+          />
         </Link>
 
         <form action="/" className="relative hidden flex-1 md:block">

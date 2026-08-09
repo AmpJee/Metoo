@@ -69,7 +69,31 @@ export const en = {
   'cart.subtotalItems': 'Subtotal ({n} items)',
   'cart.subtotalItem': 'Subtotal ({n} item)',
   'cart.shipping': 'Shipping',
-  'cart.shippingLater': 'Calculated after ordering',
+  'delivery.title': 'Delivery address',
+  'delivery.subtitle':
+    'Where parcels are sent. Separate from your shop address — leave it blank ' +
+    'and we deliver to the shop.',
+  'delivery.usingShopAddress':
+    'No delivery address yet, so orders go to your shop address.',
+  'delivery.recipient': 'Recipient name',
+  'delivery.recipientPlaceholder': 'Who signs for the parcel',
+  'delivery.phone': 'Phone number',
+  'delivery.addressLine': 'House no., soi, moo, road',
+  'delivery.addressLinePlaceholder': 'e.g. 112, room 705, Soi Vibhavadi 2',
+  'delivery.subdistrict': 'Sub-district',
+  'delivery.district': 'District',
+  'delivery.province': 'Province',
+  'delivery.chooseProvince': 'Choose a province',
+  'delivery.postalCode': 'Postal code',
+  'cart.shippingFree': 'Free',
+  'cart.firstOrderFreeShipping':
+    'Welcome — delivery is on us for your first order.',
+  'product.shippingEstimate': 'Delivery about {amount} for this quantity',
+  'product.shippingFree': 'Free delivery',
+  'product.shippingToFree':
+    'Add {amount} more from this brand for free delivery',
+  'cart.toFreeShipping':
+    'Add {amount} more from {brand} for free delivery on their parcel.',
   'cart.total': 'Total',
   'cart.splitNotice':
     'Your cart spans {n} brands, so it will be placed as {n} separate orders — one per brand, each tracked and delivered on its own.',
@@ -93,7 +117,7 @@ export const en = {
   'checkout.totalPayment': 'Total Payment',
   'checkout.merchandiseSubtotal': 'Merchandise subtotal',
   'checkout.shippingSubtotal': 'Shipping subtotal',
-  'checkout.shippingLater': 'Set after confirmation',
+
   'checkout.orderTotal': 'Order Total',
   'checkout.splitNotice':
     'This becomes {n} orders, one per brand. Each is confirmed and delivered separately, so a delay at one brand never holds up another.',
@@ -101,10 +125,8 @@ export const en = {
   'checkout.paymentMethod': 'Payment Method',
   'checkout.promptpay': 'QR PromptPay',
   'checkout.promptpayHint': 'Scan and transfer once the order is placed',
-  'checkout.card': 'Credit / Debit Card',
-  'checkout.cardHint': 'Coming soon',
   'checkout.noPaymentNow':
-    'No payment is taken now. Once the order is placed you will get a PromptPay QR to transfer to, then send us the slip — we confirm it arrived and the brand accepts your order.',
+    'No payment is taken now. This total, delivery included, is what you transfer once the order is placed — scan the PromptPay QR, send us the slip, and the brand accepts your order once we confirm it.',
   'checkout.placeOrder': 'Place Order',
   'checkout.placeOrderSplit': 'Place Order ({n} orders)',
 
@@ -273,7 +295,6 @@ export const en = {
   'shopOps.currentProductsPlaceholder': 'Snacks, drinks, household goods…',
   'shopOps.capacity': 'Monthly capacity (orders you can take)',
   'shopOps.capacityPlaceholder': 'e.g. 40',
-  'shopOps.preferredPayment': 'Preferred payment',
   'shopOps.deliveryWindow': 'Delivery window',
   'shopOps.deliveryWindowPlaceholder': 'e.g. Weekday mornings, 9am–12pm',
   'shopOps.save': 'Save shop details',
@@ -380,7 +401,28 @@ export const th: Record<keyof Dict, string> = {
   'cart.subtotalItems': 'ยอดรวมสินค้า ({n} รายการ)',
   'cart.subtotalItem': 'ยอดรวมสินค้า ({n} รายการ)',
   'cart.shipping': 'ค่าจัดส่ง',
-  'cart.shippingLater': 'คำนวณหลังสั่งซื้อ',
+  'delivery.title': 'ที่อยู่ในการจัดส่ง',
+  'delivery.subtitle':
+    'ที่อยู่สำหรับส่งพัสดุ แยกจากที่อยู่ร้านค้า หากเว้นว่างไว้ เราจะจัดส่งไปที่ร้านของคุณ',
+  'delivery.usingShopAddress':
+    'ยังไม่ได้ตั้งที่อยู่จัดส่ง ระบบจะส่งพัสดุไปที่อยู่ร้านค้าของคุณ',
+  'delivery.recipient': 'ชื่อ นามสกุล ผู้รับ',
+  'delivery.recipientPlaceholder': 'ผู้ที่รับพัสดุแทนได้',
+  'delivery.phone': 'หมายเลขโทรศัพท์',
+  'delivery.addressLine': 'บ้านเลขที่, ซอย, หมู่, ถนน',
+  'delivery.addressLinePlaceholder': 'เช่น 112 ห้อง 705 ซอย วิภาวดีรังสิต 2',
+  'delivery.subdistrict': 'แขวง/ตำบล',
+  'delivery.district': 'เขต/อำเภอ',
+  'delivery.province': 'จังหวัด',
+  'delivery.chooseProvince': 'เลือกจังหวัด',
+  'delivery.postalCode': 'รหัสไปรษณีย์',
+  'cart.shippingFree': 'ฟรี',
+  'cart.firstOrderFreeShipping': 'ยินดีต้อนรับ — คำสั่งซื้อแรกของคุณ ส่งฟรี',
+  'product.shippingEstimate': 'ค่าจัดส่งประมาณ {amount} สำหรับจำนวนนี้',
+  'product.shippingFree': 'ส่งฟรี',
+  'product.shippingToFree': 'สั่งจากแบรนด์นี้เพิ่มอีก {amount} ส่งฟรี',
+  'cart.toFreeShipping':
+    'สั่งจาก {brand} เพิ่มอีก {amount} ส่งฟรีสำหรับพัสดุนี้',
   'cart.total': 'ยอดรวมทั้งหมด',
   'cart.splitNotice':
     'ตะกร้าของคุณมีสินค้าจาก {n} แบรนด์ ระบบจะแยกเป็น {n} คำสั่งซื้อ แบรนด์ละ 1 รายการ ติดตามและจัดส่งแยกกัน',
@@ -404,7 +446,7 @@ export const th: Record<keyof Dict, string> = {
   'checkout.totalPayment': 'ยอดชำระทั้งหมด',
   'checkout.merchandiseSubtotal': 'ยอดรวมค่าสินค้า',
   'checkout.shippingSubtotal': 'ยอดรวมค่าจัดส่ง',
-  'checkout.shippingLater': 'กำหนดหลังยืนยันออร์เดอร์',
+
   'checkout.orderTotal': 'ยอดรวมคำสั่งซื้อ',
   'checkout.splitNotice':
     'รายการนี้จะแยกเป็น {n} คำสั่งซื้อ แบรนด์ละ 1 รายการ แต่ละรายการยืนยันและจัดส่งแยกกัน ความล่าช้าของแบรนด์หนึ่งจึงไม่กระทบอีกแบรนด์',
@@ -412,10 +454,8 @@ export const th: Record<keyof Dict, string> = {
   'checkout.paymentMethod': 'วิธีชำระเงิน',
   'checkout.promptpay': 'PromptPay QR',
   'checkout.promptpayHint': 'สแกนและโอนเงินหลังสั่งซื้อ',
-  'checkout.card': 'บัตรเครดิต / เดบิต',
-  'checkout.cardHint': 'เร็ว ๆ นี้',
   'checkout.noPaymentNow':
-    'ยังไม่มีการเรียกเก็บเงินตอนนี้ เมื่อสั่งซื้อแล้วคุณจะได้รับ PromptPay QR เพื่อโอนเงิน จากนั้นส่งสลิปให้เรา เมื่อเรายืนยันแล้ว แบรนด์จะรับออร์เดอร์ของคุณ',
+    'ยังไม่มีการเรียกเก็บเงินตอนนี้ ยอดรวมนี้รวมค่าจัดส่งแล้ว และเป็นยอดที่คุณจะโอนหลังสั่งซื้อ สแกน PromptPay QR แล้วส่งสลิปให้เรา เมื่อเรายืนยันแล้ว แบรนด์จะรับออร์เดอร์ของคุณ',
   'checkout.placeOrder': 'ยืนยันสั่งซื้อ',
   'checkout.placeOrderSplit': 'ยืนยันสั่งซื้อ ({n} คำสั่งซื้อ)',
 
@@ -581,7 +621,6 @@ export const th: Record<keyof Dict, string> = {
   'shopOps.currentProductsPlaceholder': 'ขนม เครื่องดื่ม ของใช้ในบ้าน…',
   'shopOps.capacity': 'จำนวนออร์เดอร์ที่รับได้ต่อเดือน',
   'shopOps.capacityPlaceholder': 'เช่น 40',
-  'shopOps.preferredPayment': 'วิธีชำระเงินที่สะดวก',
   'shopOps.deliveryWindow': 'ช่วงเวลาที่สะดวกรับสินค้า',
   'shopOps.deliveryWindowPlaceholder': 'เช่น วันธรรมดาช่วงเช้า 9:00–12:00 น.',
   'shopOps.save': 'บันทึกข้อมูลร้าน',
