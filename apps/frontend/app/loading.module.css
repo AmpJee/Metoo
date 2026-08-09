@@ -19,8 +19,6 @@
 .mark {
   width: 96px;
   height: 96px;
-  border-radius: 18px;
-  background: var(--color-primary);
   /* The design's tilt. Kept as the resting angle so the animation eases
      around it rather than away from it. */
   transform: rotate(-12deg);
