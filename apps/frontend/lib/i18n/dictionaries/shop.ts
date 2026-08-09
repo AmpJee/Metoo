@@ -75,6 +75,7 @@ export const en = {
   'delivery.subdistrict': 'Sub-district',
   'delivery.district': 'District',
   'delivery.province': 'Province',
+  'delivery.chooseProvince': 'Choose a province',
   'delivery.postalCode': 'Postal code',
   'cart.shippingFree': 'Free',
   'cart.firstOrderFreeShipping':
@@ -398,6 +399,7 @@ export const th: Record<keyof Dict, string> = {
   'delivery.subdistrict': 'แขวง/ตำบล',
   'delivery.district': 'เขต/อำเภอ',
   'delivery.province': 'จังหวัด',
+  'delivery.chooseProvince': 'เลือกจังหวัด',
   'delivery.postalCode': 'รหัสไปรษณีย์',
   'cart.shippingFree': 'ฟรี',
   'cart.firstOrderFreeShipping': 'ยินดีต้อนรับ — คำสั่งซื้อแรกของคุณ ส่งฟรี',
