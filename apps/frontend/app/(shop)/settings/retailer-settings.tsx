@@ -20,6 +20,10 @@ import type { RetailerProfile } from '@/lib/types'
  * `ProfileForm` still serves the seller console, whose fields really are
  * independent.
  *
+ * Reads before it edits, as the designer's card does. Most visits here are to
+ * check what is on file rather than to change it, and a page of open form
+ * fields makes "what is my postcode" a harder question than it should be.
+ *
  * Pipeline fields — shop type, zone, admin notes — are deliberately absent.
  * An admin maintains those from the console, and the API refuses them here.
  */

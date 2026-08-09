@@ -92,8 +92,8 @@ export const en = {
   'delivery.recipientPlaceholder': 'Who signs for the parcel',
   'delivery.phone': 'Phone number',
   'delivery.addressLine': 'House no., soi, moo, road',
-  // Generic on purpose. A placeholder ships to every user, so it must never
-  // be a real address belonging to anyone.
+  // Generic on purpose. A placeholder is shipped to every user, so it must
+  // never be a real address belonging to anyone.
   'delivery.addressLinePlaceholder': 'House no., building, soi, road',
   'delivery.subdistrict': 'Sub-district',
   'delivery.district': 'District',
@@ -303,6 +303,15 @@ export const en = {
   'settings.postalCode': 'Postal code',
   'settings.taxId': 'Tax ID',
   'settings.saveFailed': 'Could not save your profile.',
+  'settings.edit': 'Edit',
+  'settings.notSet': 'Not set',
+  'settings.retailerAccount': 'Retailer account',
+  'settings.backToShop': 'Back to the marketplace',
+  'settings.shortcuts': 'Shortcuts',
+  'settings.myPurchases': 'My purchases',
+  'settings.myReturns': 'Returns and refunds',
+  'settings.changePassword': 'Change password',
+  'settings.passwordHidden': '••••••••',
 
   // --- how your shop operates ----------------------------------------------
   'shopOps.title': 'How your shop operates',
@@ -648,6 +657,15 @@ export const th: Record<keyof Dict, string> = {
   'settings.postalCode': 'รหัสไปรษณีย์',
   'settings.taxId': 'เลขประจำตัวผู้เสียภาษี',
   'settings.saveFailed': 'บันทึกข้อมูลไม่สำเร็จ',
+  'settings.edit': 'แก้ไข',
+  'settings.notSet': 'ยังไม่ได้กรอก',
+  'settings.retailerAccount': 'บัญชีร้านค้าปลีก',
+  'settings.backToShop': 'กลับไปหน้าเลือกซื้อสินค้า',
+  'settings.shortcuts': 'ทางลัด',
+  'settings.myPurchases': 'คำสั่งซื้อของฉัน',
+  'settings.myReturns': 'คืนสินค้า/คืนเงิน',
+  'settings.changePassword': 'เปลี่ยนรหัสผ่าน',
+  'settings.passwordHidden': '••••••••',
 
   // --- how your shop operates ----------------------------------------------
   'shopOps.title': 'ข้อมูลการดำเนินงานของร้าน',

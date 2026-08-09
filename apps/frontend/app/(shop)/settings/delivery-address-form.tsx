@@ -26,7 +26,15 @@ import type { RetailerProfile } from '@/lib/types'
  * back to the shop address when this is empty, so the stored shape and the
  * wording on screen finally agree.
  */
-export function DeliveryAddressForm({ profile }: { profile: RetailerProfile }) {
+export function DeliveryAddressForm({
+  profile,
+  onSaved,
+  onCancel,
+}: {
+  profile: RetailerProfile
+  onSaved?: () => void
+  onCancel?: () => void
+}) {
   const router = useRouter()
   const t = useT()
   const [error, setError] = useState<string | null>(null)
@@ -73,7 +81,8 @@ export function DeliveryAddressForm({ profile }: { profile: RetailerProfile }) {
         setError(result.error)
         return
       }
-      setSaved(true)
+      if (onSaved) onSaved()
+      else setSaved(true)
       router.refresh()
     })
   }
@@ -151,7 +160,18 @@ export function DeliveryAddressForm({ profile }: { profile: RetailerProfile }) {
         </p>
       ) : null}
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-5">
+        {onCancel ? (
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={pending}
+            className="cursor-pointer text-sm text-muted-foreground transition-colors hover:text-foreground disabled:opacity-60"
+          >
+            {t('common.cancel')}
+          </button>
+        ) : null}
+
         <Button type="submit" disabled={pending}>
           {pending ? <Loader2 className="mr-1 size-4 animate-spin" /> : null}
           {t('common.save')}
