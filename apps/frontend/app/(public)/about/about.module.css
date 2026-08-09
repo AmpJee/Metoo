@@ -379,15 +379,9 @@
   z-index: 30;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  /* Only the pills live here now, and the design puts them on the right. */
+  justify-content: flex-end;
   gap: 1rem;
-}
-.topLogo {
-  color: var(--pink);
-  font-size: 18px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  text-transform: uppercase;
 }
 .pillNav {
   display: flex;
@@ -442,9 +436,6 @@
     align-items: flex-start;
     gap: 0.75rem;
     padding: 1rem 1rem 0;
-  }
-  .topLogo {
-    color: var(--pink);
   }
   .pillNav {
     width: 100%;
