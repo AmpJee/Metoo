@@ -106,7 +106,11 @@ export default async function HomePage({
       ) : null}
 
       <div className="mt-8">
-        {brands.length > 0 && page.items.length > 0 ? (
+        {/* Only when the Brands row is actually above it. `brands` is now
+            also fetched unfiltered just to count them for the hero, so
+            testing it alone put a "Products" heading on the plain catalog
+            with nothing to distinguish it from. */}
+        {q && brands.length > 0 && page.items.length > 0 ? (
           <h2 className="mb-4 text-base font-semibold">
             {t('explore.productResults')}
           </h2>

@@ -430,6 +430,17 @@
 }
 
 @media (max-width: 900px) {
+  /* The nav leaves the overlay and joins the flow here, so the hero has to
+     stop being a row — otherwise the pills and the headline sit side by side
+     and the text is squeezed to a sliver, taking the page wider than the
+     phone. Column, with the text still pinned to the bottom. */
+  .hero {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .heroInner {
+    margin-top: auto;
+  }
   .topBar {
     position: static;
     flex-direction: column;
