@@ -9,4 +9,4 @@
  * there is nothing to keep secret, and a missing env var would render an empty
  * mailto rather than fail loudly.
  */
-export const SUPPORT_EMAIL = 'metoo.wholesale@gmail.com'
+export const SUPPORT_EMAIL = 'metoo.u2207@gmail.com'
