@@ -22,12 +22,19 @@ import type { ChatMessage } from '@/lib/types'
 export function ChatThread({
   threadId,
   counterpartyName,
+  counterpartyLine,
   viewerId,
   initialMessages,
   hasUnread,
 }: {
   threadId: string
   counterpartyName: string
+  /**
+   * The line under the name. Passed in rather than fixed, because the two
+   * sides of a thread describe each other differently: a shop is talking to a
+   * brand, and the brand is talking to a shop.
+   */
+  counterpartyLine?: string
   viewerId: string
   initialMessages: ChatMessage[]
   hasUnread: boolean
@@ -81,7 +88,9 @@ export function ChatThread({
     <div className="flex min-h-[520px] flex-col rounded-[9px] border border-border">
       <header className="border-b border-border px-5 py-4">
         <p className="font-semibold">{counterpartyName}</p>
-        <p className="text-xs text-muted-foreground">{t('chat.brandLine')}</p>
+        <p className="text-xs text-muted-foreground">
+          {counterpartyLine ?? t('chat.brandLine')}
+        </p>
       </header>
 
       <div className="flex flex-1 flex-col gap-3 overflow-y-auto p-5">

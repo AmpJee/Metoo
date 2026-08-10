@@ -275,6 +275,12 @@ model RetailerProfile {
   shopName    String
   phone       String
   addressLine String
+  /// แขวง/ตำบล. Nullable because shops that signed up before the address
+  /// picker existed have an addressLine and a province and nothing between
+  /// them; requiring it would lock them out of their own settings page.
+  subdistrict String?
+  /// เขต/อำเภอ. Nullable for the same reason.
+  district    String?
   province    String
   postalCode  String
   taxId       String?

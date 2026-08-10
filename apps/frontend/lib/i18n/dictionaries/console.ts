@@ -16,8 +16,13 @@ export const en = {
   'console.admin': 'Management Console',
 
   // --- sidebar -------------------------------------------------------------
+  'sellerChat.shopLine': 'Shop · a retailer who messaged you',
+  'sellerChat.emptyTitle': 'No messages yet',
+  'sellerChat.emptyBody':
+    'Retailers start these conversations from your store page. When one writes to you it appears here.',
   'nav.seller.dashboard': 'Dashboard',
   'nav.seller.orders': 'Orders',
+  'nav.seller.chat': 'Messages',
   'nav.seller.products': 'Products',
   'nav.seller.wallet': 'Wallet',
   'nav.seller.customers': 'Customers',
@@ -506,8 +511,13 @@ export const th: Record<keyof Dict, string> = {
   'console.admin': 'ระบบจัดการหลังบ้าน',
 
   // --- sidebar -------------------------------------------------------------
+  'sellerChat.shopLine': 'ร้านค้าปลีก · ผู้ที่ทักหาคุณ',
+  'sellerChat.emptyTitle': 'ยังไม่มีข้อความ',
+  'sellerChat.emptyBody':
+    'ร้านค้าปลีกจะเริ่มการสนทนาจากหน้าร้านของคุณ เมื่อมีคนทักเข้ามา ข้อความจะแสดงที่นี่',
   'nav.seller.dashboard': 'ภาพรวม',
   'nav.seller.orders': 'ออร์เดอร์',
+  'nav.seller.chat': 'ข้อความ',
   'nav.seller.products': 'สินค้า',
   'nav.seller.wallet': 'กระเป๋าเงิน',
   'nav.seller.customers': 'ลูกค้า',

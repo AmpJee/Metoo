@@ -40,6 +40,11 @@ const retailerProfile = t.Object({
   shopName: t.String(),
   phone: t.String(),
   addressLine: t.String(),
+  // Nullable, unlike the rest of the shop address: shops that signed up
+  // before the picker existed have the district buried in addressLine as
+  // prose, and nothing can safely split it back out.
+  subdistrict: t.Union([t.String(), t.Null()]),
+  district: t.Union([t.String(), t.Null()]),
   province: t.String(),
   postalCode: t.String(),
   taxId: t.Union([t.String(), t.Null()]),
@@ -108,6 +113,17 @@ export const retailerProfileModule = new Elysia({
           shopName: t.Optional(t.String({ minLength: 1, maxLength: 120 })),
           taxId: t.Optional(t.Union([t.String({ maxLength: 20 }), t.Null()])),
           ...t.Partial(t.Object(CONTACT_FIELDS)).properties,
+
+          // The two halves of the shop address that CONTACT_FIELDS does not
+          // cover. Nullable so clearing one is expressible — a shop that
+          // picked the wrong district must be able to unset it, not just
+          // overwrite it with another wrong one.
+          subdistrict: t.Optional(
+            t.Union([t.String({ maxLength: 100 }), t.Null()])
+          ),
+          district: t.Optional(
+            t.Union([t.String({ maxLength: 100 }), t.Null()])
+          ),
 
           // Operational details, editable by the shop itself. Admin can still
           // edit them too, from the pipeline route — onboarding happens over

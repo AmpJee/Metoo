@@ -12,6 +12,7 @@ import { adminModule } from './modules/admin/index.ts'
 import { adminOrdersModule } from './modules/admin-orders/index.ts'
 import { adminSummaryModule } from './modules/admin-summary/index.ts'
 import { adminWithdrawalsModule } from './modules/admin-withdrawals/index.ts'
+import { addressModule } from './modules/address/index.ts'
 import { authModule } from './modules/auth/index.ts'
 import { brandCustomersModule } from './modules/brand-customers/index.ts'
 import { brandDashboardModule } from './modules/brand-dashboard/index.ts'
@@ -76,6 +77,9 @@ export const app = new Elysia()
   .use(productImagesModule)
   .use(productImageUploadModule)
   .use(catalogModule)
+  // Public reference data, beside the catalog for the same reason: no session
+  // needed, and signup asks for an address before there is one.
+  .use(addressModule)
   .use(favouritesModule)
   .use(savedForLaterModule)
   .use(savedStatusModule)

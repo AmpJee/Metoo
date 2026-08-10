@@ -212,6 +212,9 @@ export interface RetailerProfile {
   shopName: string
   phone: string
   addressLine: string
+  /** Nullable: shops that predate the area picker have neither on file. */
+  subdistrict: string | null
+  district: string | null
   province: string
   postalCode: string
   taxId: string | null
@@ -683,4 +686,23 @@ export interface ChatThread {
   unreadCount: number
   lastMessageAt: string
   createdAt: string
+}
+
+/**
+ * Thai administrative areas, from GET /address/districts.
+ *
+ * One province's worth at a time — the largest is under 8KB, so the whole
+ * district → sub-district → postcode cascade runs off a single response.
+ */
+export interface AddressSubDistrict {
+  name: string
+  /** So an English-locale form can label its own dropdown. */
+  nameEn: string
+  postalCode: string
+}
+
+export interface AddressDistrict {
+  name: string
+  nameEn: string
+  subDistricts: AddressSubDistrict[]
 }

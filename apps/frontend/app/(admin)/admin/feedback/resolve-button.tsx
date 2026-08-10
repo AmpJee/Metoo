@@ -53,7 +53,7 @@ export function ResolveButton({ id }: { id: string }) {
           }}
         >
           {pending ? <Loader2 className="size-3 animate-spin" /> : null}
-          Mark resolved
+          {t('feedback.markResolved')}
         </CButton>
         <CButton size="sm" variant="ghost" onClick={() => setOpen(false)}>
           {t('common.cancel')}

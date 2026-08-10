@@ -170,7 +170,7 @@ function CallToAction({ t }: { t: Translate }) {
         </Link>
       </div>
 
-      <Link href="/explore" className={styles.btn}>
+      <Link href="/" className={styles.btn}>
         {t('story.ctaBrowse')}
       </Link>
     </section>

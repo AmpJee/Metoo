@@ -19,8 +19,12 @@ const MIN_LENGTH = 8
  * them, so the user stays signed in here and is signed out everywhere else.
  *
  * Works for all three roles — the endpoint does not care which.
+ *
+ * `onSaved` is for a caller that shows this behind a disclosure, as the
+ * buyer's account page does: the card closes instead of the form growing a
+ * success banner nobody stays to read.
  */
-export function ChangePasswordForm() {
+export function ChangePasswordForm({ onSaved }: { onSaved?: () => void }) {
   const router = useRouter()
   const t = useT()
   const [error, setError] = useState<string | null>(null)
@@ -68,7 +72,8 @@ export function ChangePasswordForm() {
       }
 
       form.reset()
-      setDone(true)
+      if (onSaved) onSaved()
+      else setDone(true)
       // New cookies came back on that response; re-run server components with
       // them rather than leaving the page holding the old session.
       router.refresh()

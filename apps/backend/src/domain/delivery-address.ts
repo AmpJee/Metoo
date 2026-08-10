@@ -17,6 +17,13 @@ export interface ShopAddress {
   shopName: string
   phone: string
   addressLine: string
+  /**
+   * Nullable, unlike the rest of the shop address. Shops that signed up
+   * before the area picker existed have the district written into
+   * addressLine as prose, and splitting it back out would be guesswork.
+   */
+  subdistrict: string | null
+  district: string | null
   province: string
   postalCode: string
 }
@@ -84,8 +91,13 @@ export function resolveShippingAddress(
       recipient: profile.shopName,
       phone: profile.phone,
       addressLine: profile.addressLine,
-      subdistrict: null,
-      district: null,
+      // Carried through now that the shop address has them. Older shops still
+      // have null here, which is why the formatter drops empty parts rather
+      // than leaving gaps where แขวง and เขต would be.
+      subdistrict: filled(profile.subdistrict)
+        ? profile.subdistrict.trim()
+        : null,
+      district: filled(profile.district) ? profile.district.trim() : null,
       province: profile.province,
       postalCode: profile.postalCode,
       usedShopAddress: true,
