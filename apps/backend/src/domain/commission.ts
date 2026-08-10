@@ -10,27 +10,13 @@
  */
 
 import type { Category } from '@metoo/shared'
+import { COMMISSION_BPS, VOLUME_THRESHOLD } from '@metoo/shared'
 
-/** Orders in the trailing month at which a brand moves to the lower rate. */
-export const VOLUME_THRESHOLD = 30
-
-/** Days counted as "the trailing month" when measuring volume. */
-export const VOLUME_WINDOW_DAYS = 30
-
-/**
- * [new brand, high volume] in basis points.
- *
- * The first three come from the product brief. Fashion & Accessories appears
- * only in the design and was set to match Health & Beauty — both are
- * discretionary, higher-margin goods rather than the staples a minimart
- * restocks weekly.
- */
-const RATES: Record<Category, readonly [number, number]> = {
-  FOOD_BEVERAGE: [400, 200], // 4% / 2%
-  HEALTH_BEAUTY: [800, 500], // 8% / 5%
-  HOME_LIVING: [500, 300], // 5% / 3%
-  FASHION_ACCESSORIES: [800, 500], // 8% / 5%
-}
+// The rate card moved to @metoo/shared so the help centre can publish the
+// same numbers it invoices. The logic stays here — nothing in a browser
+// should be deciding what a brand earns. Re-exported because the checkout
+// and the tests import them from this module.
+export { VOLUME_THRESHOLD, VOLUME_WINDOW_DAYS } from '@metoo/shared'
 
 /**
  * The rate a brand earns for one order, in basis points.
@@ -43,7 +29,7 @@ export function resolveCommissionBps(
   category: Category,
   monthlyOrderCount: number
 ): number {
-  const [newBrand, highVolume] = RATES[category]
+  const [newBrand, highVolume] = COMMISSION_BPS[category]
   return monthlyOrderCount >= VOLUME_THRESHOLD ? highVolume : newBrand
 }
 

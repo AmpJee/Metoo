@@ -7,6 +7,7 @@
  * something different on the other.
  */
 export * from './constants/roles.ts'
+export * from './commission.ts'
 export * from './pricing.ts'
 export * from './provinces.ts'
 export * from './shipping.ts'

@@ -4,3 +4,7 @@
 # Prisma's generated client and migration SQL are artifacts, not source.
 src/generated
 prisma/migrations
+
+# A vendored dataset, not hand-written source. Prettier expands its single
+# minified line into 13,650, which buries every real diff that touches it.
+src/data/thai-addresses.json
