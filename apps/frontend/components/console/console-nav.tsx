@@ -4,6 +4,7 @@ import {
   Banknote,
   BarChart3,
   LayoutDashboard,
+  MessageCircle,
   MessageSquare,
   Package,
   RotateCcw,
@@ -48,6 +49,11 @@ const NAV: Record<'seller' | 'admin', NavItem[]> = {
       href: '/seller/orders',
       labelKey: 'nav.seller.orders',
       icon: ShoppingBag,
+    },
+    {
+      href: '/seller/chat',
+      labelKey: 'nav.seller.chat',
+      icon: MessageCircle,
     },
     {
       href: '/seller/products',
